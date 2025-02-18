@@ -26,7 +26,7 @@
     <a href="https://github.com/JayNightmare/MAD-Jay-Koki"><strong>Explore the docs »</strong></a>
     <br />
     <br />
-    <a href="https://jaynightmare.github.io/MAD-Jay-Koki/">View Page</a>
+    <!-- <a href="https://jaynightmare.github.io/MAD-Jay-Koki/">View Page</a> -->
     &middot;
     <a href="https://github.com/JayNightmare/MAD-Jay-Koki/issues/new?labels=bug&template=bug-report---.md">Report Bug</a>
     &middot;
