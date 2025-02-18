@@ -4,7 +4,6 @@
 <div align="center">
   
   [![CC0 1.0 License][license-shield]][license-url]
-  [![LinkedIn][linkedin-shield]][linkedin-url]
   
 </div>
 
