@@ -15,7 +15,7 @@
 <div align="center">
   <a href="https://github.com/JayNightmare/MAD-Jay-Koki">
     
-![image](https://github.com/user-attachments/assets/16e07c12-568e-4879-8478-6d2980b58f3a)
+![image](https://github.com/user-attachments/assets/b506d901-cf4d-4b52-a479-a92a7882845f)
   </a>
 
 <h3 align="center">MAD Project</h3>
