@@ -59,6 +59,16 @@ dependencies {
     implementation(libs.androidx.ui.graphics)
     implementation(libs.androidx.ui.tooling.preview)
     implementation(libs.androidx.material3)
+    //Extra dependencies
+    // ViewModel for Jetpack Compose
+    implementation(libs.androidx.lifecycle.viewmodel.compose)
+    //Runtime dependency
+    implementation(libs.androidx.lifecycle.runtime.compose)
+    // Coroutines for asynchronous programming
+    implementation(libs.kotlinx.coroutines.core)
+    implementation(libs.kotlinx.coroutines.android)
+    // Navigation
+    implementation(libs.androidx.navigation.compose)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
