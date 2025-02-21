@@ -10,7 +10,7 @@
 
 
 <!-- PROJECT LOGO -->
-<br />
+<br />[App.kt](src%2FApp.kt)
 <div align="center">
   <a href="https://github.com/JayNightmare/MAD-Jay-Koki">
     
