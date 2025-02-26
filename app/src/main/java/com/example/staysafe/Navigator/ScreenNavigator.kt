@@ -1,24 +1,29 @@
 package com.example.staysafe.Navigator
 
 import androidx.compose.runtime.Composable
-import androidx.navigation.compose.*
+import androidx.navigation.NavHostController
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
 import com.example.staysafe.View.MainScreen
 import com.example.staysafe.View.RouteScreen
-import com.example.staysafe.View.HistoryScreen
-import com.example.staysafe.View.BookNoteScreen
-@Composable
-fun ScreenNavigator() {
-    val navController = rememberNavController()
+import com.example.staysafe.View.TrackingScreen
 
+@Composable
+fun ScreenNavigator(navController: NavHostController) {
     NavHost(
         navController = navController,
-        startDestination = Screen.MainScreen.route
+        startDestination = Screen.Home.route
     ) {
-        composable(Screen.MainScreen.route) {
+        composable(Screen.Home.route) {
             MainScreen(navController)
         }
-        composable(Screen.RouteScreen.route) {
+        
+        composable(Screen.Route.route) {
             RouteScreen(navController)
+        }
+        
+        composable(Screen.Tracking.route) {
+            TrackingScreen(navController)
         }
     }
 }
