@@ -4,16 +4,17 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     id("com.google.android.libraries.mapsplatform.secrets-gradle-plugin")
+    alias(libs.plugins.compose.compiler)
 }
 
 android {
     namespace = "com.example.staysafe"
-    compileSdk = 34
+    compileSdk = 35
 
     defaultConfig {
         applicationId = "com.example.staysafe"
         minSdk = 24
-        targetSdk = 34
+        targetSdk = 35
         versionCode = 1
         versionName = "1.0"
 
@@ -93,10 +94,12 @@ dependencies {
     debugImplementation(libs.androidx.ui.test.manifest)
 
     // Google API Maps
-    implementation(libs.play.services.maps)
+//    implementation(libs.play.services.maps)
+    implementation(libs.play.services.maps.v1820)
+//    implementation(libs.maps.compose)
+    implementation(libs.maps.compose.v2110)
     implementation(libs.maps.ktx)
     implementation(libs.maps.utils.ktx)
-    implementation(libs.maps.compose)
 
     // Permissions
     implementation(libs.accompanist.permissions)
