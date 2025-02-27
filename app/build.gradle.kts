@@ -5,6 +5,7 @@ plugins {
     alias(libs.plugins.kotlin.android)
     id("com.google.android.libraries.mapsplatform.secrets-gradle-plugin")
     alias(libs.plugins.compose.compiler)
+    id("kotlin-kapt")
 }
 
 android {
@@ -62,7 +63,11 @@ android {
 }
 
 dependencies {
+    val room_version = "2.6.1"
+
     implementation(libs.androidx.media3.common.ktx)
+    implementation(libs.androidx.room.common)
+    implementation(libs.androidx.room.ktx)
     val composeBom = platform(libs.androidx.compose.bom)
     implementation(composeBom)
     androidTestImplementation(composeBom)
@@ -74,7 +79,13 @@ dependencies {
     implementation(libs.androidx.ui.graphics)
     implementation(libs.androidx.ui.tooling.preview)
     implementation(libs.androidx.material3)
-    
+
+    // Room
+    kapt("androidx.room:room-compiler:$room_version")
+    implementation("androidx.room:room-runtime:$room_version")
+    implementation("androidx.room:room-ktx:$room_version")
+
+
     // ViewModel for Jetpack Compose
     implementation(libs.androidx.lifecycle.viewmodel.compose)
     // Runtime dependency
