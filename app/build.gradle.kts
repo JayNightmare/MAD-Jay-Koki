@@ -21,9 +21,8 @@ android {
         // Load the API key from local.properties
         val properties = Properties()
         properties.load(project.rootProject.file("local.properties").inputStream())
-        val apiKey = properties.getProperty("MAP_API_GOOGLE")
-        buildConfigField("String", "MAP_API_GOOGLE", apiKey)
-        manifestPlaceholders["google_maps_api_key"] = apiKey
+        // Set API keys in BuildConfig
+        buildConfigField("String", "MAP_API_GOOGLE", "\"${properties.getProperty(" MAP_API_GOOGLE ")}\"")
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
@@ -32,8 +31,9 @@ android {
     }
 
     buildTypes {
+        android.buildFeatures.buildConfig = true
         release {
-            isMinifyEnabled = false
+            isMinifyEnabled = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
@@ -62,6 +62,7 @@ android {
 }
 
 dependencies {
+    implementation(libs.androidx.media3.common.ktx)
     val composeBom = platform(libs.androidx.compose.bom)
     implementation(composeBom)
     androidTestImplementation(composeBom)
@@ -94,10 +95,8 @@ dependencies {
     debugImplementation(libs.androidx.ui.test.manifest)
 
     // Google API Maps
-//    implementation(libs.play.services.maps)
-    implementation(libs.play.services.maps.v1820)
-//    implementation(libs.maps.compose)
-    implementation(libs.maps.compose.v2110)
+    implementation("com.google.android.gms:play-services-maps:18.2.0")
+    implementation("com.google.maps.android:maps-compose:2.11.0")
     implementation(libs.maps.ktx)
     implementation(libs.maps.utils.ktx)
 

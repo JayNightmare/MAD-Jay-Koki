@@ -9,13 +9,11 @@ espressoCore = "3.6.1"
 lifecycleRuntimeKtx = "2.8.7"
 activityCompose = "1.10.1"
 composeBom = "2025.02.00"
-mapsCompose = "2.11.0"
 mapsKtx = "3.4.0"
 mapsUtilsKtx = "3.4.0"
-playServicesMaps = "19.1.0"
-playServicesMapsVersion = "18.2.0"
 secretsGradlePlugin = "2.0.1"
 playServicesLocation = "21.3.0"
+media3CommonKtx = "1.5.1"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -37,15 +35,12 @@ kotlinx-coroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-c
 kotlinx-coroutines-android = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-android", version = "1.7.3" }
 androidx-navigation-compose = { module = "androidx.navigation:navigation-compose", version = "2.8.8" }
 androidx-lifecycle-runtime-compose = { module = "androidx.lifecycle:lifecycle-runtime-compose", version.ref = "lifecycleRuntimeKtx" }
-maps-compose = { module = "com.google.maps.android:maps-compose", version = "2.15.0" }
-maps-compose-v2110 = { module = "com.google.maps.android:maps-compose", version.ref = "mapsCompose" }
 maps-ktx = { module = "com.google.maps.android:maps-ktx", version.ref = "mapsKtx" }
 maps-utils-ktx = { module = "com.google.maps.android:maps-utils-ktx", version.ref = "mapsUtilsKtx" }
-play-services-maps = { module = "com.google.android.gms:play-services-maps", version.ref = "playServicesMaps" }
-play-services-maps-v1820 = { module = "com.google.android.gms:play-services-maps", version.ref = "playServicesMapsVersion" }
 secrets-gradle-plugin = { module = "com.google.android.libraries.mapsplatform.secrets-gradle-plugin:secrets-gradle-plugin", version.ref = "secretsGradlePlugin" }
 play-services-location = { group = "com.google.android.gms", name = "play-services-location", version.ref = "playServicesLocation" }
 accompanist-permissions = { group = "com.google.accompanist", name = "accompanist-permissions", version.ref = "accompanist" }
+androidx-media3-common-ktx = { group = "androidx.media3", name = "media3-common-ktx", version.ref = "media3CommonKtx" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
