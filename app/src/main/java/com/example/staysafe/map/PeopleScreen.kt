@@ -23,9 +23,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.foundation.lazy.items
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.example.staysafe.model.data.Location
 import com.example.staysafe.model.data.User
@@ -33,8 +35,10 @@ import com.example.staysafe.ui.components.BottomNavigationBar
 import com.example.staysafe.ui.components.TopNavigationBar
 import com.example.staysafe.viewModel.PeopleViewModel
 
+
 @Composable
-fun PeopleScreen(navController: NavController, viewModel: PeopleViewModel){
+fun PeopleScreen(navController: NavController){
+    val viewModel: PeopleViewModel = viewModel()
     val users by viewModel.users.collectAsStateWithLifecycle()
     val username by viewModel.usernames.collectAsStateWithLifecycle()
     val location by viewModel.locationName.collectAsStateWithLifecycle()
@@ -47,7 +51,7 @@ fun PeopleScreen(navController: NavController, viewModel: PeopleViewModel){
 
     Scaffold(
         topBar = { TopNavigationBar() },
-        bottomBar = { BottomNavigationBar() }
+        bottomBar = { BottomNavigationBar(navController) }
     ) { paddingValues ->
         Column(modifier = Modifier.padding(paddingValues)) {
             if (users.isEmpty()) {
@@ -58,20 +62,17 @@ fun PeopleScreen(navController: NavController, viewModel: PeopleViewModel){
                 )
             } else {
                 //Should I make locationID to foreign key of the users?
-                /*LazyColumn {
+                LazyColumn {
                     items(users) { user ->
                         // Find the correct Location for this User
-                        val userLocation = locations[user.toString()]?: Location(0)
-                        PeopleItem(users, userLocation)
+                        val userLocation = locations[user.toString()]?:
+                        Location(locationID = 1, locationName = "Central Park", locationAddress = "New York, NY", locationPostcode = "10024", locationLatitude = 40.7851, locationLongitude = -73.9683)
+                        PeopleItem(user, userLocation)
                     }
                 }
             }
-
-                 */
         }
     }
-}
-
 }
 @Composable
 fun PeopleItem(user: User, location: Location){

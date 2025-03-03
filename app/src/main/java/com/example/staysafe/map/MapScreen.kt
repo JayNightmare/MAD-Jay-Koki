@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.navigation.NavController
 import com.example.staysafe.ui.components.BottomNavigationBar
 import com.example.staysafe.ui.components.TopNavigationBar
 import com.google.android.gms.maps.model.CameraPosition
@@ -15,10 +16,10 @@ import com.google.maps.android.compose.rememberCameraPositionState
 
 
 @Composable
-fun MapScreen() {
+fun MapScreen(navController: NavController) {
     Scaffold(
         topBar = { TopNavigationBar() },
-        bottomBar = { BottomNavigationBar() }
+        bottomBar = { BottomNavigationBar(navController) }
     ) { paddingValues ->
         Box(modifier = Modifier.padding(paddingValues)) {
             GoogleMap(
