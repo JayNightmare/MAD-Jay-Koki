@@ -8,7 +8,7 @@ import androidx.room.Query
 import com.example.staysafe.model.data.Location
 
 @Dao
-interface LocationDao {
+interface LocationDao  {
     @Insert
     suspend fun insertLocation(location: Location): Long
 
