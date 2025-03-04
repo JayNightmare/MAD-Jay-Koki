@@ -18,19 +18,19 @@ fun BottomNavigationBar() {
     ) {
         NavigationBarItem(
             icon = { Icon(Icons.Outlined.Face, contentDescription = "People", tint = Color.White) },
-            label = { Text("People", color =Color.White) },
-            selected = false,
+            label = { Text("People", color = Color.White) },
+            selected = true,
             onClick = { /* TODO: Navigate to People Screen */ }
         )
         NavigationBarItem(
             icon = { Icon(Icons.Outlined.Call, contentDescription = "Call", tint = Color.White) },
-            label = { Text("Call", color =Color.White) },
+            label = { Text("Call", color = Color.White) },
             selected = false,
             onClick = { /* TODO: Navigate to Call Screen */ }
         )
         NavigationBarItem(
             icon = { Icon(Icons.Outlined.Person, contentDescription = "Profile", tint = Color.White) },
-            label = { Text("Profile", color =Color.White) },
+            label = { Text("Profile", color = Color.White) },
             selected = false,
             onClick = { /* TODO: Navigate to Profile Screen */ }
         )

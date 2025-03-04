@@ -6,7 +6,6 @@ import androidx.activity.compose.setContent
 import com.example.staysafe.map.MapScreen
 import com.example.staysafe.model.database.StaySafeDatabase
 import androidx.lifecycle.lifecycleScope
-import com.example.staysafe.model.data.*
 import com.example.staysafe.model.dummyData.DatabaseSeeder
 import kotlinx.coroutines.launch
 

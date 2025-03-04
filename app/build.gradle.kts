@@ -5,7 +5,7 @@ plugins {
     alias(libs.plugins.kotlin.android)
     id("com.google.android.libraries.mapsplatform.secrets-gradle-plugin")
     alias(libs.plugins.compose.compiler)
-    id("kotlin-kapt")
+    id("com.google.devtools.ksp")
 }
 
 android {
@@ -22,6 +22,7 @@ android {
         // Load the API key from local.properties
         val properties = Properties()
         properties.load(project.rootProject.file("local.properties").inputStream())
+
         // Set API keys in BuildConfig
         buildConfigField("String", "MAP_API_GOOGLE", "\"${properties.getProperty(" MAP_API_GOOGLE ")}\"")
 
@@ -81,10 +82,9 @@ dependencies {
     implementation(libs.androidx.material3)
 
     // Room
-    kapt("androidx.room:room-compiler:$room_version")
-    implementation("androidx.room:room-runtime:$room_version")
-    implementation("androidx.room:room-ktx:$room_version")
-
+    ksp(libs.androidx.room.compiler)
+    implementation(libs.androidx.room.runtime)
+    implementation(libs.androidx.room.ktx)
 
     // ViewModel for Jetpack Compose
     implementation(libs.androidx.lifecycle.viewmodel.compose)
@@ -106,8 +106,8 @@ dependencies {
     debugImplementation(libs.androidx.ui.test.manifest)
 
     // Google API Maps
-    implementation("com.google.android.gms:play-services-maps:18.2.0")
-    implementation("com.google.maps.android:maps-compose:2.11.0")
+    implementation(libs.play.services.maps)
+    implementation(libs.maps.compose)
     implementation(libs.maps.ktx)
     implementation(libs.maps.utils.ktx)
 

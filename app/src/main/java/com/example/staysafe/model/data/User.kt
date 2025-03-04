@@ -9,7 +9,7 @@ data class User(
     val userFirstname: String,
     val userLastname: String,
     val userUsername: String,
-    val userPassword: String,  // Store as a hashed string
+    val userPassword: String,
     val userLatitude: Double?,
     val userLongitude: Double?,
     val userTimestamp: Long?
