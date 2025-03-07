@@ -3,7 +3,6 @@ package com.example.staysafe
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import com.example.staysafe.map.MapScreen
 import com.example.staysafe.model.database.StaySafeDatabase
 import androidx.lifecycle.lifecycleScope
 import com.example.staysafe.model.dummyData.DatabaseSeeder
@@ -20,7 +19,7 @@ class MainActivity : ComponentActivity() {
         }
 
         setContent {
-            Navigation()
+            Navigation(database = db)
         }
     }
 }

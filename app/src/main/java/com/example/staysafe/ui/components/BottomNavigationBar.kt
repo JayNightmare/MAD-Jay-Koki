@@ -10,9 +10,10 @@ import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
+import androidx.navigation.NavController
 
 @Composable
-fun BottomNavigationBar() {
+fun BottomNavigationBar(navController: NavController) {
     NavigationBar(
         containerColor = Color.Black.copy(alpha = 0.5f),
     ) {
@@ -20,7 +21,7 @@ fun BottomNavigationBar() {
             icon = { Icon(Icons.Outlined.Face, contentDescription = "People", tint = Color.White) },
             label = { Text("People", color =Color.White) },
             selected = false,
-            onClick = { /* TODO: Navigate to People Screen */ }
+            onClick = { onPeopleClicked() }
         )
         NavigationBarItem(
             icon = { Icon(Icons.Outlined.Call, contentDescription = "Call", tint = Color.White) },

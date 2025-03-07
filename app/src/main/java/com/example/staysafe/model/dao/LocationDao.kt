@@ -6,6 +6,7 @@ import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import com.example.staysafe.model.data.Location
+import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface LocationDao  {
@@ -17,6 +18,9 @@ interface LocationDao  {
 
     @Query("SELECT * FROM locations")
     fun getAllLocations(): List<Location>
+
+    @Query("SELECT * FROM locations WHERE userID = :userId")
+    fun getLocationByUserId(userId: Long): Flow<Location?>
 
     @Delete
     suspend fun deleteLocation(location: Location)

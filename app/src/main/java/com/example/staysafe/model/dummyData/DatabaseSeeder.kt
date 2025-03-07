@@ -34,9 +34,9 @@ class DatabaseSeeder {
         )
 
         private val dummyLocations = listOf(
-            Location(locationID = 1, locationName = "Central Park", locationAddress = "New York, NY", locationPostcode = "10024", locationLatitude = 40.7851, locationLongitude = -73.9683),
-            Location(locationID = 2, locationName = "Tower Bridge", locationAddress = "London, UK", locationPostcode = "SE1 2UP", locationLatitude = 51.5055, locationLongitude = -0.0754),
-            Location(locationID = 3, locationName = "Hollywood Sign", locationAddress = "Los Angeles, CA", locationPostcode = "90068", locationLatitude = 34.1341, locationLongitude = -118.3215)
+            Location(locationID = 1, locationName = "Central Park", locationAddress = "New York, NY", locationPostcode = "10024", locationLatitude = 40.7851, locationLongitude = -73.9683, userID = 1),
+            Location(locationID = 2, locationName = "Tower Bridge", locationAddress = "London, UK", locationPostcode = "SE1 2UP", locationLatitude = 51.5055, locationLongitude = -0.0754, userID = 2),
+            Location(locationID = 3, locationName = "Hollywood Sign", locationAddress = "Los Angeles, CA", locationPostcode = "90068", locationLatitude = 34.1341, locationLongitude = -118.3215, userID = 3)
         )
 
         private val dummyContacts = listOf(

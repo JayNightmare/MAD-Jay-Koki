@@ -6,6 +6,7 @@ import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Update
 import com.example.staysafe.model.data.User
+import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface UserDao {
@@ -15,20 +16,19 @@ interface UserDao {
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertAll(dummyUsers: List<User>)
-    //Get user
+
     @Query("SELECT * FROM users WHERE userID = :id")
     suspend fun getUserById(id: Long): User?
 
     @Query("SELECT * FROM users")
-    suspend fun getAllUsers(): List<User>  // Ensure this matches the entity
-    /*update*/
-    @Update
-    suspend fun updateUser(user: User)
-    /*delete*/
-    @Query("DELETE FROM users WHERE userID = :id")
-    suspend fun deleteUserById(id: Long)
-    /*Searching user that attached to the location*/
-    @Query("SELECT COUNT(*) FROM users WHERE userID = :id")
-    suspend fun isUserExist(id: Long)
+    fun getAllUsers(): Flow<List<User>>
 
+//    @Update
+//    suspend fun updateUser(user: User)
+//
+//    @Query("DELETE FROM users WHERE userID = :id")
+//    suspend fun deleteUserById(id: Long)
+//
+//    @Query("SELECT COUNT(*) FROM users WHERE userID = :id")
+//    suspend fun isUserExist(id: Long)
 }
