@@ -1,6 +1,8 @@
-package com.example.staysafe.map
+package com.example.staysafe.view.screens
 
 import android.content.Context
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -8,19 +10,12 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.rememberModalBottomSheetState
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.media3.common.util.Log
 import androidx.navigation.NavController
-import androidx.navigation.compose.rememberNavController
-import com.example.staysafe.model.data.Location
+import com.example.staysafe.BuildConfig
 import com.example.staysafe.model.data.User
 import com.example.staysafe.ui.components.BottomNavigationBar
 import com.example.staysafe.ui.components.TopNavigationBar
@@ -31,13 +26,9 @@ import com.google.android.gms.location.LocationServices
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
-import com.google.maps.android.compose.CameraPositionState
-import com.google.maps.android.compose.GoogleMap
-import com.google.maps.android.compose.Marker
-import com.google.maps.android.compose.rememberCameraPositionState
-import com.google.maps.android.compose.rememberMarkerState
-import kotlinx.coroutines.launch
+import com.google.maps.android.compose.*
 
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -48,19 +39,43 @@ fun MapScreen(navController: NavController, viewModel: MapViewModel) {
     var showSheet by remember { mutableStateOf(true) }
 
     val context = LocalContext.current
-
     var currentDeviceLat by remember { mutableStateOf(0.0) }
     var currentDeviceLon by remember { mutableStateOf(0.0) }
-
     val cameraPositionState = rememberCameraPositionState {
         position = CameraPosition.fromLatLngZoom(LatLng(51.5074, -0.1278), 10f)
     }
-    val coroutine = rememberCoroutineScope()
+    val coroutineScope = rememberCoroutineScope()
 
+    val permissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission()
+    ) {
+        isGranted ->
+            if (isGranted) {
+                getCurrentLocation(context) { lat, lon ->
+                    currentDeviceLat = lat
+                    currentDeviceLon = lon
+                    coroutineScope.launch {
+                        cameraPositionState.moveToUserLocation(lat, lon)
+                    }
+                }
+            } else {
+                Log.d("MapScreen", "Location permission denied")
+            }
+    }
+
+    // Fetch device location when screen loads
     LaunchedEffect(Unit) {
+        permissionLauncher.launch(android.Manifest.permission.ACCESS_FINE_LOCATION)
+        permissionLauncher.launch(android.Manifest.permission.ACCESS_COARSE_LOCATION)
+        permissionLauncher.launch(android.Manifest.permission.INTERNET)
+
         getCurrentLocation(context) { lat, lon ->
             currentDeviceLat = lat
             currentDeviceLon = lon
+
+            coroutineScope.launch {
+                cameraPositionState.moveToUserLocation(lat, lon)
+            }
         }
     }
 
@@ -78,12 +93,17 @@ fun MapScreen(navController: NavController, viewModel: MapViewModel) {
     ) { paddingValues ->
         Box(modifier = Modifier.fillMaxSize()) {
             GoogleMap(
-                modifier = Modifier.fillMaxSize().padding(paddingValues),
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(paddingValues),
                 cameraPositionState = cameraPositionState
             ) {
+                // Show user markers
                 users.forEach { user ->
                     if (user.userLatitude != null && user.userLongitude != null) {
-                        val markerState = rememberMarkerState(position = LatLng(user.userLatitude, user.userLongitude))
+                        val markerState = rememberMarkerState(
+                            position = LatLng(user.userLatitude, user.userLongitude)
+                        )
 
                         Marker(
                             state = markerState,
@@ -91,10 +111,30 @@ fun MapScreen(navController: NavController, viewModel: MapViewModel) {
                             onClick = {
                                 selectedUser = user
                                 showSheet = true
+                                coroutineScope.launch {
+                                    cameraPositionState.moveToUserLocation(
+                                        user.userLatitude,
+                                        user.userLongitude
+                                    )
+                                }
                                 true
                             }
                         )
                     }
+                }
+
+                // Show current location marker
+                if (currentDeviceLat != 0.0 && currentDeviceLon != 0.0) {
+                    Log.d("MapScreen", "Current location: $currentDeviceLat, $currentDeviceLon")
+                    Marker(
+                        state = rememberMarkerState(
+                            position = LatLng(currentDeviceLat, currentDeviceLon)
+                        ),
+                        title = "You",
+                        snippet = "Current Location"
+                    )
+                } else {
+                    Log.d("MapScreen", "Current location not available")
                 }
             }
 
@@ -109,7 +149,7 @@ fun MapScreen(navController: NavController, viewModel: MapViewModel) {
                             onUserSelected = { user ->
                                 selectedUser = user
                                 showSheet = true
-                                coroutine.launch {
+                                coroutineScope.launch {
                                     user.userLatitude?.let { lat ->
                                         user.userLongitude?.let { lon ->
                                             cameraPositionState.moveToUserLocation(lat, lon)
@@ -122,12 +162,15 @@ fun MapScreen(navController: NavController, viewModel: MapViewModel) {
                         val locationFlow = viewModel.getLocationForUser(selectedUser!!.userID)
                         val location by locationFlow.collectAsState(initial = null)
 
+                        Log.d("API Key", "API KEY: ${BuildConfig.MAP_API_GOOGLE}")
+
                         if (location != null) {
                             UserDetailsSheet(
                                 user = selectedUser!!,
                                 location = location!!,
                                 userLat = currentDeviceLat,
                                 userLon = currentDeviceLon,
+                                apiKey = BuildConfig.MAP_API_GOOGLE,
                                 onClose = { selectedUser = null }
                             )
                         }
@@ -152,4 +195,3 @@ suspend fun CameraPositionState.moveToUserLocation(latitude: Double, longitude: 
         CameraUpdateFactory.newLatLngZoom(LatLng(latitude, longitude), 15f)
     )
 }
-

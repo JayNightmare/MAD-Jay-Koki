@@ -8,9 +8,16 @@ import androidx.compose.material.icons.filled.Create
 import androidx.compose.material3.*
 import androidx.compose.ui.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.media3.common.util.Log
+import com.example.staysafe.map.fetchDistanceAndDuration
 import com.example.staysafe.model.data.*
 
 @Composable
@@ -19,9 +26,31 @@ fun UserDetailsSheet(
     location: Location,
     userLat: Double,
     userLon: Double,
+    apiKey: String,
     onClose: () -> Unit
 ) {
-    val distance = calculateDistance(userLat, userLon, location.locationLatitude, location.locationLongitude)
+    var distance by remember { mutableStateOf("Calculating...") }
+    var duration by remember { mutableStateOf("Calculating...") }
+
+    Log.d("API Key", apiKey)
+
+    LaunchedEffect(userLat, userLon, location, apiKey) {
+        val result = fetchDistanceAndDuration(
+            originLat = userLat,
+            originLng = userLon,
+            destLat = location.locationLatitude,
+            destLng = location.locationLongitude,
+            apiKey = apiKey
+        )
+
+        if (result != null) {
+            distance = result.first
+            duration = result.second
+        } else {
+            distance = "Unavailable"
+            duration = "Unavailable"
+        }
+    }
 
     Column(modifier = Modifier.fillMaxWidth().padding(16.dp)) {
         Row(horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier.fillMaxWidth()) {
@@ -37,7 +66,7 @@ fun UserDetailsSheet(
 
         Row(horizontalArrangement = Arrangement.SpaceEvenly, modifier = Modifier.fillMaxWidth()) {
             ContactButton()
-            DirectionsButton(distance)
+            DirectionsButton(distance, duration)
         }
 
         Spacer(modifier = Modifier.height(12.dp))
@@ -56,12 +85,11 @@ fun ContactButton() {
 }
 
 @Composable
-fun DirectionsButton(distance: Double) {
-    val formattedDistance = "%.2f".format(distance * 0.621371)
+fun DirectionsButton(distance: String, duration: String) {
     Button(onClick = { /* Open directions */ }) {
         Icon(Icons.Default.Create, contentDescription = "Directions")
         Spacer(modifier = Modifier.width(8.dp))
-        Text("$formattedDistance miles • ~5 min")
+        Text("$distance • $duration")
     }
 }
 
@@ -74,22 +102,4 @@ fun NotificationsSection() {
             Text("Add")
         }
     }
-}
-
-fun calculateDistance(
-    startLat: Double, startLng: Double,
-    endLat: Double, endLng: Double
-): Double {
-    val earthRadius = 6371.0  // km
-    val dLat = Math.toRadians(endLat - startLat)
-    val dLng = Math.toRadians(endLng - startLng)
-
-    val a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-            Math.cos(Math.toRadians(startLat)) *
-            Math.cos(Math.toRadians(endLat)) *
-            Math.sin(dLng / 2) * Math.sin(dLng / 2)
-
-    val c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
-
-    return earthRadius * c
 }

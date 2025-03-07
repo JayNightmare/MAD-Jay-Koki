@@ -1,4 +1,4 @@
-//package com.example.staysafe.map
+package com.example.staysafe.view.screens//package com.example.staysafe.map
 //
 //import androidx.compose.foundation.Image
 //import androidx.compose.foundation.layout.Column

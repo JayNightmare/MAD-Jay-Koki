@@ -9,7 +9,7 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.stateIn
 
 class MapViewModel(
-    private val userDao: UserDao,
+    val userDao: UserDao,
     private val locationDao: LocationDao
 ) : ViewModel() {
 
