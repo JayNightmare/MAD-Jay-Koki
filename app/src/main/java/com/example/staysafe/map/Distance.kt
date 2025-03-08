@@ -1,6 +1,8 @@
 package com.example.staysafe.map
 
+import android.os.Build
 import android.util.Log
+import androidx.annotation.RequiresApi
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.json.JSONObject
@@ -8,6 +10,7 @@ import java.net.HttpURLConnection
 import java.net.URL
 import java.time.Instant
 
+@RequiresApi(Build.VERSION_CODES.O)
 suspend fun fetchDistanceAndDuration(
     originLat: Double,
     originLng: Double,

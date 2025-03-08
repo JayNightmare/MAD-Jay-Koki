@@ -1,5 +1,8 @@
 package com.example.staysafe.ui.components
 
+import android.os.Build
+import androidx.annotation.OptIn
+import androidx.annotation.RequiresApi
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Call
@@ -12,14 +15,21 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.media3.common.util.Log
+import androidx.media3.common.util.UnstableApi
 import com.example.staysafe.map.fetchDistanceAndDuration
+import com.example.staysafe.map.fetchRoutePolyline
 import com.example.staysafe.model.data.*
+import com.google.android.gms.maps.model.LatLng
+import kotlinx.coroutines.launch
 
+@OptIn(UnstableApi::class)
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun UserDetailsSheet(
     user: User,
@@ -27,6 +37,7 @@ fun UserDetailsSheet(
     userLat: Double,
     userLon: Double,
     apiKey: String,
+    onRouteFetched: (List<LatLng>) -> Unit,
     onClose: () -> Unit
 ) {
     var distance by remember { mutableStateOf("Calculating...") }
@@ -64,9 +75,19 @@ fun UserDetailsSheet(
 
         Spacer(modifier = Modifier.height(12.dp))
 
-        Row(horizontalArrangement = Arrangement.SpaceEvenly, modifier = Modifier.fillMaxWidth()) {
+        Column(modifier = Modifier.fillMaxWidth()) {
             ContactButton()
-            DirectionsButton(distance, duration)
+            Spacer(modifier = Modifier.width(12.dp))
+            DirectionsButton(
+                distance = distance,
+                duration = duration,
+                userLat = userLat,
+                userLon = userLon,
+                destLat = location.locationLatitude,
+                destLon = location.locationLongitude,
+                apiKey = apiKey,
+                onRouteFetched = onRouteFetched
+            )
         }
 
         Spacer(modifier = Modifier.height(12.dp))
@@ -84,15 +105,42 @@ fun ContactButton() {
     }
 }
 
+@OptIn(UnstableApi::class)
 @Composable
-fun DirectionsButton(distance: String, duration: String) {
-    Button(onClick = { /* Open directions */ }) {
+fun DirectionsButton(
+    distance: String,
+    duration: String,
+    userLat: Double,
+    userLon: Double,
+    destLat: Double,
+    destLon: Double,
+    apiKey: String,
+    onRouteFetched: (List<LatLng>) -> Unit
+) {
+    val coroutineScope = rememberCoroutineScope()
+
+    Button(onClick = {
+        Log.d("DirectionsButton", "Button Clicked: Fetching Route...") // ✅ LOG CLICK
+        coroutineScope.launch {
+            Log.d("DirectionsButton", "Fetching route from API...") // ✅ LOG START
+            fetchRoutePolyline(
+                originLat = userLat,
+                originLng = userLon,
+                destLat = destLat,
+                destLng = destLon,
+                apiKey = apiKey,
+                onRouteFetched = {
+                    Log.d("DirectionsButton", "Route fetched: ${it.size} points") // ✅ LOG RESULT
+                    onRouteFetched(it)
+                }
+            )
+        }
+    }) {
         Icon(Icons.Default.Create, contentDescription = "Directions")
         Spacer(modifier = Modifier.width(8.dp))
         Text("$distance • $duration")
     }
 }
-
 
 @Composable
 fun NotificationsSection() {
