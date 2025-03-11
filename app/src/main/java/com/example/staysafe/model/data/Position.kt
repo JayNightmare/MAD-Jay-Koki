@@ -1,13 +1,27 @@
 package com.example.staysafe.model.data
 
 import androidx.room.Entity
+import androidx.room.ForeignKey
+import androidx.room.Index
 import androidx.room.PrimaryKey
 
-@Entity(tableName = "positions")
+@Entity(
+    tableName = "positions",
+    foreignKeys = [
+        ForeignKey(
+            entity = User::class,
+            parentColumns = ["activityID"],
+            childColumns = ["activityID"],
+            onDelete = ForeignKey.CASCADE,
+            deferred = true
+        )
+    ],
+    indices = [Index(value = ["positionActivityID"])] // Fix: Add index to foreign key
+)
 data class Position(
     @PrimaryKey(autoGenerate = true) val positionID: Long = 0,
     val positionActivityID: Long,
     val positionLatitude: Double,
     val positionLongitude: Double,
-    val positionTimestamp: Long
+    val positionTimestamp: Long,
 )

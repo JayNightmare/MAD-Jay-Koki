@@ -111,6 +111,16 @@ dependencies {
     implementation(libs.maps.ktx)
     implementation(libs.maps.utils.ktx)
 
+    //Retrofit2
+    implementation(libs.retrofit)
+    implementation(libs.converter.moshi)
+    //JSON
+    implementation(libs.gson)
+    //API request
+    implementation(libs.volley)
+    //Communication with API and monitor log
+    implementation(libs.logging.interceptor)
+
     // Permissions
     implementation(libs.accompanist.permissions)
 }
