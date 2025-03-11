@@ -10,7 +10,10 @@ import com.example.staysafe.viewModel.MapViewModel
 
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
-fun Navigation(database: StaySafeDatabase) {
+fun Navigation(
+    viewModel: MapViewModel,
+    database: StaySafeDatabase
+) {
     val nav = rememberNavController()
 
     NavHost(
@@ -22,7 +25,8 @@ fun Navigation(database: StaySafeDatabase) {
                 navController = nav,
                 viewModel = MapViewModel(
                     userDao = database.userDao(),
-                    locationDao = database.locationDao()
+                    locationDao = database.locationDao(),
+                    service = viewModel.getTestingData()
                 )
             )
         }

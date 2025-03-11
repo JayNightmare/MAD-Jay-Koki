@@ -6,17 +6,17 @@ import androidx.room.Index
 import androidx.room.PrimaryKey
 
 @Entity(
-    tableName = "activity",
+    tableName = "activities",
     foreignKeys = [
         ForeignKey(
             entity = User::class,
             parentColumns = ["userID"],
-            childColumns = ["userID"],
+            childColumns = ["activityUserID"],
             onDelete = ForeignKey.CASCADE,
             deferred = true
         )
     ],
-    indices = [Index(value = ["userID"])] // Fix: Add index to foreign key
+    indices = [Index(value = ["activityUserID"])] // Fix: Add index to foreign key
 )
 data class Activity(
     @PrimaryKey(autoGenerate = true) val activityID: Long = 0,

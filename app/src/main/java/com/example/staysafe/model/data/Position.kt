@@ -9,9 +9,9 @@ import androidx.room.PrimaryKey
     tableName = "positions",
     foreignKeys = [
         ForeignKey(
-            entity = User::class,
+            entity = Activity::class,
             parentColumns = ["activityID"],
-            childColumns = ["activityID"],
+            childColumns = ["positionActivityID"],
             onDelete = ForeignKey.CASCADE,
             deferred = true
         )

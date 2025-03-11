@@ -8,9 +8,11 @@ import com.example.staysafe.model.data.Position
 import com.example.staysafe.model.data.Status
 import com.example.staysafe.model.data.User
 import com.example.staysafe.model.database.StaySafeDatabase
+import com.example.staysafe.API.Service
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
+import com.example.staysafe.viewModel.MapViewModel
 import kotlinx.coroutines.launch
 
 class DatabaseSeeder {
@@ -55,6 +57,7 @@ class DatabaseSeeder {
             Location(locationID = 6, locationName = "Hollywood Sign", locationAddress = "Los Angeles, CA", locationPostcode = "90068", locationLatitude = 34.1341, locationLongitude = -118.3215, userID = 6),
         )
 
+
         private val dummyContacts = listOf(
             Contact(contactID = 1, contactUserID = 1, contactContactID = 2, contactLabel = "Friend", contactDateCreated = System.currentTimeMillis()),
             Contact(contactID = 2, contactUserID = 2, contactContactID = 3, contactLabel = "Colleague", contactDateCreated = System.currentTimeMillis()),
@@ -75,7 +78,7 @@ class DatabaseSeeder {
             CoroutineScope(Dispatchers.IO).launch {
                 database.userDao().insertAll(dummyUsers)
                 database.statusDao().insertAll(dummyStatuses)
-                database.positionDao().insertAll(dummyPositions)
+//                database.positionDao().insertAll(dummyPositions)
                 database.locationDao().insertAll(dummyLocations)
                 database.contactDao().insertAll(dummyContacts)
                 database.activityDao().insertAll(dummyActivities)

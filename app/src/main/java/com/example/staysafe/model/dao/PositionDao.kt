@@ -9,15 +9,15 @@ import com.example.staysafe.model.data.Position
 
 @Dao
 interface PositionDao {
-    @Insert
-    suspend fun insertPosition(position: Position): Long
-
-    @Query("SELECT * FROM positions WHERE positionActivityID = :activityID")
-    fun getPositionsForActivity(activityID: Long): List<Position>
-
-    @Delete
-    suspend fun deletePosition(position: Position)
-
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insertAll(dummyPositions: List<Position>)
+//    @Insert
+//    suspend fun insertPosition(position: Position): Long
+//
+//    @Query("SELECT * FROM positions WHERE positionActivityID = :activityID")
+//    fun getPositionsForActivity(activityID: Long): List<Position>
+//
+//    @Delete
+//    suspend fun deletePosition(position: Position)
+//
+//    @Insert(onConflict = OnConflictStrategy.REPLACE)
+//    suspend fun insertAll(dummyPositions: List<Position>)
 }

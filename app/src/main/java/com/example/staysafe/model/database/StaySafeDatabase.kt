@@ -13,7 +13,7 @@ import com.example.staysafe.model.dao.*
 
 @Database(
     entities = [User::class, Contact::class, Activity::class, Location::class, Status::class, Position::class],
-    version = 1,
+    version = 2,
     exportSchema = false
 )
 @TypeConverters(Converters::class)
