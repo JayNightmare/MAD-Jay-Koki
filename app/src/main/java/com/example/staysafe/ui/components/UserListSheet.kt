@@ -7,25 +7,43 @@ import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.staysafe.model.data.*
+import com.example.staysafe.viewModel.MapViewModel
 
 @Composable
 fun UserListSheet(
-    users: List<User>,
+    viewModel: MapViewModel,
     onUserSelected: (User) -> Unit
 ) {
+    // Ensure data fetching starts when the screen loads
+    LaunchedEffect(Unit) {
+        println("DEBUG: Calling fetchAllData() in UserListSheet")
+        viewModel.fetchAllData()
+    }
+
+    // Observe the user list
+    val users by viewModel.users.collectAsStateWithLifecycle()
+
     Column(modifier = Modifier.fillMaxWidth().padding(16.dp)) {
         Text("Nearby Users", fontSize = 20.sp, fontWeight = FontWeight.Bold)
 
-        users.forEach { user ->
-            UserListItem(user, onClick = { onUserSelected(user) })
+        if (users.isEmpty()) {
+            Text("No users found")  // Debugging: Display when user list is empty
+        } else {
+            users.forEach { user ->
+                UserListItem(user, onClick = { onUserSelected(user) })
+            }
         }
     }
 }
+
 
 @Composable
 fun UserListItem(user: User, onClick: () -> Unit) {

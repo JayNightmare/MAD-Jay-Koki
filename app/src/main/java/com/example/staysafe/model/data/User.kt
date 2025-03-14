@@ -1,13 +1,15 @@
 package com.example.staysafe.model.data
+import com.google.gson.annotations.SerializedName
 
 data class User(
-    val userID: Long = 0,
-    val userFirstname: String,
-    val userLastname: String,
-    val userPhone: String,
-    val userUsername: String,
-    val userPassword: String,
-    val userLatitude: Double?,
-    val userLongitude: Double?,
-    val userTimestamp: Long?
+    @SerializedName("UserID") val userID: Long,
+    @SerializedName("UserFirstname") val userFirstname: String,
+    @SerializedName("UserLastname") val userLastname: String,
+    @SerializedName("UserPhone") val userPhone: String,
+    @SerializedName("UserUsername") val userUsername: String,
+    @SerializedName("UserPassword") val userPassword: String,
+    @SerializedName("UserLatitude") val userLatitude: Double?,
+    @SerializedName("UserLongitude") val userLongitude: Double?,
+    @SerializedName("UserTimestamp") val userTimestamp: Long?,
+    @SerializedName("UserImageURL") val userImageURL: String
 )

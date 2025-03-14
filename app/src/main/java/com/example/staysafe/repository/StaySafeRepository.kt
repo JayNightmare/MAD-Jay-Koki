@@ -5,6 +5,7 @@ import com.example.staysafe.model.data.*
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import retrofit2.await
+import retrofit2.awaitResponse
 
 class StaySafeRepository(
     private val service: Service
@@ -85,9 +86,16 @@ class StaySafeRepository(
     // Fetch Users directly from API
     suspend fun getAllUsers(): Flow<List<User>> = flow {
         try {
-            val users = service.getUsers().await()
-            emit(users)
+
+            val users = service.getUsers().awaitResponse()
+            println("DEBUG: API call executed, response received: $users")
+            users.body()?.let {
+                println("DEBUG: Users body found, emitting data: $it")
+                emit(it)
+            }
+            println("DEBUG: Works! Users data: ${users.body()}")
         } catch (e: Exception) {
+            println("API_ERROR: Exception - ${e.message}")
             e.printStackTrace()
             emit(emptyList())
         }
@@ -95,8 +103,8 @@ class StaySafeRepository(
 
     suspend fun getUserById(id: Long): Flow<List<User>> = flow {
         try {
-            val user = service.getUser(id).await()
-            emit(user)
+            val user = service.getUser(id).awaitResponse()
+            user.body()?.let { emit(it) }?:emit(emptyList())
         } catch (e: Exception) {
             e.printStackTrace()
             emit(emptyList())

@@ -163,7 +163,7 @@ fun MapScreen(navController: NavController, viewModel: MapViewModel) {
                 ) {
                     if (selectedUser == null) {
                         UserListSheet(
-                            users = users,
+                            viewModel = viewModel,
                             onUserSelected = { user ->
                                 selectedUser = user
                                 showSheet = true

@@ -38,11 +38,11 @@ interface Service {
     fun getStatus(): Call<List<Status>>
 
     //Users
-    @GET("http://softwarehub.uk/unibase/staysafe/v1/api/users")
+    @GET("users")
     fun getUsers(): Call<List<User>>
-    @GET("http://softwarehub.uk/unibase/staysafe/v1/api/users/{userID}")
+    @GET("users/{userID}")
     fun getUser(@Path("userID") id: Long): Call<List<User>>
-    @GET("https://softwarehub.uk/unibase/staysafe/v1/api/users/contacts/{userID}")
+    @GET("users/contacts/{userID}")
     fun getUserContact(@Path("userID") id: Long): Call<List<User>>
 
 

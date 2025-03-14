@@ -17,11 +17,25 @@ class MapViewModel(
     @SuppressLint("RestrictedApi")
     val users: StateFlow<List<User>> = _users
 
+    init {
+        fetchAllData()
+    }
+
     private fun fetchAllUsers() {
+        println("DEBUG: fetchAllUsers() CALLED")  // ✅ Log when function is called
+
         viewModelScope.launch {
-            repository.getAllUsers().collect { _users.value = it }
+            println("DEBUG: fetchAllUsers() - Inside viewModelScope.launch")  // ✅ Log inside coroutine
+
+            repository.getAllUsers()
+                .collect { users ->
+                    println("DEBUG: fetchAllUsers() - Received ${users.size} users")  // ✅ Log received data
+                    _users.value = users
+                }
         }
     }
+
+
 
     fun fetchUserById(id: Long) {
         viewModelScope.launch {
