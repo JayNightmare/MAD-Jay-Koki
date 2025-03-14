@@ -64,11 +64,10 @@ android {
 }
 
 dependencies {
-    val room_version = "2.6.1"
-
     implementation(libs.androidx.media3.common.ktx)
     implementation(libs.androidx.room.common)
     implementation(libs.androidx.room.ktx)
+    implementation(libs.firebase.firestore.ktx)
     val composeBom = platform(libs.androidx.compose.bom)
     implementation(composeBom)
     androidTestImplementation(composeBom)
@@ -88,11 +87,14 @@ dependencies {
 
     // ViewModel for Jetpack Compose
     implementation(libs.androidx.lifecycle.viewmodel.compose)
+
     // Runtime dependency
     implementation(libs.androidx.lifecycle.runtime.compose)
+
     // Coroutines for asynchronous programming
     implementation(libs.kotlinx.coroutines.core)
     implementation(libs.kotlinx.coroutines.android)
+
     // Navigation
     implementation(libs.androidx.navigation.compose)
     implementation(libs.play.services.location)
@@ -111,14 +113,18 @@ dependencies {
     implementation(libs.maps.ktx)
     implementation(libs.maps.utils.ktx)
 
-    //Retrofit2
+    // Retrofit2
     implementation(libs.retrofit)
     implementation(libs.converter.moshi)
-    //JSON
+
+    // JSON
     implementation(libs.gson)
-    //API request
+    implementation(libs.converter.gson)
+
+    // API request
     implementation(libs.volley)
-    //Communication with API and monitor log
+
+    // Communication with API and monitor log
     implementation(libs.logging.interceptor)
 
     // Permissions

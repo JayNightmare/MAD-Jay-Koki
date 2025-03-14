@@ -1,5 +1,6 @@
 [versions]
 agp = "8.6.1"
+converterGson = "2.9.0"
 converterMoshi = "2.8.0"
 gson = "2.10.1"
 kotlin = "2.0.0"
@@ -24,11 +25,13 @@ media3CommonKtx = "1.5.1"
 roomCommon = "2.6.1"
 roomKtx = "2.6.1"
 volley = "1.2.1"
+firebaseFirestoreKtx = "25.1.2"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
 androidx-room-compiler = { module = "androidx.room:room-compiler", version.ref = "roomCompiler" }
 androidx-room-runtime = { module = "androidx.room:room-runtime", version.ref = "roomCompiler" }
+converter-gson = { module = "com.squareup.retrofit2:converter-gson", version.ref = "converterGson" }
 converter-moshi = { module = "com.squareup.retrofit2:converter-moshi", version.ref = "converterMoshi" }
 gson = { module = "com.google.code.gson:gson", version.ref = "gson" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }
@@ -62,6 +65,7 @@ androidx-media3-common-ktx = { group = "androidx.media3", name = "media3-common-
 androidx-room-common = { group = "androidx.room", name = "room-common", version.ref = "roomCommon" }
 androidx-room-ktx = { group = "androidx.room", name = "room-ktx", version.ref = "roomKtx" }
 volley = { module = "com.android.volley:volley", version.ref = "volley" }
+firebase-firestore-ktx = { group = "com.google.firebase", name = "firebase-firestore-ktx", version.ref = "firebaseFirestoreKtx" }
 
 
 

@@ -58,18 +58,18 @@ fun MapScreen(navController: NavController, viewModel: MapViewModel) {
     val permissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestPermission()
     ) {
-        isGranted ->
-            if (isGranted) {
-                getCurrentLocation(context) { lat, lon ->
-                    currentDeviceLat = lat
-                    currentDeviceLon = lon
-                    coroutineScope.launch {
-                        cameraPositionState.moveToUserLocation(lat, lon)
-                    }
+            isGranted ->
+        if (isGranted) {
+            getCurrentLocation(context) { lat, lon ->
+                currentDeviceLat = lat
+                currentDeviceLon = lon
+                coroutineScope.launch {
+                    cameraPositionState.moveToUserLocation(lat, lon)
                 }
-            } else {
-                Log.d("MapScreen", "Location permission denied")
             }
+        } else {
+            Log.d("MapScreen", "Location permission denied")
+        }
     }
 
     // Fetch device location when screen loads
@@ -177,15 +177,15 @@ fun MapScreen(navController: NavController, viewModel: MapViewModel) {
                             }
                         )
                     } else {
-                        val locationFlow = viewModel.getLocationForUser(selectedUser!!.userID)
-                        val location by locationFlow.collectAsState(initial = null)
+                        val locationList by viewModel.fetchLocationById(selectedUser!!.userID).collectAsState(initial = emptyList())
+                        val location = locationList.firstOrNull()
 
                         Log.d("API Key", "API KEY: ${BuildConfig.MAP_API_GOOGLE}")
 
                         if (location != null) {
                             UserDetailsSheet(
                                 user = selectedUser!!,
-                                location = location!!,
+                                location = location,
                                 userLat = currentDeviceLat,
                                 userLon = currentDeviceLon,
                                 apiKey = BuildConfig.MAP_API_GOOGLE,
