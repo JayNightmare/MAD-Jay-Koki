@@ -2,6 +2,8 @@ package com.example.staysafe.ui.components
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.Icon
@@ -31,19 +33,29 @@ fun UserListSheet(
     // Observe the user list
     val users by viewModel.users.collectAsStateWithLifecycle()
 
-    Column(modifier = Modifier.fillMaxWidth().padding(16.dp)) {
-        Text("Nearby Users", fontSize = 20.sp, fontWeight = FontWeight.Bold)
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .heightIn(max = 400.dp) // Set max height to enable scrolling
+            .padding(16.dp)
+    ) {
+        Column {
+            Text("Nearby Users", fontSize = 20.sp, fontWeight = FontWeight.Bold)
 
-        if (users.isEmpty()) {
-            Text("No users found")  // Debugging: Display when user list is empty
-        } else {
-            users.forEach { user ->
-                UserListItem(user, onClick = { onUserSelected(user) })
+            if (users.isEmpty()) {
+                Text("No users found")  // Debugging: Display when user list is empty
+            } else {
+                LazyColumn(
+                    modifier = Modifier.fillMaxSize()
+                ) {
+                    items(users) { user ->
+                        UserListItem(user, onClick = { onUserSelected(user) })
+                    }
+                }
             }
         }
     }
 }
-
 
 @Composable
 fun UserListItem(user: User, onClick: () -> Unit) {

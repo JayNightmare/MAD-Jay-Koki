@@ -2,8 +2,11 @@ package com.example.staysafe.repository
 
 import com.example.staysafe.API.Service
 import com.example.staysafe.model.data.*
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.flowOn
 import retrofit2.await
 import retrofit2.awaitResponse
 
@@ -52,14 +55,26 @@ class StaySafeRepository(
         }
     }
 
-    fun getLocationById(id: Long): Flow<List<Location>> = flow {
-        try {
-            val location = service.getLocation(id).await()
-            emit(location)
-        } catch (e: Exception) {
+    fun getLocationById(id: Long): Flow<List<Location>> {
+        return flow {
+            println("DEBUG: getLocationById() CALLED")  // ✅ Log when function is called
+            println("DEBUG: id: $id")  // ✅ Log the value of id
+
+            val response = service.getLocation(id).awaitResponse()
+
+            if (response.isSuccessful) {
+                val locations = response.body() ?: emptyList()
+                println("DEBUG: Received locations: $locations")  // ✅ Log the received locations
+                emit(locations)
+            } else {
+                println("DEBUG: API returned error: ${response.errorBody()?.string()}")  // Log API error
+                emit(emptyList()) // Emit an empty list if API fails
+            }
+        }.catch { e ->
+            println("DEBUG: Exception: ${e.message}")  // ✅ Log any exceptions
             e.printStackTrace()
-            emit(emptyList())
-        }
+            emit(emptyList()) // Emit empty list safely inside `catch`
+        }.flowOn(Dispatchers.IO) // Ensures the API call runs on background thread
     }
 
     // Fetch Positions directly from API

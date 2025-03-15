@@ -1,7 +1,6 @@
 package com.example.staysafe.ui.components
 
 import android.os.Build
-import androidx.annotation.OptIn
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
@@ -9,57 +8,54 @@ import androidx.compose.material.icons.filled.Call
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Create
 import androidx.compose.material3.*
-import androidx.compose.ui.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.*
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.media3.common.util.Log
 import androidx.media3.common.util.UnstableApi
-import com.example.staysafe.map.fetchDistanceAndDuration
-import com.example.staysafe.map.fetchRoutePolyline
-import com.example.staysafe.model.data.*
+import com.example.staysafe.model.data.Location
+import com.example.staysafe.model.data.User
+import com.example.staysafe.viewModel.MapViewModel
 import com.google.android.gms.maps.model.LatLng
 import kotlinx.coroutines.launch
 
-@OptIn(UnstableApi::class)
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun UserDetailsSheet(
+    viewModel: MapViewModel,
     user: User,
-    location: Location,
+    location: Location?,
     userLat: Double,
     userLon: Double,
     apiKey: String,
-    onRouteFetched: (List<LatLng>) -> Unit,
+    onRoutePlotted: (List<LatLng>) -> Unit,
     onClose: () -> Unit
 ) {
     var distance by remember { mutableStateOf("Calculating...") }
     var duration by remember { mutableStateOf("Calculating...") }
 
-    Log.d("API Key", apiKey)
+//    val coroutineScope = rememberCoroutineScope()
 
     LaunchedEffect(userLat, userLon, location, apiKey) {
-        val result = fetchDistanceAndDuration(
-            originLat = userLat,
-            originLng = userLon,
-            destLat = location.locationLatitude,
-            destLng = location.locationLongitude,
-            apiKey = apiKey
-        )
+        if (location != null) {
+            val result = viewModel.fetchDistanceAndDuration(
+                originLat = userLat,
+                originLng = userLon,
+                destLat = location.locationLatitude,
+                destLng = location.locationLongitude,
+                apiKey = apiKey
+            )
 
-        if (result != null) {
-            distance = result.first
-            duration = result.second
-        } else {
-            distance = "Unavailable"
-            duration = "Unavailable"
+            if (result != null) {
+                distance = result.first
+                duration = result.second
+            } else {
+                distance = "Unavailable"
+                duration = "Unavailable"
+            }
         }
     }
 
@@ -71,28 +67,40 @@ fun UserDetailsSheet(
             }
         }
 
-        Text("${location.locationName}\nLive • Last Seen")
-
+        Text(text = "User Information", fontWeight = FontWeight.Bold, fontSize = 18.sp)
+        Text(text = "Username: ${user.userUsername}")
+        Text(text = "Phone: ${user.userPhone}")
         Spacer(modifier = Modifier.height(12.dp))
+
+        if (location != null) {
+            Text(text = "Destination", fontWeight = FontWeight.Bold, fontSize = 18.sp)
+            Text(text = "Location: ${location.locationName ?: "Unknown"}")
+            Text(text = "Address: ${location.locationAddress ?: "No address available"}")
+            Spacer(modifier = Modifier.height(12.dp))
+
+            Text(text = "Estimated Travel Time", fontWeight = FontWeight.Bold)
+            Text(text = "$distance • $duration")
+        } else {
+            Text(text = "No planned destination", color = Color.Gray)
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
 
         Column(modifier = Modifier.fillMaxWidth()) {
             ContactButton()
             Spacer(modifier = Modifier.width(12.dp))
-            DirectionsButton(
-                distance = distance,
-                duration = duration,
-                userLat = userLat,
-                userLon = userLon,
-                destLat = location.locationLatitude,
-                destLon = location.locationLongitude,
-                apiKey = apiKey,
-                onRouteFetched = onRouteFetched
-            )
+            if (location != null) {
+                DirectionsButton(
+                    viewModel = viewModel,
+                    userLat = userLat,
+                    userLon = userLon,
+                    friendLat = user.userLatitude!!,
+                    friendLon = user.userLongitude!!,
+                    apiKey = apiKey,
+                    onRoutePlotted = onRoutePlotted
+                )
+            }
         }
-
-        Spacer(modifier = Modifier.height(12.dp))
-
-        NotificationsSection()
     }
 }
 
@@ -105,49 +113,35 @@ fun ContactButton() {
     }
 }
 
-@OptIn(UnstableApi::class)
+@androidx.annotation.OptIn(UnstableApi::class)
 @Composable
 fun DirectionsButton(
-    distance: String,
-    duration: String,
+    viewModel: MapViewModel,
     userLat: Double,
     userLon: Double,
-    destLat: Double,
-    destLon: Double,
+    friendLat: Double,
+    friendLon: Double,
     apiKey: String,
-    onRouteFetched: (List<LatLng>) -> Unit
+    onRoutePlotted: (List<LatLng>) -> Unit // Sends route back to MapScreen
 ) {
     val coroutineScope = rememberCoroutineScope()
 
     Button(onClick = {
-        Log.d("DirectionsButton", "Button Clicked: Fetching Route...") // ✅ LOG CLICK
+        Log.d("DirectionsButton", "Fetching Route to Friend...")
         coroutineScope.launch {
-            Log.d("DirectionsButton", "Fetching route from API...") // ✅ LOG START
-            fetchRoutePolyline(
-                originLat = userLat,
-                originLng = userLon,
-                destLat = destLat,
-                destLng = destLon,
+            viewModel.fetchRoute(
+                start = LatLng(userLat, userLon),
+                end = LatLng(friendLat, friendLon),
                 apiKey = apiKey,
-                onRouteFetched = {
-                    Log.d("DirectionsButton", "Route fetched: ${it.size} points") // ✅ LOG RESULT
-                    onRouteFetched(it)
+                onResult = { routePoints ->
+                    Log.d("DirectionsButton", "Route fetched: ${routePoints.size} points")
+                    onRoutePlotted(routePoints) // Send data back to MapScreen
                 }
             )
         }
     }) {
         Icon(Icons.Default.Create, contentDescription = "Directions")
         Spacer(modifier = Modifier.width(8.dp))
-        Text("$distance • $duration")
-    }
-}
-
-@Composable
-fun NotificationsSection() {
-    Column {
-        Text("Notifications", fontWeight = FontWeight.Bold)
-        TextButton(onClick = { /* Add notifications */ }) {
-            Text("Add")
-        }
+        Text("Get Directions")
     }
 }

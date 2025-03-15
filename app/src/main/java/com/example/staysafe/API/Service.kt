@@ -11,39 +11,44 @@ import retrofit2.http.GET
 import retrofit2.http.Path
 
 interface Service {
-    //Activities
-    @GET("http://softwarehub.uk/unibase/staysafe/v1/api/activities")
+    // Activities
+    @GET("https://softwarehub.uk/unibase/staysafe/v1/api/activities")
     fun getAllActivities(): Call<List<Activity>>
-    @GET("http://softwarehub.uk/unibase/staysafe/v1/api/activities/{activityID}")
+
+    @GET("https://softwarehub.uk/unibase/staysafe/v1/api/activities/{activityID}")
     fun getActivity(@Path("activityID") id:Long): Call<List<Activity>>
-    @GET("http://softwarehub.uk/unibase/staysafe/v1/api/activities/users/{userID}")
+
+    @GET("https://softwarehub.uk/unibase/staysafe/v1/api/activities/users/{userID}")
     fun getActivityUser(@Path("userID") id:Long): Call<List<Activity>>
 
-    //Locations
-    @GET("http://softwarehub.uk/unibase/staysafe/v1/api/locations")
+    // Locations
+    @GET("https://softwarehub.uk/unibase/staysafe/v1/api/locations")
     fun getAllLocations():Call<List<Location>>
-    @GET("http://softwarehub.uk/unibase/staysafe/v1/api/locations/{locationID}")
+
+    @GET("https://softwarehub.uk/unibase/staysafe/v1/api/locations/{locationID}")
     fun getLocation(@Path("locationID") id:Long): Call<List<Location>>
 
-    //Positions
-    @GET("http://softwarehub.uk/unibase/staysafe/v1/api/positions")
+    // Positions
+    @GET("https://softwarehub.uk/unibase/staysafe/v1/api/positions")
     fun getAllPositions(): Call<List<Position>>
+
     @GET("https://softwarehub.uk/unibase/staysafe/v1/api/positions/{positionID}")
     fun getPositions(@Path("positionID") id:Long): Call<List<Position>>
+
     @GET("https://softwarehub.uk/unibase/staysafe/v1/api/positions/{positionActivityID}")
     fun getActivityPosition(@Path("positionActivityID") id: Long): Call<List<Position>>
 
-    //Status
-    @GET("http://softwarehub.uk/unibase/staysafe/v1/api/status")
+    // Status
+    @GET("https://softwarehub.uk/unibase/staysafe/v1/api/status")
     fun getStatus(): Call<List<Status>>
 
-    //Users
-    @GET("users")
+    // Users
+    @GET("https://softwarehub.uk/unibase/staysafe/v1/api/users")
     fun getUsers(): Call<List<User>>
-    @GET("users/{userID}")
+
+    @GET("https://softwarehub.uk/unibase/staysafe/v1/api/users/{userID}")
     fun getUser(@Path("userID") id: Long): Call<List<User>>
-    @GET("users/contacts/{userID}")
+
+    @GET("https://softwarehub.uk/unibase/staysafe/v1/api/users/contacts/{userID}")
     fun getUserContact(@Path("userID") id: Long): Call<List<User>>
-
-
 }

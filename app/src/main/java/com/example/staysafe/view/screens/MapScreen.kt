@@ -162,6 +162,7 @@ fun MapScreen(navController: NavController, viewModel: MapViewModel) {
                     sheetState = sheetState
                 ) {
                     if (selectedUser == null) {
+                        Log.d("MapScreen", "Showing UserListSheet") // ✅ LOG
                         UserListSheet(
                             viewModel = viewModel,
                             onUserSelected = { user ->
@@ -177,20 +178,29 @@ fun MapScreen(navController: NavController, viewModel: MapViewModel) {
                             }
                         )
                     } else {
-                        val locationList by viewModel.fetchLocationById(selectedUser!!.userID).collectAsState(initial = emptyList())
-                        val location = locationList.firstOrNull()
+                        Log.d("MapScreen", "Showing UserDetailsSheet") // ✅ LOG
+                        val location by viewModel.fetchLocationById(selectedUser!!.userID).collectAsState(initial = null)
 
-                        Log.d("API Key", "API KEY: ${BuildConfig.MAP_API_GOOGLE}")
+                        Log.d("MapScreen", "Location found: $location for User: $selectedUser") // ✅ LOG
+                        UserDetailsSheet(
+                            viewModel = viewModel,
+                            user = selectedUser!!,
+                            location = location,
+                            userLat = currentDeviceLat,
+                            userLon = currentDeviceLon,
+                            apiKey = BuildConfig.MAP_API_GOOGLE,
+                            onRoutePlotted = { newRoute ->
+                                routePoints = newRoute
+                            },
+                            onClose = { selectedUser = null }
+                        )
 
-                        if (location != null) {
-                            UserDetailsSheet(
-                                user = selectedUser!!,
-                                location = location,
-                                userLat = currentDeviceLat,
-                                userLon = currentDeviceLon,
-                                apiKey = BuildConfig.MAP_API_GOOGLE,
-                                onRouteFetched = { routePoints = it },
-                                onClose = { selectedUser = null }
+                        // Draw polyline only if a route exists
+                        if (routePoints.isNotEmpty()) {
+                            Polyline(
+                                points = routePoints,
+                                color = Color(255, 165, 0), // Orange
+                                width = 8f
                             )
                         }
                     }
