@@ -60,27 +60,30 @@ fun UserDetailsSheet(
         }
     }
 
-    Column(modifier = Modifier.fillMaxWidth().padding(16.dp)) {
+    Column(modifier = Modifier
+        .fillMaxWidth()
+        .padding(16.dp)
+    ) {
         Row(horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier.fillMaxWidth()) {
-            Text(user.userFirstname, fontSize = 22.sp, fontWeight = FontWeight.Bold)
+            Text(user.userFirstname, fontSize = 22.sp, fontWeight = FontWeight.Bold, color = Color.White)
             IconButton(onClick = onClose) {
-                Icon(Icons.Default.Close, contentDescription = "Close")
+                Icon(Icons.Default.Close, contentDescription = "Close", tint = Color.White)
             }
         }
 
-        Text(text = "User Information", fontWeight = FontWeight.Bold, fontSize = 18.sp)
-        Text(text = "Username: ${user.userUsername}")
-        Text(text = "Phone: ${user.userPhone}")
+        Text(text = "User Information", fontWeight = FontWeight.Bold, fontSize = 18.sp, color = Color.White)
+        Text(text = "Username: ${user.userUsername}", color = Color.White)
+        Text(text = "Phone: ${user.userPhone}", color = Color.White)
         Spacer(modifier = Modifier.height(12.dp))
 
         if (location != null) {
-            Text(text = "Destination", fontWeight = FontWeight.Bold, fontSize = 18.sp)
-            Text(text = "Location: ${location.locationName ?: "Unknown"}")
-            Text(text = "Address: ${location.locationAddress ?: "No address available"}")
+            Text(text = "Destination", fontWeight = FontWeight.Bold, fontSize = 18.sp, color = Color.White)
+            Text(text = "Location: ${location.locationName ?: "Unknown"}", color = Color.White)
+            Text(text = "Address: ${location.locationAddress ?: "No address available"}", color = Color.White)
             Spacer(modifier = Modifier.height(12.dp))
 
-            Text(text = "Estimated Travel Time", fontWeight = FontWeight.Bold)
-            Text(text = "$distance • $duration")
+            Text(text = "Estimated Travel Time", fontWeight = FontWeight.Bold, color = Color.White)
+            Text(text = "$distance • $duration", color = Color.White)
         } else {
             Text(text = "No planned destination", color = Color.Gray)
         }
@@ -90,17 +93,15 @@ fun UserDetailsSheet(
         Column(modifier = Modifier.fillMaxWidth()) {
             ContactButton()
             Spacer(modifier = Modifier.width(12.dp))
-            if (location != null) {
-                DirectionsButton(
-                    viewModel = viewModel,
-                    userLat = userLat,
-                    userLon = userLon,
-                    friendLat = user.userLatitude!!,
-                    friendLon = user.userLongitude!!,
-                    apiKey = apiKey,
-                    onRoutePlotted = onRoutePlotted
-                )
-            }
+            DirectionsButton(
+                viewModel = viewModel,
+                userLat = userLat,
+                userLon = userLon,
+                friendLat = user.userLatitude!!,
+                friendLon = user.userLongitude!!,
+                apiKey = apiKey,
+                onRoutePlotted = onRoutePlotted
+            )
         }
     }
 }
@@ -136,7 +137,7 @@ fun DirectionsButton(
                 apiKey = apiKey,
                 onResult = { routePoints ->
                     Log.d("DirectionsButton", "Route fetched: ${routePoints.size} points")
-                    onRoutePlotted(routePoints) // Send data back to MapScreen
+                    onRoutePlotted(routePoints)
                 }
             )
         }

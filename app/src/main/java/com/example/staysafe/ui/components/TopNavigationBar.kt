@@ -27,7 +27,7 @@ fun TopNavigationBar() {
             }
         },
         colors = TopAppBarDefaults.topAppBarColors(
-            containerColor = Color.Black.copy(alpha = 0.5f),
+            containerColor = Color.Black,
             titleContentColor = Color.White
         )
     )

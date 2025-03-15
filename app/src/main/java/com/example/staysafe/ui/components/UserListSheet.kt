@@ -12,6 +12,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -40,10 +41,10 @@ fun UserListSheet(
             .padding(16.dp)
     ) {
         Column {
-            Text("Nearby Users", fontSize = 20.sp, fontWeight = FontWeight.Bold)
+            Text("Nearby Users", fontSize = 20.sp, fontWeight = FontWeight.Bold, color = Color.White)
 
             if (users.isEmpty()) {
-                Text("No users found")  // Debugging: Display when user list is empty
+                Text("No users found", color = Color.White)  // Debugging: Display when user list is empty
             } else {
                 LazyColumn(
                     modifier = Modifier.fillMaxSize()
@@ -60,11 +61,12 @@ fun UserListSheet(
 @Composable
 fun UserListItem(user: User, onClick: () -> Unit) {
     Row(modifier = Modifier.fillMaxWidth().clickable { onClick() }.padding(12.dp)) {
-        Icon(Icons.Default.Person, contentDescription = null)
+        // White icon
+        Icon(Icons.Default.Person, contentDescription = null, tint = Color.White)
         Spacer(modifier = Modifier.width(8.dp))
         Column {
-            Text(user.userFirstname, fontWeight = FontWeight.Bold)
-            Text("Tap to see location")
+            Text(user.userFirstname, fontWeight = FontWeight.Bold, color = Color.White)
+            Text("Tap to see location", color = Color.White)
         }
     }
 }

@@ -10,15 +10,15 @@ import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
-import androidx.navigation.NavController
+// import androidx.navigation.NavController
 
 @Composable
 fun BottomNavigationBar(
-    navController: NavController,
+//    navController: NavController,
     onPeopleClicked: () -> Unit
     ) {
     NavigationBar(
-        containerColor = Color.Black.copy(alpha = 0.5f),
+        containerColor = Color.Black,
     ) {
         NavigationBarItem(
             icon = { Icon(Icons.Outlined.Face, contentDescription = "People", tint = Color.White) },

@@ -92,7 +92,7 @@ fun MapScreen(navController: NavController, viewModel: MapViewModel) {
         topBar = { TopNavigationBar() },
         bottomBar = {
             BottomNavigationBar(
-                navController,
+//                navController,
                 onPeopleClicked = {
                     selectedUser = null
                     showSheet = true
@@ -159,7 +159,8 @@ fun MapScreen(navController: NavController, viewModel: MapViewModel) {
             if (showSheet) {
                 ModalBottomSheet(
                     onDismissRequest = { showSheet = false },
-                    sheetState = sheetState
+                    sheetState = sheetState,
+                    containerColor = Color.Black
                 ) {
                     if (selectedUser == null) {
                         Log.d("MapScreen", "Showing UserListSheet") // ✅ LOG
