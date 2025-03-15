@@ -42,6 +42,7 @@ fun UserDetailsSheet(
     LaunchedEffect(userLat, userLon, location, apiKey) {
         if (location != null) {
             val result = viewModel.fetchDistanceAndDuration(
+                user = user,
                 originLat = userLat,
                 originLng = userLon,
                 destLat = location.locationLatitude,
