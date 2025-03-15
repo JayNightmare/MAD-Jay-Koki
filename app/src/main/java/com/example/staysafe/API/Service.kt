@@ -1,12 +1,17 @@
 package com.example.staysafe.API
 
 import com.example.staysafe.model.data.Activity
+import com.example.staysafe.model.data.Contact
 import com.example.staysafe.model.data.Location
 import com.example.staysafe.model.data.Position
 import com.example.staysafe.model.data.Status
 import com.example.staysafe.model.data.User
 import retrofit2.*
+import retrofit2.http.Body
+import retrofit2.http.DELETE
 import retrofit2.http.GET
+import retrofit2.http.POST
+import retrofit2.http.PUT
 import retrofit2.http.Path
 
 interface Service {
@@ -50,4 +55,21 @@ interface Service {
 
     @GET("https://softwarehub.uk/unibase/staysafe/v1/api/users/contacts/{userID}")
     fun getUserContact(@Path("userID") id: Long): Call<List<User>>
+
+    //Contact (Emergency contact)
+    @POST("https://softwarehub.uk/unibase/staysafe/v1/api/contacts")
+    fun addContact(@Body contact: Contact): Call<List<Contact>>
+    @DELETE("https://softwarehub.uk/unibase/staysafe/v1/api/contacts/{contactID}")
+    fun deleteContact(@Path("contactID") id: Long): Call<List<Unit>>
+
+
+    //Insert user
+    @POST("https://softwarehub.uk/unibase/staysafe/v1/api/users")
+    fun addUsers(@Body user: User): Call<List<User>>
+    //Update user
+    @PUT("https://softwarehub.uk/unibase/staysafe/v1/api/users/{userID}")
+    fun updateUser(@Path("userID") id: Long ): Call<List<User>>
+    //Delete user
+    @DELETE("https://softwarehub.uk/unibase/staysafe/v1/api/users/{userID}")
+    fun deleteUser(@Path("userID") id: Long): Call<Unit>
 }
