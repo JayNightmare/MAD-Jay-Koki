@@ -98,14 +98,6 @@ dependencies {
     // Navigation
     implementation(libs.androidx.navigation.compose)
     implementation(libs.play.services.location)
-    
-    // Testing
-    testImplementation(libs.junit)
-    androidTestImplementation(libs.androidx.junit)
-    androidTestImplementation(libs.androidx.espresso.core)
-    androidTestImplementation(libs.androidx.ui.test.junit4)
-    debugImplementation(libs.androidx.ui.tooling)
-    debugImplementation(libs.androidx.ui.test.manifest)
 
     // Google API Maps
     implementation(libs.play.services.maps)
@@ -124,8 +116,13 @@ dependencies {
     // API request
     implementation(libs.volley)
 
+    // Coil
+    implementation(libs.coil)
+    implementation(libs.coil.compose)
+
     // Communication with API and monitor log
     implementation(libs.logging.interceptor)
+    implementation(libs.okhttp)
 
     // Permissions
     implementation(libs.accompanist.permissions)

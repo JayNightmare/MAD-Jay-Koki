@@ -21,6 +21,8 @@ import androidx.media3.common.util.Log
 import androidx.media3.common.util.UnstableApi
 import androidx.navigation.NavController
 import com.example.staysafe.BuildConfig
+import com.example.staysafe.R
+import com.example.staysafe.map.CustomMarker
 import com.example.staysafe.model.data.User
 import com.example.staysafe.ui.components.BottomNavigationBar
 import com.example.staysafe.ui.components.TopNavigationBar
@@ -31,6 +33,7 @@ import com.google.android.gms.location.LocationServices
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
+import com.google.android.gms.maps.model.MapStyleOptions
 import com.google.maps.android.compose.*
 
 import kotlinx.coroutines.launch
@@ -54,6 +57,8 @@ fun MapScreen(navController: NavController, viewModel: MapViewModel) {
     val coroutineScope = rememberCoroutineScope()
 
     var routePoints by remember { mutableStateOf<List<LatLng>>(emptyList()) }
+
+    val nightMapStyle = remember { context.resources.openRawResource(R.raw.map_style).bufferedReader().use { it.readText() } }
 
     val permissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestPermission()
@@ -105,28 +110,44 @@ fun MapScreen(navController: NavController, viewModel: MapViewModel) {
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(paddingValues),
-                cameraPositionState = cameraPositionState
+                cameraPositionState = cameraPositionState,
+                properties = MapProperties(mapStyleOptions = MapStyleOptions(nightMapStyle), mapType = MapType.NORMAL),
             ) {
                 // Show user markers
                 users.forEach { user ->
                     if (user.userLatitude != null && user.userLongitude != null) {
-                        val markerState = rememberMarkerState(
-                            position = LatLng(user.userLatitude, user.userLongitude)
-                        )
+//                        val markerState = rememberMarkerState(
+//                            position = LatLng(user.userLatitude, user.userLongitude)
+//                        )
+//
+//                        Marker(
+//                            state = markerState,
+//                            title = "${user.userFirstname} ${user.userLastname}",
+//                            onClick = {
+//                                selectedUser = user
+//                                showSheet = true
+//                                coroutineScope.launch {
+//                                    cameraPositionState.moveToUserLocation(
+//                                        user.userLatitude,
+//                                        user.userLongitude
+//                                    )
+//                                }
+//                                true
+//                            }
+//                        )
 
-                        Marker(
-                            state = markerState,
-                            title = "${user.userFirstname} ${user.userLastname}",
+                        val latLng = LatLng(user.userLatitude, user.userLongitude)
+
+                        val imageUrl = user.userImageURL?.takeIf { it.isNotEmpty() } ?: R.drawable.avataaars
+                        Log.d("MapScreen", "User image URL: $imageUrl")
+
+                        CustomMarker(
+                            imageUrl = imageUrl.toString(),
+                            fullName = "${user.userFirstname} ${user.userLastname}",
+                            location = latLng,
                             onClick = {
                                 selectedUser = user
                                 showSheet = true
-                                coroutineScope.launch {
-                                    cameraPositionState.moveToUserLocation(
-                                        user.userLatitude,
-                                        user.userLongitude
-                                    )
-                                }
-                                true
                             }
                         )
                     }

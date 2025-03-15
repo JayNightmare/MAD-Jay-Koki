@@ -5,7 +5,6 @@ import com.example.staysafe.model.data.Location
 import com.example.staysafe.model.data.Position
 import com.example.staysafe.model.data.Status
 import com.example.staysafe.model.data.User
-import kotlinx.coroutines.flow.Flow
 import retrofit2.*
 import retrofit2.http.GET
 import retrofit2.http.Path
