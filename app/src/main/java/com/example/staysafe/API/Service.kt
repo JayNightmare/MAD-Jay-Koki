@@ -1,5 +1,6 @@
 package com.example.staysafe.API
 
+import androidx.room.Delete
 import com.example.staysafe.model.data.Activity
 import com.example.staysafe.model.data.Contact
 import com.example.staysafe.model.data.Location
@@ -25,12 +26,31 @@ interface Service {
     @GET("https://softwarehub.uk/unibase/staysafe/v1/api/activities/users/{userID}")
     fun getActivityUser(@Path("userID") id:Long): Call<List<Activity>>
 
+    @POST("https://softwarehub.uk/unibase/staysafe/v1/api/activities")
+    fun addActivities(@Body activity: Activity): Call<List<Activity>>
+
+    @PUT("https://softwarehub.uk/unibase/staysafe/v1/api/activities/{activityID}")
+    fun updateActivity(@Path("activityID") id: Long): Call<List<Activity>>
+
+    @DELETE("https://softwarehub.uk/unibase/staysafe/v1/api/activities/{activityID}")
+    fun deleteActivity(@Path("activityID") id: Long): Call<Unit>
+
     // Locations
     @GET("https://softwarehub.uk/unibase/staysafe/v1/api/locations")
     fun getAllLocations():Call<List<Location>>
 
     @GET("https://softwarehub.uk/unibase/staysafe/v1/api/locations/{locationID}")
     fun getLocation(@Path("locationID") id:Long): Call<List<Location>>
+
+    //Just in case (If you do not want just delete it)
+    @POST("https://softwarehub.uk/unibase/staysafe/v1/api/locations")
+    fun addLocation(@Body location: Location): Call<List<Location>>
+
+    @PUT("https://softwarehub.uk/unibase/staysafe/v1/api/locations/{locationID}")
+    fun updateLocation(@Path("locationID") id: Long) :Call<List<Location>>
+
+    @DELETE("https://softwarehub.uk/unibase/staysafe/v1/api/locations/{locationID}")
+    fun deleteLocation(@Path("locationID") id: Long): Call<Unit>
 
     // Positions
     @GET("https://softwarehub.uk/unibase/staysafe/v1/api/positions")
@@ -41,6 +61,16 @@ interface Service {
 
     @GET("https://softwarehub.uk/unibase/staysafe/v1/api/positions/{positionActivityID}")
     fun getActivityPosition(@Path("positionActivityID") id: Long): Call<List<Position>>
+
+    //Just in case (If you do not want just delete it)
+    @POST("https://softwarehub.uk/unibase/staysafe/v1/api/positions")
+    fun addPositions(@Body position: Position): Call<List<Position>>
+
+    @PUT("https://softwarehub.uk/unibase/staysafe/v1/api/positions/{positionID}")
+    fun updatePosition(@Path("positionID") id: Long) :Call<List<Position>>
+
+    @DELETE("https://softwarehub.uk/unibase/staysafe/v1/api/positions/{positionID}")
+    fun deletePosition(@Path("positionID") id: Long): Call<Unit>
 
     // Status
     @GET("https://softwarehub.uk/unibase/staysafe/v1/api/status")
@@ -59,9 +89,9 @@ interface Service {
     //Contact (Emergency contact)
     @POST("https://softwarehub.uk/unibase/staysafe/v1/api/contacts")
     fun addContact(@Body contact: Contact): Call<List<Contact>>
+
     @DELETE("https://softwarehub.uk/unibase/staysafe/v1/api/contacts/{contactID}")
     fun deleteContact(@Path("contactID") id: Long): Call<List<Unit>>
-
 
     //Insert user
     @POST("https://softwarehub.uk/unibase/staysafe/v1/api/users")
