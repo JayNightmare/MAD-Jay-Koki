@@ -56,8 +56,6 @@ fun MapScreen(navController: NavController, viewModel: MapViewModel) {
     }
     val coroutineScope = rememberCoroutineScope()
 
-    var routePoints by remember { mutableStateOf<List<LatLng>>(emptyList()) }
-
     val nightMapStyle = remember { context.resources.openRawResource(R.raw.map_style).bufferedReader().use { it.readText() } }
 
     val permissionLauncher = rememberLauncherForActivityResult(
@@ -111,69 +109,37 @@ fun MapScreen(navController: NavController, viewModel: MapViewModel) {
                     .fillMaxSize()
                     .padding(paddingValues),
                 cameraPositionState = cameraPositionState,
-                properties = MapProperties(mapStyleOptions = MapStyleOptions(nightMapStyle), mapType = MapType.NORMAL),
+                properties = MapProperties(
+                    mapStyleOptions = MapStyleOptions(nightMapStyle),
+                    mapType = MapType.NORMAL,
+                    isMyLocationEnabled = true
+                ),
             ) {
                 // Show user markers
                 users.forEach { user ->
                     if (user.userLatitude != null && user.userLongitude != null) {
-//                        val markerState = rememberMarkerState(
-//                            position = LatLng(user.userLatitude, user.userLongitude)
-//                        )
-//
-//                        Marker(
-//                            state = markerState,
-//                            title = "${user.userFirstname} ${user.userLastname}",
-//                            onClick = {
-//                                selectedUser = user
-//                                showSheet = true
-//                                coroutineScope.launch {
-//                                    cameraPositionState.moveToUserLocation(
-//                                        user.userLatitude,
-//                                        user.userLongitude
-//                                    )
-//                                }
-//                                true
-//                            }
-//                        )
-
                         val latLng = LatLng(user.userLatitude, user.userLongitude)
 
-                        val imageUrl = user.userImageURL?.takeIf { it.isNotEmpty() } ?: R.drawable.avataaars
+                        val imageUrl = user.userImageURL
                         Log.d("MapScreen", "User image URL: $imageUrl")
 
                         CustomMarker(
-                            imageUrl = imageUrl.toString(),
+                            imageUrl = imageUrl,
                             fullName = "${user.userFirstname} ${user.userLastname}",
                             location = latLng,
                             onClick = {
                                 selectedUser = user
                                 showSheet = true
-                            }
+                                coroutineScope.launch {
+                                    cameraPositionState.moveToUserLocation(
+                                        user.userLatitude,
+                                        user.userLongitude
+                                    )
+                                }
+                            },
+                            size = 50
                         )
                     }
-                }
-
-                // Show current location marker
-                if (currentDeviceLat != 0.0 && currentDeviceLon != 0.0) {
-                    Log.d("MapScreen", "Current location: $currentDeviceLat, $currentDeviceLon")
-                    Marker(
-                        state = rememberMarkerState(
-                            position = LatLng(currentDeviceLat, currentDeviceLon)
-                        ),
-                        title = "You",
-                        snippet = "Current Location"
-                    )
-                } else {
-                    Log.d("MapScreen", "Current location not available")
-                }
-
-                if (routePoints.isNotEmpty()) {
-                    Log.d("MapScreen", "Drawing polyline with ${routePoints.size} points") // ✅ LOG POLYLINE
-                    Polyline(
-                        points = routePoints,
-                        color = Color.Blue,
-                        width = 10f
-                    )
                 }
             }
 
@@ -184,7 +150,7 @@ fun MapScreen(navController: NavController, viewModel: MapViewModel) {
                     containerColor = Color.Black
                 ) {
                     if (selectedUser == null) {
-                        Log.d("MapScreen", "Showing UserListSheet") // ✅ LOG
+                        Log.d("MapScreen", "Showing UserListSheet")
                         UserListSheet(
                             viewModel = viewModel,
                             onUserSelected = { user ->
@@ -200,10 +166,10 @@ fun MapScreen(navController: NavController, viewModel: MapViewModel) {
                             }
                         )
                     } else {
-                        Log.d("MapScreen", "Showing UserDetailsSheet") // ✅ LOG
+                        Log.d("MapScreen", "Showing UserDetailsSheet")
                         val location by viewModel.fetchLocationById(selectedUser!!.userID).collectAsState(initial = null)
 
-                        Log.d("MapScreen", "Location found: $location for User: $selectedUser") // ✅ LOG
+                        Log.d("MapScreen", "Location found: $location for User: $selectedUser")
                         UserDetailsSheet(
                             viewModel = viewModel,
                             user = selectedUser!!,
@@ -211,20 +177,9 @@ fun MapScreen(navController: NavController, viewModel: MapViewModel) {
                             userLat = currentDeviceLat,
                             userLon = currentDeviceLon,
                             apiKey = BuildConfig.MAP_API_GOOGLE,
-                            onRoutePlotted = { newRoute ->
-                                routePoints = newRoute
-                            },
-                            onClose = { selectedUser = null }
+                            onClose = { selectedUser = null },
+                            mapStyle = nightMapStyle
                         )
-
-                        // Draw polyline only if a route exists
-                        if (routePoints.isNotEmpty()) {
-                            Polyline(
-                                points = routePoints,
-                                color = Color(255, 165, 0), // Orange
-                                width = 8f
-                            )
-                        }
                     }
                 }
             }
@@ -244,6 +199,6 @@ fun getCurrentLocation(context: Context, onLocationReceived: (Double, Double) ->
 
 suspend fun CameraPositionState.moveToUserLocation(latitude: Double, longitude: Double) {
     animate(
-        CameraUpdateFactory.newLatLngZoom(LatLng(latitude, longitude), 15f)
+        CameraUpdateFactory.newLatLngZoom(LatLng(latitude, longitude), 16f)
     )
 }

@@ -1,8 +1,11 @@
 package com.example.staysafe.ui.components
 
 import android.os.Build
+import androidx.annotation.OptIn
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Call
 import androidx.compose.material.icons.filled.Close
@@ -16,12 +19,19 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.media3.common.util.Log
 import androidx.media3.common.util.UnstableApi
+import com.example.staysafe.map.CustomMarker
 import com.example.staysafe.model.data.Location
 import com.example.staysafe.model.data.User
 import com.example.staysafe.viewModel.MapViewModel
+import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.model.LatLng
+import com.google.android.gms.maps.model.LatLngBounds
+import com.google.android.gms.maps.model.MapStyleOptions
+import com.google.maps.android.compose.*
+
 import kotlinx.coroutines.launch
 
+@OptIn(UnstableApi::class)
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun UserDetailsSheet(
@@ -31,20 +41,24 @@ fun UserDetailsSheet(
     userLat: Double,
     userLon: Double,
     apiKey: String,
-    onRoutePlotted: (List<LatLng>) -> Unit,
-    onClose: () -> Unit
+    onClose: () -> Unit,
+    mapStyle: String
 ) {
     var distance by remember { mutableStateOf("Calculating...") }
     var duration by remember { mutableStateOf("Calculating...") }
+    var routePoints by remember { mutableStateOf<List<LatLng>>(emptyList()) }
 
-//    val coroutineScope = rememberCoroutineScope()
+    val cameraPositionState = rememberCameraPositionState()
+    val coroutineScope = rememberCoroutineScope()
 
-    LaunchedEffect(userLat, userLon, location, apiKey) {
+    val friendLatLng = LatLng(user.userLatitude!!, user.userLongitude!!)
+
+    LaunchedEffect(user.userLatitude, user.userLongitude, location, apiKey) {
         if (location != null) {
             val result = viewModel.fetchDistanceAndDuration(
                 user = user,
-                originLat = userLat,
-                originLng = userLon,
+                originLat = user.userLatitude,
+                originLng = user.userLongitude,
                 destLat = location.locationLatitude,
                 destLng = location.locationLongitude,
                 apiKey = apiKey
@@ -57,50 +71,122 @@ fun UserDetailsSheet(
                 distance = "Unavailable"
                 duration = "Unavailable"
             }
+
+            viewModel.fetchRoute(
+                start = friendLatLng,
+                end = LatLng(location.locationLatitude, location.locationLongitude),
+                apiKey = apiKey
+            ) { newRoute ->
+                routePoints = newRoute
+                if (newRoute.isNotEmpty()) {
+                    coroutineScope.launch {
+                        cameraPositionState.move(
+                            CameraUpdateFactory.newLatLngBounds(
+                                LatLngBounds.builder().apply {
+                                    newRoute.forEach { include(it) }
+                                }.build(),
+                                100 // Padding for visibility
+                            )
+                        )
+                    }
+                }
+            }
         }
     }
 
-    Column(modifier = Modifier
-        .fillMaxWidth()
-        .padding(16.dp)
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(16.dp)
+            .heightIn(max = 600.dp)
+            .verticalScroll(rememberScrollState())
     ) {
+        // Header
         Row(horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier.fillMaxWidth()) {
-            Text(user.userFirstname, fontSize = 22.sp, fontWeight = FontWeight.Bold, color = Color.White)
+            Text("${user.userFirstname} ${user.userLastname}", fontSize = 22.sp, fontWeight = FontWeight.Bold, color = Color.White)
             IconButton(onClick = onClose) {
                 Icon(Icons.Default.Close, contentDescription = "Close", tint = Color.White)
             }
         }
 
-        Text(text = "User Information", fontWeight = FontWeight.Bold, fontSize = 18.sp, color = Color.White)
-        Text(text = "Username: ${user.userUsername}", color = Color.White)
-        Text(text = "Phone: ${user.userPhone}", color = Color.White)
+        Text("User Information:", fontSize = 16.sp, color = Color.White)
+        Text("Username: ${user.userUsername}", color = Color.White)
+        Text("Phone: ${user.userPhone}", color = Color.White)
+
+        Spacer(modifier = Modifier.height(12.dp))
+        HorizontalDivider(color = Color.White, thickness = 1.dp)
         Spacer(modifier = Modifier.height(12.dp))
 
         if (location != null) {
-            Text(text = "Destination", fontWeight = FontWeight.Bold, fontSize = 18.sp, color = Color.White)
-            Text(text = "Location: ${location.locationName ?: "Unknown"}", color = Color.White)
-            Text(text = "Address: ${location.locationAddress ?: "No address available"}", color = Color.White)
+            Text("Destination:", fontSize = 16.sp, color = Color.White)
+            Text("Location: ${location.locationName ?: "Unknown"}", color = Color.White)
+            Text("Address: ${location.locationAddress ?: "No address available"}", color = Color.White)
             Spacer(modifier = Modifier.height(12.dp))
 
-            Text(text = "Estimated Travel Time", fontWeight = FontWeight.Bold, color = Color.White)
-            Text(text = "$distance • $duration", color = Color.White)
+            Text("Estimated Travel Time", fontSize = 16.sp,  color = Color.White)
+            Text("$distance • $duration", color = Color.White)
         } else {
-            Text(text = "No planned destination", color = Color.Gray)
+            Text("No planned destination", color = Color.Gray)
         }
 
         Spacer(modifier = Modifier.height(16.dp))
+        HorizontalDivider(color = Color.White, thickness = 1.dp)
+        Spacer(modifier = Modifier.height(16.dp))
 
-        Column(modifier = Modifier.fillMaxWidth()) {
+        if (location != null) {
+            Text("Route Preview", fontSize = 16.sp, color = Color.White)
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            Text("Use 2 fingers to interact with the map", color = Color.Gray)
+
+            GoogleMap(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(350.dp),
+                cameraPositionState = cameraPositionState,
+                properties = MapProperties(
+                    mapStyleOptions = MapStyleOptions(mapStyle)
+                )
+            ) {
+                // Draw the route in Orange
+                if (routePoints.isNotEmpty()) {
+                    Polyline(
+                        points = routePoints,
+                        color = Color(255, 165, 0),
+                        width = 8f
+                    )
+                }
+
+                CustomMarker(
+                    imageUrl = user.userImageURL,
+                    fullName = "${user.userFirstname} ${user.userLastname}",
+                    location = friendLatLng,
+                    onClick = { Log.d("CustomMarker", "Clicked on ${user.userFirstname}'s marker") },
+                    size = 25
+                )
+
+//                if (location != null) {
+//                    Marker(
+//                        state = rememberMarkerState(position = LatLng(location.locationLatitude, location.locationLongitude)),
+//                        title = "Destination: ${location.locationName}"
+//                    )
+//                }
+            }
+
+            Spacer(modifier = Modifier.height(12.dp))
+        }
+
+        // Contact and Directions Buttons
+        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
             ContactButton()
-            Spacer(modifier = Modifier.width(12.dp))
             DirectionsButton(
                 viewModel = viewModel,
                 userLat = userLat,
                 userLon = userLon,
-                friendLat = user.userLatitude!!,
-                friendLon = user.userLongitude!!,
-                apiKey = apiKey,
-                onRoutePlotted = onRoutePlotted
+                friendLat = user.userLatitude,
+                friendLon = user.userLongitude,
+                apiKey = apiKey
             )
         }
     }
@@ -115,7 +201,7 @@ fun ContactButton() {
     }
 }
 
-@androidx.annotation.OptIn(UnstableApi::class)
+@OptIn(UnstableApi::class)
 @Composable
 fun DirectionsButton(
     viewModel: MapViewModel,
@@ -124,7 +210,6 @@ fun DirectionsButton(
     friendLat: Double,
     friendLon: Double,
     apiKey: String,
-    onRoutePlotted: (List<LatLng>) -> Unit // Sends route back to MapScreen
 ) {
     val coroutineScope = rememberCoroutineScope()
 
@@ -132,14 +217,12 @@ fun DirectionsButton(
         Log.d("DirectionsButton", "Fetching Route to Friend...")
         coroutineScope.launch {
             viewModel.fetchRoute(
-                start = LatLng(userLat, userLon),
-                end = LatLng(friendLat, friendLon),
-                apiKey = apiKey,
-                onResult = { routePoints ->
-                    Log.d("DirectionsButton", "Route fetched: ${routePoints.size} points")
-                    onRoutePlotted(routePoints)
-                }
-            )
+                start = LatLng(friendLat, friendLon),
+                end = LatLng(userLat, userLon),
+                apiKey = apiKey
+            ) { routePoints ->
+                Log.d("DirectionsButton", "Route fetched: ${routePoints.size} points")
+            }
         }
     }) {
         Icon(Icons.Default.Create, contentDescription = "Directions")
