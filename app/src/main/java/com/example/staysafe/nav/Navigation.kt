@@ -22,8 +22,6 @@ fun Navigation() {
     val nav = rememberNavController()
     val repository: StaySafeRepository
 
-
-
     //Debugging purposes
     // ✅ Add Logging Interceptor
     val loggingInterceptor = HttpLoggingInterceptor().apply {
@@ -70,9 +68,5 @@ fun Navigation() {
             )
         }
         // //
-        composable(Screen.PeopleScreen.route){
-//            PeopleScreen(nav)
-        }
-
     }
 }
