@@ -7,6 +7,7 @@ import androidx.navigation.compose.*
 import com.example.staysafe.API.Service
 import com.example.staysafe.view.screens.MapScreen
 import com.example.staysafe.repository.StaySafeRepository
+import com.example.staysafe.view.screens.LoginScreen
 import com.example.staysafe.viewModel.MapViewModel
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
@@ -43,8 +44,16 @@ fun Navigation() {
 
     NavHost(
         navController = nav,
-        startDestination = Screen.MapScreen.route
+        startDestination = Screen.LoginScreen.route
     ){
+        composable(Screen.LoginScreen.route) { LoginScreen(
+            navController = nav,
+            viewModel = MapViewModel(
+                repository = StaySafeRepository(
+                    service = service
+                )
+            )
+        )}
         composable(Screen.MapScreen.route) {
             MapScreen(
                 navController = nav,

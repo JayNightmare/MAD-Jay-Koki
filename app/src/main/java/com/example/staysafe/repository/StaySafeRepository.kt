@@ -13,6 +13,9 @@ import retrofit2.awaitResponse
 class StaySafeRepository(
     private val service: Service
 ) {
+    // //
+    // * Activity
+
     // Fetch Activities directly from API
     suspend fun getAllActivities(): Flow<List<Activity>> = flow {
         try {
@@ -43,6 +46,10 @@ class StaySafeRepository(
             emit(emptyList())
         }
     }
+    // //
+
+    // //
+    // * Locations
 
     // Fetch Locations directly from API
     suspend fun getAllLocations(): Flow<List<Location>> = flow {
@@ -76,6 +83,10 @@ class StaySafeRepository(
             emit(emptyList()) // Emit empty list safely inside `catch`
         }.flowOn(Dispatchers.IO) // Ensures the API call runs on background thread
     }
+    // //
+
+    // //
+    // * Positions
 
     // Fetch Positions directly from API
     suspend fun getAllPositions(): Flow<List<Position>> = flow {
@@ -97,11 +108,28 @@ class StaySafeRepository(
             emit(emptyList())
         }
     }
+    // //
+
+    // //
+    // * Status
+    suspend fun getStatus(): Flow<List<Status>> = flow {
+        try {
+            val statusList = service.getStatus().awaitResponse()
+            emit(statusList.body() ?: emptyList())
+        } catch (e: Exception) {
+            e.printStackTrace()
+            emit(emptyList())
+        }
+    }
+
+    // //
+
+    // //
+    // * Users
 
     // Fetch Users directly from API
     suspend fun getAllUsers(): Flow<List<User>> = flow {
         try {
-
             val users = service.getUsers().awaitResponse()
             println("DEBUG: API call executed, response received: $users")
             users.body()?.let {
@@ -125,4 +153,33 @@ class StaySafeRepository(
             emit(emptyList())
         }
     }
+    // //
+
+    // //
+    // * Contacts
+    suspend fun getUserContacts(userId: Long): Flow<List<Contact>> = flow {
+        try {
+            val contacts = service.getUserContact(userId).awaitResponse()
+            contacts.body()?.let { emit(it) } ?: emit(emptyList())
+        } catch (e: Exception) {
+            e.printStackTrace()
+            emit(emptyList())
+        }
+    }
+
+    suspend fun getContactsForUser(userId: Long): Flow<List<User>> = flow {
+        try {
+            val contacts = service.getUserContact(userId).awaitResponse()
+            val contactIds = contacts.body()?.map { it.contactContactID } ?: emptyList()
+
+            val allUsers = service.getUsers().awaitResponse()
+            val filteredUsers = allUsers.body()?.filter { it.userID in contactIds } ?: emptyList()
+
+            emit(filteredUsers)
+        } catch (e: Exception) {
+            e.printStackTrace()
+            emit(emptyList())
+        }
+    }
+    // //
 }

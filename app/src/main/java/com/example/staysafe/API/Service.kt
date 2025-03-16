@@ -84,7 +84,7 @@ interface Service {
     fun getUser(@Path("userID") id: Long): Call<List<User>>
 
     @GET("https://softwarehub.uk/unibase/staysafe/v1/api/users/contacts/{userID}")
-    fun getUserContact(@Path("userID") id: Long): Call<List<User>>
+    fun getUserContact(@Path("userID") id: Long): Call<List<Contact>>
 
     //Contact (Emergency contact)
     @POST("https://softwarehub.uk/unibase/staysafe/v1/api/contacts")

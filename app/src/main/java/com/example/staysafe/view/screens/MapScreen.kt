@@ -9,14 +9,20 @@ import androidx.annotation.RequiresApi
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.unit.dp
 import androidx.media3.common.util.Log
 import androidx.media3.common.util.UnstableApi
 import androidx.navigation.NavController
@@ -35,6 +41,8 @@ import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.MapStyleOptions
 import com.google.maps.android.compose.*
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 
 import kotlinx.coroutines.launch
 
@@ -44,7 +52,7 @@ import kotlinx.coroutines.launch
 @Composable
 fun MapScreen(navController: NavController, viewModel: MapViewModel) {
     var selectedUser by remember { mutableStateOf<User?>(null) }
-    val users by viewModel.users.collectAsState(emptyList())
+    val contacts by viewModel.contacts.collectAsState(emptyList())
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     var showSheet by remember { mutableStateOf(true) }
 
@@ -54,6 +62,9 @@ fun MapScreen(navController: NavController, viewModel: MapViewModel) {
     val cameraPositionState = rememberCameraPositionState {
         position = CameraPosition.fromLatLngZoom(LatLng(51.5074, -0.1278), 10f)
     }
+    var routePoints by remember { mutableStateOf<List<LatLng>>(emptyList()) }
+    var showStopNavigationDialog by remember { mutableStateOf(false) }
+
     val coroutineScope = rememberCoroutineScope()
 
     val nightMapStyle = remember { context.resources.openRawResource(R.raw.map_style).bufferedReader().use { it.readText() } }
@@ -75,12 +86,21 @@ fun MapScreen(navController: NavController, viewModel: MapViewModel) {
         }
     }
 
+    val loggedInUser = viewModel.loggedInUser.collectAsState().value
+
     // Fetch device location when screen loads
     LaunchedEffect(Unit) {
         permissionLauncher.launch(android.Manifest.permission.ACCESS_FINE_LOCATION)
         permissionLauncher.launch(android.Manifest.permission.ACCESS_COARSE_LOCATION)
         permissionLauncher.launch(android.Manifest.permission.INTERNET)
 
+        if (loggedInUser != null) {
+            viewModel.fetchUserContacts(userId = loggedInUser.userID)
+        } else {
+            Log.d("MapScreen", "No user logged in")
+        }
+
+        // Fetch current location regardless of login status
         getCurrentLocation(context) { lat, lon ->
             currentDeviceLat = lat
             currentDeviceLon = lon
@@ -90,6 +110,7 @@ fun MapScreen(navController: NavController, viewModel: MapViewModel) {
             }
         }
     }
+
 
     Scaffold(
         topBar = { TopNavigationBar() },
@@ -104,6 +125,9 @@ fun MapScreen(navController: NavController, viewModel: MapViewModel) {
         }
     ) { paddingValues ->
         Box(modifier = Modifier.fillMaxSize()) {
+            if (routePoints.isNotEmpty()) {
+                StopNavigationButton(onStopNavigation = { showStopNavigationDialog = true })
+            }
             GoogleMap(
                 modifier = Modifier
                     .fillMaxSize()
@@ -115,12 +139,11 @@ fun MapScreen(navController: NavController, viewModel: MapViewModel) {
                     isMyLocationEnabled = true
                 ),
             ) {
-                // Show user markers
-                users.forEach { user ->
+                contacts.forEach { user ->
                     if (user.userLatitude != null && user.userLongitude != null) {
                         val latLng = LatLng(user.userLatitude, user.userLongitude)
 
-                        val imageUrl = user.userImageURL
+                        val imageUrl = user.userImageURL ?: null
                         Log.d("MapScreen", "User image URL: $imageUrl")
 
                         CustomMarker(
@@ -141,6 +164,35 @@ fun MapScreen(navController: NavController, viewModel: MapViewModel) {
                         )
                     }
                 }
+
+                if (routePoints.isNotEmpty()) {
+                    Polyline(
+                        points = routePoints,
+                        color = Color(0xff049bec),
+                        width = 10f
+                    )
+                }
+            }
+
+            if (showStopNavigationDialog) {
+                AlertDialog(
+                    onDismissRequest = { showStopNavigationDialog = false },
+                    title = { Text("End Navigation") },
+                    text = { Text("Are you sure you want to end the navigation to your friend?") },
+                    confirmButton = {
+                        Button(onClick = {
+                            routePoints = listOf()
+                            showStopNavigationDialog = false
+                        }) {
+                            Text("End Navigation")
+                        }
+                    },
+                    dismissButton = {
+                        Button(onClick = { showStopNavigationDialog = false }) {
+                            Text("Cancel")
+                        }
+                    }
+                )
             }
 
             if (showSheet) {
@@ -178,7 +230,8 @@ fun MapScreen(navController: NavController, viewModel: MapViewModel) {
                             userLon = currentDeviceLon,
                             apiKey = BuildConfig.MAP_API_GOOGLE,
                             onClose = { selectedUser = null },
-                            mapStyle = nightMapStyle
+                            mapStyle = nightMapStyle,
+                            onRoutePlotted = { route -> routePoints = route }
                         )
                     }
                 }
@@ -201,4 +254,21 @@ suspend fun CameraPositionState.moveToUserLocation(latitude: Double, longitude: 
     animate(
         CameraUpdateFactory.newLatLngZoom(LatLng(latitude, longitude), 16f)
     )
+}
+
+@Composable
+fun StopNavigationButton(onStopNavigation: () -> Unit) {
+    Box(
+        modifier = Modifier
+            .padding(16.dp)
+            .fillMaxSize(),
+        contentAlignment = Alignment.BottomCenter
+    ) {
+        Button(
+            onClick = onStopNavigation,
+            colors = ButtonDefaults.buttonColors(containerColor = Color.Red)
+        ) {
+            Text("Stop Navigation", color = Color.White)
+        }
+    }
 }

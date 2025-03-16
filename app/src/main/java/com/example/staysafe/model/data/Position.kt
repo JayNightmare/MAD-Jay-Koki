@@ -1,11 +1,12 @@
 package com.example.staysafe.model.data
 
+import com.google.gson.annotations.SerializedName
 
 data class Position(
-    val positionID: Long = 0,
-    val positionActivityID: Long,
-    val positionActivityName: String,
-    val positionLatitude: Double,
-    val positionLongitude: Double,
-    val positionTimestamp: Long,
+    @SerializedName("PositionID") val positionID: Long = 0,
+    @SerializedName("PositionActivityID") val positionActivityID: Long,
+    @SerializedName("PositionLatitude") val positionLatitude: String,
+    @SerializedName("PositionLongitude") val positionLongitude: Double,
+    @SerializedName("PositionTimestamp") val positionTimestamp: Double,
+    @SerializedName("PositionActivityName") val positionActivityName: Long,
 )

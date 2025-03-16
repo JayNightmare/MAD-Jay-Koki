@@ -1,7 +1,9 @@
 package com.example.staysafe.model.data
 
+import com.google.gson.annotations.SerializedName
+
 data class Status(
-    val statusID: Long = 0,
-    val statusName: String,
-    val statusOrder: Int
+    @SerializedName("StatusID") val statusID: Long = 0,
+    @SerializedName("StatusName") val statusName: String,
+    @SerializedName("StatusOrder") val statusOrder: Int
 )

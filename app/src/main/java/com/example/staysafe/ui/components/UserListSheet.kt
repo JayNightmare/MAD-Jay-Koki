@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
@@ -28,11 +29,13 @@ fun UserListSheet(
     // Ensure data fetching starts when the screen loads
     LaunchedEffect(Unit) {
         println("DEBUG: Calling fetchAllData() in UserListSheet")
-        viewModel.fetchAllData()
+        viewModel.fetchUserContacts(
+            userId = viewModel.loggedInUser.value?.userID ?: 0
+        )
     }
 
     // Observe the user list
-    val users by viewModel.users.collectAsStateWithLifecycle()
+    val contacts by viewModel.contacts.collectAsStateWithLifecycle()
 
     Box(
         modifier = Modifier
@@ -43,14 +46,18 @@ fun UserListSheet(
         Column {
             Text("Nearby Users", fontSize = 20.sp, fontWeight = FontWeight.Bold, color = Color.White)
 
-            if (users.isEmpty()) {
-                Text("No users found", color = Color.White)  // Debugging: Display when user list is empty
+            if (contacts.isEmpty()) {
+                Text("No contacts found", color = Color.White)  // Debugging: Display when user list is empty
             } else {
                 LazyColumn(
                     modifier = Modifier.fillMaxSize()
                 ) {
-                    items(users) { user ->
-                        UserListItem(user, onClick = { onUserSelected(user) })
+                    items(contacts) { user ->
+                        UserListItem(
+                            user,
+                            onClick = { onUserSelected(user) },
+//                            status = user.statusID
+                        )
                     }
                 }
             }
@@ -68,6 +75,8 @@ fun UserListItem(user: User, onClick: () -> Unit) {
             Text(user.userFirstname, fontWeight = FontWeight.Bold, color = Color.White)
             Text("Tap to see location", color = Color.White)
         }
+        Spacer(modifier = Modifier.weight(1f))
+        Icon(Icons.Default.MoreVert, contentDescription = null, tint = Color.White)
     }
 }
 

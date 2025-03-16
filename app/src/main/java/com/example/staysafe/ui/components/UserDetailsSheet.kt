@@ -1,5 +1,7 @@
 package com.example.staysafe.ui.components
 
+import android.content.Intent
+import android.net.Uri
 import android.os.Build
 import androidx.annotation.OptIn
 import androidx.annotation.RequiresApi
@@ -14,6 +16,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -42,7 +45,8 @@ fun UserDetailsSheet(
     userLon: Double,
     apiKey: String,
     onClose: () -> Unit,
-    mapStyle: String
+    mapStyle: String,
+    onRoutePlotted: (List<LatLng>) -> Unit
 ) {
     var distance by remember { mutableStateOf("Calculating...") }
     var duration by remember { mutableStateOf("Calculating...") }
@@ -186,9 +190,14 @@ fun UserDetailsSheet(
                 userLon = userLon,
                 friendLat = user.userLatitude,
                 friendLon = user.userLongitude,
-                apiKey = apiKey
+                apiKey = apiKey,
+                onRoutePlotted = onRoutePlotted
             )
         }
+
+        Spacer(modifier = Modifier.height(16.dp))
+        HorizontalDivider(color = Color.White, thickness = 1.dp)
+        Spacer(modifier = Modifier.height(16.dp))
     }
 }
 
@@ -210,18 +219,32 @@ fun DirectionsButton(
     friendLat: Double,
     friendLon: Double,
     apiKey: String,
+    onRoutePlotted: (List<LatLng>) -> Unit // Passes route to MapScreen
 ) {
     val coroutineScope = rememberCoroutineScope()
+    val context = LocalContext.current
 
     Button(onClick = {
         Log.d("DirectionsButton", "Fetching Route to Friend...")
         coroutineScope.launch {
             viewModel.fetchRoute(
-                start = LatLng(friendLat, friendLon),
-                end = LatLng(userLat, userLon),
+                start = LatLng(userLat, userLon),
+                end = LatLng(friendLat, friendLon),
                 apiKey = apiKey
             ) { routePoints ->
                 Log.d("DirectionsButton", "Route fetched: ${routePoints.size} points")
+
+                // Update route on map
+                onRoutePlotted(routePoints)
+
+                // ✅ Open Google Maps Navigation (Optional)
+                val gmmIntentUri = Uri.parse("google.navigation:q=$friendLat,$friendLon")
+                val mapIntent = Intent(Intent.ACTION_VIEW, gmmIntentUri).apply {
+                    setPackage("com.google.android.apps.maps")
+                }
+                if (mapIntent.resolveActivity(context.packageManager) != null) {
+                    context.startActivity(mapIntent)
+                }
             }
         }
     }) {

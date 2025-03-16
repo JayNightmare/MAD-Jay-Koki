@@ -1,9 +1,11 @@
 package com.example.staysafe.model.data
 
+import com.google.gson.annotations.SerializedName
+
 data class Contact(
-    val contactID: Long = 0,
-    val contactUserID: Long,
-    val contactContactID: Long,
-    val contactLabel: String,
-    val contactDateCreated: Long
+    @SerializedName("ContactID") val contactID: Long = 0,
+    @SerializedName("ContactUserID") val contactUserID: Long,
+    @SerializedName("ContactContactID") val contactContactID: Long,
+    @SerializedName("ContactLabel") val contactLabel: String,
+    @SerializedName("ContactDatecreated") val contactDateCreated: Long
 )

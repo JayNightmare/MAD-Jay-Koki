@@ -1,6 +1,5 @@
 package com.example.staysafe.viewModel
 
-import android.annotation.SuppressLint
 import android.os.Build
 import androidx.annotation.OptIn
 import androidx.annotation.RequiresApi
@@ -24,58 +23,92 @@ import java.time.Instant
 class MapViewModel(
     private val repository: StaySafeRepository
 ) : ViewModel() {
+    // ! Contacts (Only show users in the Contact Table)
+    private val _contacts = MutableStateFlow<List<User>>(emptyList())
+    val contacts: StateFlow<List<User>> = _contacts
 
-    // Users
-    private val _users = MutableStateFlow<List<User>>(emptyList())
-    @SuppressLint("RestrictedApi")
-    val users: StateFlow<List<User>> = _users
+    // ! Status of user (planned, active, completed)
+    private val _userStatus = MutableStateFlow<Status?>(null)
+    val userStatus: StateFlow<Status?> = _userStatus
 
-    init {
-        fetchAllData()
+    // ! Activities of user
+    private val _activities = MutableStateFlow<List<Activity>>(emptyList())
+    val activities: StateFlow<List<Activity>> = _activities
+
+    // ! Locations of user
+    private val _locations = MutableStateFlow<List<Location>>(emptyList())
+    val locations: StateFlow<List<Location>> = _locations
+
+    // ! Positions for live tracking
+    private val _positions = MutableStateFlow<List<Position>>(emptyList())
+    val positions: StateFlow<List<Position>> = _positions
+
+    // ! User
+    private val _user = MutableStateFlow<List<User>>(emptyList())
+    val user: StateFlow<List<User>> = _user
+
+    // ! Individual user details
+    private val _selectedUser = MutableStateFlow<User?>(null)
+    val selectedUser: StateFlow<User?> = _selectedUser
+
+    // ! Logged in user
+    private val _loggedInUser = MutableStateFlow<User?>(null)
+    val loggedInUser: StateFlow<User?> = _loggedInUser
+
+    fun setLoggedInUser(user: User) {
+        _loggedInUser.value = user
     }
 
-    private fun fetchAllUsers() {
+    // //
+    // * Authenticate User
+    fun authenticateUser(user: User, password: String): Boolean {
+        return user.userPassword == password // Simple password check (For demo purposes)
+    }
+
+    // //
+
+    // //
+    // * Users
+    fun fetchAllUsers() {
         println("DEBUG: fetchAllUsers() CALLED")  // ✅ Log when function is called
 
         viewModelScope.launch {
             println("DEBUG: fetchAllUsers() - Inside viewModelScope.launch")  // ✅ Log inside coroutine
 
             repository.getAllUsers()
-                .collect { users ->
-                    println("DEBUG: fetchAllUsers() - Received ${users.size} users")  // ✅ Log received data
-                    _users.value = users
+                .collect { user ->
+                    println("DEBUG: fetchAllUsers() - Received ${user.size} contacts")  // ✅ Log received data
+                    _user.value = user
                 }
         }
     }
 
-
-
     fun fetchUserById(id: Long) {
         viewModelScope.launch {
-            repository.getUserById(id).collect { _users.value = it }
+            repository.getUserById(id).collect { users ->
+                _selectedUser.value = users.firstOrNull() // Expecting a single user
+            }
         }
     }
+    // //
 
-    // Activities
-    private val _activities = MutableStateFlow<List<Activity>>(emptyList())
-    val activities: StateFlow<List<Activity>> = _activities
-
+    // //
+    // * Activities
     private fun fetchAllActivities() {
         viewModelScope.launch {
             repository.getAllActivities().collect { _activities.value = it }
         }
     }
 
-    fun fetchActivityById(id: Long) {
+    fun fetchActivityByUser(userId: Long) {
         viewModelScope.launch {
-            repository.getActivityById(id).collect { _activities.value = it }
+            repository.getActivityByUser(userId).collect { _activities.value = it }
         }
     }
+    // //
 
-    // Locations
-    private val _locations = MutableStateFlow<List<Location>>(emptyList())
-    val locations: StateFlow<List<Location>> = _locations
-
+    // //
+    // * Locations
     private fun fetchAllLocations() {
         viewModelScope.launch {
             repository.getAllLocations().collect { _locations.value = it }
@@ -85,61 +118,73 @@ class MapViewModel(
     @OptIn(UnstableApi::class)
     fun fetchLocationById(userId: Long): Flow<Location?> {
         return repository.getLocationById(userId)
-            .map { locations ->
-                if (locations.isNotEmpty()) {
-                    Log.d("MapViewModel", "✅ Location found for userId $userId: ${locations.first()}")
-                    locations.first()
-                } else {
-                    Log.e("MapViewModel", "❌ No location found for userId: $userId")
-                    null
-                }
-            }
+            .map { locations -> locations.firstOrNull() }
             .catch { e ->
-                Log.e("MapViewModel", "❌ Error fetching location: ${e.message}")
+                Log.e("MapViewModel", "Error fetching location: ${e.message}")
                 emit(null)
             }
             .flowOn(Dispatchers.IO)
     }
+    // //
 
-    // Positions
-    private val _positions = MutableStateFlow<List<Position>>(emptyList())
-    val positions: StateFlow<List<Position>> = _positions
-
+    // //
+    // * Positions
     private fun fetchAllPositions() {
         viewModelScope.launch {
             repository.getAllPositions().collect { _positions.value = it }
         }
     }
 
-    fun fetchPositionById(id: Long) {
+    fun fetchPositionByUser(userId: Long) {
         viewModelScope.launch {
-            repository.getPositionById(id).collect { _positions.value = it }
+            repository.getPositionById(userId).collect { _positions.value = it }
         }
     }
+    // //
 
-    // Fetch all data at once
-    fun fetchAllData() {
-        fetchAllUsers()
-        fetchAllActivities()
-        fetchAllLocations()
-        fetchAllPositions()
+    // //
+    // * Contacts
+    fun fetchUserContacts(userId: Long) {
+        viewModelScope.launch { repository.getContactsForUser(userId).collect { _contacts.value = it } }
     }
+    // //
 
-    // Fetch Route
+    // //
+    // * Status
     @OptIn(UnstableApi::class)
-    fun fetchRoute(
-        start: LatLng,
-        end: LatLng,
-        apiKey: String,
-        onResult: (List<LatLng>) -> Unit
-    ) {
+    suspend fun fetchStatusByUserId(userId: Long): Flow<Status?> {
+        return repository.getStatus()
+            .map { statuses ->
+                statuses.find { it.statusID == userId } // Find status for the user
+            }
+            .catch { e ->
+                Log.e("MapViewModel", "Error fetching status: ${e.message}")
+                emit(null)
+            }
+            .flowOn(Dispatchers.IO)
+    }
+    // //
+
+    // //
+    // ? Fetch all data at once
+//    private fun fetchAllData() {
+//        fetchAllUsers()
+//        fetchAllActivities()
+//        fetchAllLocations()
+//        fetchAllPositions()
+//    }
+    // //
+
+    // //
+    // ! Function
+
+    // * Fetch Route
+    @OptIn(UnstableApi::class)
+    fun fetchRoute(start: LatLng, end: LatLng, apiKey: String, onResult: (List<LatLng>) -> Unit) {
         viewModelScope.launch {
             val url = "https://maps.googleapis.com/maps/api/directions/json?origin=${start.latitude},${start.longitude}&destination=${end.latitude},${end.longitude}&key=$apiKey"
-
             try {
-                val response = withContext(Dispatchers.IO) {
-                    URL(url).readText()
-                }
+                val response = withContext(Dispatchers.IO) { URL(url).readText() }
                 val jsonObject = JSONObject(response)
                 val routes = jsonObject.getJSONArray("routes")
 
@@ -159,7 +204,7 @@ class MapViewModel(
         }
     }
 
-
+    // * Fetch Distance and Duration
     @RequiresApi(Build.VERSION_CODES.O)
     @OptIn(UnstableApi::class)
     suspend fun fetchDistanceAndDuration(
@@ -276,12 +321,14 @@ class MapViewModel(
         }
     }
 
+    // * Parse Duration
     private fun parseDuration(duration: String): Int {
         val regex = Regex("(\\d+)s") // ✅ Extracts only the number before "s"
         val match = regex.find(duration)
         return match?.groupValues?.get(1)?.toInt() ?: 0
     }
 
+    // * Format Duration
     private fun formatDuration(seconds: Int): String {
         return when {
             seconds < 60 -> "$seconds sec"
@@ -294,6 +341,7 @@ class MapViewModel(
         }
     }
 
+    // * Decode Polyline
     private fun decodePolyline(encoded: String): List<LatLng> {
         val polyline = mutableListOf<LatLng>()
         var index = 0
@@ -312,7 +360,7 @@ class MapViewModel(
                 shift += 5
             } while (b >= 0x20)
 
-            val deltaLat = (if ((result and 1) != 0) (result.inv() shr 1) else (result shr 1))
+            val deltaLat = if ((result and 1) != 0) (result.inv() shr 1) else (result shr 1)
             lat += deltaLat
 
             shift = 0
@@ -324,7 +372,7 @@ class MapViewModel(
                 shift += 5
             } while (b >= 0x20)
 
-            val deltaLng = (if ((result and 1) != 0) (result.inv() shr 1) else (result shr 1))
+            val deltaLng = if ((result and 1) != 0) (result.inv() shr 1) else (result shr 1)
             lng += deltaLng
 
             polyline.add(LatLng(lat / 1E5, lng / 1E5))
@@ -332,4 +380,5 @@ class MapViewModel(
 
         return polyline
     }
+    // //
 }
