@@ -87,6 +87,7 @@ fun MapScreen(navController: NavController, viewModel: MapViewModel) {
     }
 
     val loggedInUser = viewModel.loggedInUser.collectAsState().value
+    Log.d("Flow", "Logged in user: $loggedInUser")
 
     // Fetch device location when screen loads
     LaunchedEffect(Unit) {
@@ -96,8 +97,9 @@ fun MapScreen(navController: NavController, viewModel: MapViewModel) {
 
         if (loggedInUser != null) {
             viewModel.fetchUserContacts(userId = loggedInUser.userID)
+            Log.d("Flow", "User logged in: $loggedInUser")
         } else {
-            Log.d("MapScreen", "No user logged in")
+            Log.d("Flow", "No user logged in: $loggedInUser")
         }
 
         // Fetch current location regardless of login status

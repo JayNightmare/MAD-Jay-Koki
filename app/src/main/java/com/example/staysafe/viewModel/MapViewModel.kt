@@ -20,9 +20,15 @@ import java.net.URL
 import java.time.Duration
 import java.time.Instant
 
-class MapViewModel(
-    private val repository: StaySafeRepository
+@OptIn(UnstableApi::class)
+class MapViewModel
+    (
+    val repository: StaySafeRepository
 ) : ViewModel() {
+    init {
+        Log.d("Flow", "✅ MapViewModel Initialized")
+    }
+
     // ! Contacts (Only show users in the Contact Table)
     private val _contacts = MutableStateFlow<List<User>>(emptyList())
     val contacts: StateFlow<List<User>> = _contacts
@@ -55,9 +61,21 @@ class MapViewModel(
     private val _loggedInUser = MutableStateFlow<User?>(null)
     val loggedInUser: StateFlow<User?> = _loggedInUser
 
-    fun setLoggedInUser(user: User) {
-        _loggedInUser.value = user
+    @OptIn(UnstableApi::class)
+    fun setLoggedInUser(username: String) {
+        Log.d("Flow", "Setting logged in user to: $username")
+        viewModelScope.launch {
+            val matchedUser = _user.value.find { it.userUsername == username }
+            Log.d("Flow", "Matched User: $username")
+            if (matchedUser != null) {
+                _loggedInUser.update { matchedUser }
+                Log.d("Flow", "✅ Logged in as: ${matchedUser.userUsername}")
+            } else {
+                Log.e("Flow", "❌ User not found for username: $username")
+            }
+        }
     }
+    // //
 
     // //
     // * Authenticate User
@@ -144,7 +162,9 @@ class MapViewModel(
 
     // //
     // * Contacts
+    @OptIn(UnstableApi::class)
     fun fetchUserContacts(userId: Long) {
+        Log.d("MapViewModel", "Fetching user contacts for userId: $userId")
         viewModelScope.launch { repository.getContactsForUser(userId).collect { _contacts.value = it } }
     }
     // //

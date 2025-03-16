@@ -1,5 +1,6 @@
 package com.example.staysafe.repository
 
+import android.util.Log
 import com.example.staysafe.API.Service
 import com.example.staysafe.model.data.*
 import kotlinx.coroutines.Dispatchers
@@ -157,23 +158,26 @@ class StaySafeRepository(
 
     // //
     // * Contacts
-    suspend fun getUserContacts(userId: Long): Flow<List<Contact>> = flow {
-        try {
-            val contacts = service.getUserContact(userId).awaitResponse()
-            contacts.body()?.let { emit(it) } ?: emit(emptyList())
-        } catch (e: Exception) {
-            e.printStackTrace()
-            emit(emptyList())
-        }
-    }
+//    suspend fun getUserContacts(userId: Long): Flow<List<Contact>> = flow {
+//        try {
+//            val contacts = service.getUserContact(userId).awaitResponse()
+//            contacts.body()?.let { emit(it) } ?: emit(emptyList())
+//        } catch (e: Exception) {
+//            e.printStackTrace()
+//            emit(emptyList())
+//        }
+//    }
 
     suspend fun getContactsForUser(userId: Long): Flow<List<User>> = flow {
         try {
+            Log.d("MapViewModel", "Fetching user contacts for userId: $userId")
             val contacts = service.getUserContact(userId).awaitResponse()
-            val contactIds = contacts.body()?.map { it.contactContactID } ?: emptyList()
+            Log.d("MapViewModel", "Received contacts: ${contacts.body()}")
+            val contactIds = contacts.body()?.map { it.userID } ?: emptyList()
 
             val allUsers = service.getUsers().awaitResponse()
             val filteredUsers = allUsers.body()?.filter { it.userID in contactIds } ?: emptyList()
+            Log.d("MapViewModel", "Filtered users: $filteredUsers")
 
             emit(filteredUsers)
         } catch (e: Exception) {

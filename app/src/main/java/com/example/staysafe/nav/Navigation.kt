@@ -3,6 +3,7 @@ package com.example.staysafe.nav
 import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.navigation.compose.*
 import com.example.staysafe.API.Service
 import com.example.staysafe.view.screens.MapScreen
@@ -19,6 +20,9 @@ import java.util.concurrent.TimeUnit
 @Composable
 fun Navigation() {
     val nav = rememberNavController()
+    val repository: StaySafeRepository
+
+
 
     //Debugging purposes
     // ✅ Add Logging Interceptor
@@ -42,28 +46,30 @@ fun Navigation() {
 
     val service = retrofit.create(Service::class.java)
 
+    val sharedViewModel: MapViewModel = remember { MapViewModel(
+        repository = StaySafeRepository(
+            service = service
+        )
+    )}
+
     NavHost(
         navController = nav,
         startDestination = Screen.LoginScreen.route
     ){
-        composable(Screen.LoginScreen.route) { LoginScreen(
-            navController = nav,
-            viewModel = MapViewModel(
-                repository = StaySafeRepository(
-                    service = service
-                )
+        composable(Screen.LoginScreen.route) {
+            LoginScreen(
+                navController = nav,
+                viewModel = sharedViewModel
             )
-        )}
+        }
+        // //
         composable(Screen.MapScreen.route) {
             MapScreen(
                 navController = nav,
-                viewModel = MapViewModel(
-                    repository = StaySafeRepository(
-                        service = service
-                    )
-                )
+                viewModel = sharedViewModel
             )
         }
+        // //
         composable(Screen.PeopleScreen.route){
 //            PeopleScreen(nav)
         }

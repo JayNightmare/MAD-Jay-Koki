@@ -1,5 +1,6 @@
 package com.example.staysafe.ui.components
 
+import android.util.Log
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -26,16 +27,20 @@ fun UserListSheet(
     viewModel: MapViewModel,
     onUserSelected: (User) -> Unit
 ) {
-    // Ensure data fetching starts when the screen loads
-    LaunchedEffect(Unit) {
-        println("DEBUG: Calling fetchAllData() in UserListSheet")
-        viewModel.fetchUserContacts(
-            userId = viewModel.loggedInUser.value?.userID ?: 0
-        )
+    val loggedInUser by viewModel.loggedInUser.collectAsStateWithLifecycle()
+
+    LaunchedEffect(loggedInUser) {
+        loggedInUser?.let {
+            viewModel.fetchUserContacts(userId = it.userID)
+            Log.d("UserListSheet", it.userID.toString())
+        }
+        Log.d("UserListSheet", "Logged in User ID: $loggedInUser")
+        Log.d("UserListSheet", "Contacts: ${viewModel.contacts.value}")
     }
 
     // Observe the user list
     val contacts by viewModel.contacts.collectAsStateWithLifecycle()
+    Log.d("UserListSheet", "Contacts: $contacts")
 
     Box(
         modifier = Modifier
@@ -45,6 +50,8 @@ fun UserListSheet(
     ) {
         Column {
             Text("Nearby Users", fontSize = 20.sp, fontWeight = FontWeight.Bold, color = Color.White)
+
+            Spacer(modifier = Modifier.height(8.dp))
 
             if (contacts.isEmpty()) {
                 Text("No contacts found", color = Color.White)  // Debugging: Display when user list is empty

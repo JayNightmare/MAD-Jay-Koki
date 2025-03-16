@@ -1,12 +1,7 @@
 package com.example.staysafe.API
 
 import androidx.room.Delete
-import com.example.staysafe.model.data.Activity
-import com.example.staysafe.model.data.Contact
-import com.example.staysafe.model.data.Location
-import com.example.staysafe.model.data.Position
-import com.example.staysafe.model.data.Status
-import com.example.staysafe.model.data.User
+import com.example.staysafe.model.data.*
 import retrofit2.*
 import retrofit2.http.Body
 import retrofit2.http.DELETE
@@ -84,7 +79,7 @@ interface Service {
     fun getUser(@Path("userID") id: Long): Call<List<User>>
 
     @GET("https://softwarehub.uk/unibase/staysafe/v1/api/users/contacts/{userID}")
-    fun getUserContact(@Path("userID") id: Long): Call<List<Contact>>
+    fun getUserContact(@Path("userID") userID: Long): Call<List<ContactUser>>
 
     //Contact (Emergency contact)
     @POST("https://softwarehub.uk/unibase/staysafe/v1/api/contacts")

@@ -18,13 +18,11 @@ import com.example.staysafe.model.data.User
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LoginScreen(navController: NavController, viewModel: MapViewModel) {
-    Log.d("LoginScreen", "Recomposing LoginScreen")
     var username by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     val users by viewModel.user.collectAsState(emptyList()) // Fetch users for dropdown
     val context = LocalContext.current
 
-    Log.d("LoginScreen", "Users: $users")
     // Fetch users when screen loads
     LaunchedEffect(Unit) {
         viewModel.fetchAllUsers()
@@ -41,7 +39,8 @@ fun LoginScreen(navController: NavController, viewModel: MapViewModel) {
             onValueChange = { username = it },
             label = { Text("Username") },
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text),
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxWidth(),
+            singleLine = true
         )
 
         Spacer(modifier = Modifier.height(16.dp))
@@ -53,7 +52,8 @@ fun LoginScreen(navController: NavController, viewModel: MapViewModel) {
             label = { Text("Password") },
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
             visualTransformation = PasswordVisualTransformation(),
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxWidth(),
+            singleLine = true
         )
 
         Spacer(modifier = Modifier.height(16.dp))
@@ -62,9 +62,11 @@ fun LoginScreen(navController: NavController, viewModel: MapViewModel) {
         Button(
             onClick = {
                 val matchUser = users.find { it.userUsername == username }
+                Log.d("Flow", "Match User: $matchUser")
 
                 if (matchUser != null && viewModel.authenticateUser(matchUser, password)) {
-                    viewModel.setLoggedInUser(matchUser)
+                    Log.d("Flow", "User authenticated: $matchUser")
+                    viewModel.setLoggedInUser(matchUser.userUsername)
                     navController.navigate("map")
                 } else {
                     Toast.makeText(context, "Invalid username or password", Toast.LENGTH_SHORT).show()
@@ -75,5 +77,4 @@ fun LoginScreen(navController: NavController, viewModel: MapViewModel) {
             Text("Login")
         }
     }
-    Log.d("LoginScreen", "Recomposed LoginScreen")
 }
