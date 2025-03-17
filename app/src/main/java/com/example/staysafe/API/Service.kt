@@ -11,15 +11,18 @@ import retrofit2.http.PUT
 import retrofit2.http.Path
 
 interface Service {
-    // Activities
+    // ! Activities
     @GET("https://softwarehub.uk/unibase/staysafe/v1/api/activities")
     fun getAllActivities(): Call<List<Activity>>
 
     @GET("https://softwarehub.uk/unibase/staysafe/v1/api/activities/{activityID}")
     fun getActivity(@Path("activityID") id:Long): Call<List<Activity>>
 
-    @GET("https://softwarehub.uk/unibase/staysafe/v1/api/activities/users/{userID}")
-    fun getActivityUser(@Path("userID") id:Long): Call<List<Activity>>
+    @GET("https://softwarehub.uk/unibase/staysafe/v1/api/activities/users/{activityUserID}")
+    fun getUserActivities(@Path("activityUserID") activityUserID: Long): Call<List<Activity>>
+
+    @GET("https://softwarehub.uk/unibase/staysafe/v1/api/positions/{positionActivityID}")
+    fun getActivityPositions(@Path("positionActivityID") activityID: Long): Call<List<Position>>
 
     @POST("https://softwarehub.uk/unibase/staysafe/v1/api/activities")
     fun addActivities(@Body activity: Activity): Call<List<Activity>>
@@ -30,7 +33,9 @@ interface Service {
     @DELETE("https://softwarehub.uk/unibase/staysafe/v1/api/activities/{activityID}")
     fun deleteActivity(@Path("activityID") id: Long): Call<Unit>
 
-    // Locations
+    // //
+
+    // ! Locations
     @GET("https://softwarehub.uk/unibase/staysafe/v1/api/locations")
     fun getAllLocations():Call<List<Location>>
 
@@ -47,7 +52,9 @@ interface Service {
     @DELETE("https://softwarehub.uk/unibase/staysafe/v1/api/locations/{locationID}")
     fun deleteLocation(@Path("locationID") id: Long): Call<Unit>
 
-    // Positions
+    // //
+
+    // ! Positions
     @GET("https://softwarehub.uk/unibase/staysafe/v1/api/positions")
     fun getAllPositions(): Call<List<Position>>
 
@@ -67,34 +74,44 @@ interface Service {
     @DELETE("https://softwarehub.uk/unibase/staysafe/v1/api/positions/{positionID}")
     fun deletePosition(@Path("positionID") id: Long): Call<Unit>
 
-    // Status
+    // //
+
+    // ! Status
     @GET("https://softwarehub.uk/unibase/staysafe/v1/api/status")
     fun getStatus(): Call<List<Status>>
 
-    // Users
+    // //
+
+    // ! Users
     @GET("https://softwarehub.uk/unibase/staysafe/v1/api/users")
     fun getUsers(): Call<List<User>>
 
     @GET("https://softwarehub.uk/unibase/staysafe/v1/api/users/{userID}")
     fun getUser(@Path("userID") id: Long): Call<List<User>>
 
+    // ? Insert user
+    @POST("https://softwarehub.uk/unibase/staysafe/v1/api/users")
+    fun addUsers(@Body user: User): Call<List<User>>
+
+    // ? Update user
+    @PUT("https://softwarehub.uk/unibase/staysafe/v1/api/users/{userID}")
+    fun updateUser(@Path("userID") id: Long ): Call<List<User>>
+
+    // ? Delete user
+    @DELETE("https://softwarehub.uk/unibase/staysafe/v1/api/users/{userID}")
+    fun deleteUser(@Path("userID") id: Long): Call<Unit>
+
     @GET("https://softwarehub.uk/unibase/staysafe/v1/api/users/contacts/{userID}")
     fun getUserContact(@Path("userID") userID: Long): Call<List<ContactUser>>
 
-    //Contact (Emergency contact)
+    // //
+
+    // ! Contact (Emergency contact)
     @POST("https://softwarehub.uk/unibase/staysafe/v1/api/contacts")
     fun addContact(@Body contact: Contact): Call<List<Contact>>
 
     @DELETE("https://softwarehub.uk/unibase/staysafe/v1/api/contacts/{contactID}")
     fun deleteContact(@Path("contactID") id: Long): Call<List<Unit>>
 
-    //Insert user
-    @POST("https://softwarehub.uk/unibase/staysafe/v1/api/users")
-    fun addUsers(@Body user: User): Call<List<User>>
-    //Update user
-    @PUT("https://softwarehub.uk/unibase/staysafe/v1/api/users/{userID}")
-    fun updateUser(@Path("userID") id: Long ): Call<List<User>>
-    //Delete user
-    @DELETE("https://softwarehub.uk/unibase/staysafe/v1/api/users/{userID}")
-    fun deleteUser(@Path("userID") id: Long): Call<Unit>
+    // //
 }

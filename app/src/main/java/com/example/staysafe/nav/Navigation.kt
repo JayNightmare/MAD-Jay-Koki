@@ -22,13 +22,13 @@ fun Navigation() {
     val nav = rememberNavController()
     val repository: StaySafeRepository
 
-    //Debugging purposes
-    // ✅ Add Logging Interceptor
+    // Debugging purposes
+    // * ✅ Add Logging Interceptor
     val loggingInterceptor = HttpLoggingInterceptor().apply {
         level = HttpLoggingInterceptor.Level.BODY  // Logs request & response body
     }
 
-    // ✅ Create OkHttpClient with Logging
+    // * ✅ Create OkHttpClient with Logging
     val client = OkHttpClient.Builder()
         .connectTimeout(30, TimeUnit.SECONDS)  // Timeout settings
         .readTimeout(30, TimeUnit.SECONDS)
@@ -54,6 +54,7 @@ fun Navigation() {
         navController = nav,
         startDestination = Screen.LoginScreen.route
     ){
+        // //
         composable(Screen.LoginScreen.route) {
             LoginScreen(
                 navController = nav,

@@ -6,6 +6,7 @@ import com.example.staysafe.model.data.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
 import retrofit2.await
@@ -28,25 +29,40 @@ class StaySafeRepository(
         }
     }
 
-    suspend fun getActivityById(id: Long): Flow<List<Activity>> = flow {
+    suspend fun getLatestActivityForUser(userId: Long): Flow<Activity?> = flow {
         try {
-            val activity = service.getActivity(id).await()
-            emit(activity)
+            Log.d("StaySafeRepository", "Fetching user activities for userId: $userId")
+            val activities = service.getUserActivities(userId).awaitResponse()
+            Log.d("StaySafeRepository", "Activities: ${activities.body()}")
+            val latestActivity = activities.body()?.maxByOrNull { it.activityArrive }
+            Log.d("StaySafeRepository", "Latest Activity: $latestActivity")
+            emit(latestActivity)
         } catch (e: Exception) {
+            Log.e("StaySafeRepository", "Error fetching latest activity: ${e.message}")
             e.printStackTrace()
-            emit(emptyList())
+            emit(null)
         }
-    }
+    }.flowOn(Dispatchers.IO)
 
-    suspend fun getActivityByUser(userId: Long): Flow<List<Activity>> = flow {
+    suspend fun getLatestPositionForUser(userId: Long): Flow<Position?> = flow {
         try {
-            val activities = service.getActivityUser(userId).await()
-            emit(activities)
+            val latestActivity = getLatestActivityForUser(userId).firstOrNull()
+
+            if (latestActivity != null) {
+                Log.d("StaySafeRepository", "Latest Activity: $latestActivity")
+
+                val positions = service.getActivityPositions(latestActivity.activityID).awaitResponse()
+                val latestPosition = positions.body()?.maxByOrNull { it.positionTimestamp }
+                emit(latestPosition)
+            } else {
+                emit(null)
+            }
         } catch (e: Exception) {
             e.printStackTrace()
-            emit(emptyList())
+            emit(null)
         }
-    }
+    }.flowOn(Dispatchers.IO)
+
     // //
 
     // //

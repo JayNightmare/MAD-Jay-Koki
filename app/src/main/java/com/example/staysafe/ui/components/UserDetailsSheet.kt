@@ -56,11 +56,13 @@ fun UserDetailsSheet(
     val coroutineScope = rememberCoroutineScope()
 
     val friendLatLng = LatLng(user.userLatitude!!, user.userLongitude!!)
+    val latestActivity by viewModel.latestActivityForUser.collectAsState()
 
-    LaunchedEffect(user.userLatitude, user.userLongitude, location, apiKey) {
+    LaunchedEffect(user.userID, user.userLatitude, user.userLongitude, location, apiKey) {
+        viewModel.fetchLatestActivityForUser(user.userID)
+
         if (location != null) {
             val result = viewModel.fetchDistanceAndDuration(
-                user = user,
                 originLat = user.userLatitude,
                 originLng = user.userLongitude,
                 destLat = location.locationLatitude,
@@ -105,7 +107,7 @@ fun UserDetailsSheet(
             .heightIn(max = 600.dp)
             .verticalScroll(rememberScrollState())
     ) {
-        // Header
+        // * Header
         Row(horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier.fillMaxWidth()) {
             Text("${user.userFirstname} ${user.userLastname}", fontSize = 22.sp, fontWeight = FontWeight.Bold, color = Color.White)
             IconButton(onClick = onClose) {
@@ -138,6 +140,17 @@ fun UserDetailsSheet(
         Spacer(modifier = Modifier.height(16.dp))
 
         if (location != null) {
+            Text("Activity Details", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = Color.White)
+            Spacer(modifier = Modifier.height(8.dp))
+            Text("Name: ${latestActivity?.activityName}", color = Color.White)
+            Text("Description: ${latestActivity?.activityDescription}", color = Color.White)
+            Text("From: ${latestActivity?.activityFromName}", color = Color.White)
+            Text("To: ${latestActivity?.activityToName}", color = Color.White)
+            Text("Arrive: ${latestActivity?.activityArrive}", color = Color.White)
+            Text("Status: ${latestActivity?.activityStatusName}", color = Color.White)
+
+            Spacer(modifier = Modifier.height(8.dp))
+
             Text("Route Preview", fontSize = 16.sp, color = Color.White)
 
             Spacer(modifier = Modifier.height(8.dp))
@@ -181,7 +194,7 @@ fun UserDetailsSheet(
             Spacer(modifier = Modifier.height(12.dp))
         }
 
-        // Contact and Directions Buttons
+        // * Contact and Directions Buttons
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
             ContactButton()
             DirectionsButton(
@@ -219,7 +232,7 @@ fun DirectionsButton(
     friendLat: Double,
     friendLon: Double,
     apiKey: String,
-    onRoutePlotted: (List<LatLng>) -> Unit // Passes route to MapScreen
+    onRoutePlotted: (List<LatLng>) -> Unit
 ) {
     val coroutineScope = rememberCoroutineScope()
     val context = LocalContext.current
@@ -234,10 +247,10 @@ fun DirectionsButton(
             ) { routePoints ->
                 Log.d("DirectionsButton", "Route fetched: ${routePoints.size} points")
 
-                // Update route on map
+                // * ✅ Update map route
                 onRoutePlotted(routePoints)
 
-                // ✅ Open Google Maps Navigation (Optional)
+                // * ✅ Open Google Maps Navigation
                 val gmmIntentUri = Uri.parse("google.navigation:q=$friendLat,$friendLon")
                 val mapIntent = Intent(Intent.ACTION_VIEW, gmmIntentUri).apply {
                     setPackage("com.google.android.apps.maps")

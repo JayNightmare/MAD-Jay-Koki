@@ -12,6 +12,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -38,9 +39,17 @@ fun UserListSheet(
         Log.d("UserListSheet", "Contacts: ${viewModel.contacts.value}")
     }
 
+    LaunchedEffect(viewModel.contacts.collectAsState().value) {
+        viewModel.contacts.value.forEach { contact ->
+            viewModel.fetchLatestActivityForUsers(contact.userID)
+        }
+    }
+
     // Observe the user list
     val contacts by viewModel.contacts.collectAsStateWithLifecycle()
     Log.d("UserListSheet", "Contacts: $contacts")
+
+    val latestActivities by viewModel.latestActivities.collectAsState()
 
     Box(
         modifier = Modifier
@@ -49,7 +58,11 @@ fun UserListSheet(
             .padding(16.dp)
     ) {
         Column {
-            Text("Nearby Users", fontSize = 20.sp, fontWeight = FontWeight.Bold, color = Color.White)
+            Row {
+                Text("Your Friends", fontSize = 20.sp, fontWeight = FontWeight.Bold, color = Color.White)
+                Spacer(modifier = Modifier.weight(1f))
+                Text("Status", fontSize = 15.sp, fontWeight = FontWeight.Bold, color = Color.White, modifier = Modifier.padding(top = 5.dp, end = 5.dp))
+            }
 
             Spacer(modifier = Modifier.height(8.dp))
 
@@ -60,10 +73,12 @@ fun UserListSheet(
                     modifier = Modifier.fillMaxSize()
                 ) {
                     items(contacts) { user ->
+                        val userActivity = latestActivities[user.userID]
+
                         UserListItem(
                             user,
                             onClick = { onUserSelected(user) },
-//                            status = user.statusID
+                            statusName = userActivity?.activityStatusName ?: "Unknown"
                         )
                     }
                 }
@@ -73,7 +88,7 @@ fun UserListSheet(
 }
 
 @Composable
-fun UserListItem(user: User, onClick: () -> Unit) {
+fun UserListItem(user: User, statusName: String, onClick: () -> Unit) {
     Row(modifier = Modifier.fillMaxWidth().clickable { onClick() }.padding(12.dp)) {
         // White icon
         Icon(Icons.Default.Person, contentDescription = null, tint = Color.White)
@@ -83,7 +98,8 @@ fun UserListItem(user: User, onClick: () -> Unit) {
             Text("Tap to see location", color = Color.White)
         }
         Spacer(modifier = Modifier.weight(1f))
-        Icon(Icons.Default.MoreVert, contentDescription = null, tint = Color.White)
+//        Icon(Icons.Default.MoreVert, contentDescription = null, tint = Color.White)
+        StatusIcon(statusName)
     }
 }
 

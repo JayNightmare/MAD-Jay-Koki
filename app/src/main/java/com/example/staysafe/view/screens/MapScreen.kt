@@ -7,12 +7,18 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.Icon
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -69,67 +75,74 @@ fun MapScreen(navController: NavController, viewModel: MapViewModel) {
 
     val nightMapStyle = remember { context.resources.openRawResource(R.raw.map_style).bufferedReader().use { it.readText() } }
 
-    val permissionLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.RequestPermission()
-    ) {
-            isGranted ->
-        if (isGranted) {
-            getCurrentLocation(context) { lat, lon ->
-                currentDeviceLat = lat
-                currentDeviceLon = lon
-                coroutineScope.launch {
-                    cameraPositionState.moveToUserLocation(lat, lon)
-                }
-            }
-        } else {
-            Log.d("MapScreen", "Location permission denied")
-        }
-    }
+//    val permissionLauncher = rememberLauncherForActivityResult(
+//        contract = ActivityResultContracts.RequestPermission()
+//    )
+//    {
+//            isGranted ->
+//        if (isGranted) {
+//            getCurrentLocation(context) { lat, lon ->
+//                currentDeviceLat = lat
+//                currentDeviceLon = lon
+//                coroutineScope.launch {
+//                    cameraPositionState.moveToUserLocation(lat, lon)
+//                }
+//            }
+//        } else {
+//            Log.d("MapScreen", "Location permission denied")
+//        }
+//    }
 
     val loggedInUser = viewModel.loggedInUser.collectAsState().value
     Log.d("Flow", "Logged in user: $loggedInUser")
 
-    // Fetch device location when screen loads
+    // * Fetch device location when screen loads
     LaunchedEffect(Unit) {
-        permissionLauncher.launch(android.Manifest.permission.ACCESS_FINE_LOCATION)
-        permissionLauncher.launch(android.Manifest.permission.ACCESS_COARSE_LOCATION)
-        permissionLauncher.launch(android.Manifest.permission.INTERNET)
+//        permissionLauncher.launch(android.Manifest.permission.ACCESS_FINE_LOCATION)
+//        permissionLauncher.launch(android.Manifest.permission.ACCESS_COARSE_LOCATION)
+//        permissionLauncher.launch(android.Manifest.permission.INTERNET)
 
+        if (loggedInUser != null) {
+            viewModel.fetchUserContacts(userId = loggedInUser.userID)
+            Log.d("Flow", "User logged in: $loggedInUser")
+            currentDeviceLat = loggedInUser.userLatitude ?: 0.0
+            currentDeviceLon = loggedInUser.userLongitude ?: 0.0
+
+            coroutineScope.launch {
+                cameraPositionState.moveToUserLocation(currentDeviceLat, currentDeviceLon)
+            }
+        } else {
+            Log.d("Flow", "No user logged in: $loggedInUser")
+        }
+    }
+
+    LaunchedEffect(loggedInUser) {
         if (loggedInUser != null) {
             viewModel.fetchUserContacts(userId = loggedInUser.userID)
             Log.d("Flow", "User logged in: $loggedInUser")
         } else {
             Log.d("Flow", "No user logged in: $loggedInUser")
         }
-
-        // Fetch current location regardless of login status
-        getCurrentLocation(context) { lat, lon ->
-            currentDeviceLat = lat
-            currentDeviceLon = lon
-
-            coroutineScope.launch {
-                cameraPositionState.moveToUserLocation(lat, lon)
-            }
-        }
     }
-
 
     Scaffold(
         topBar = { TopNavigationBar() },
         bottomBar = {
             BottomNavigationBar(
-//                navController,
                 onPeopleClicked = {
                     selectedUser = null
                     showSheet = true
                 }
             )
-        }
-    ) { paddingValues ->
-        Box(modifier = Modifier.fillMaxSize()) {
+        },
+        floatingActionButton = {
             if (routePoints.isNotEmpty()) {
                 StopNavigationButton(onStopNavigation = { showStopNavigationDialog = true })
             }
+        },
+        floatingActionButtonPosition = androidx.compose.material3.FabPosition.Center
+    ) { paddingValues ->
+        Box(modifier = Modifier.fillMaxSize()) {
             GoogleMap(
                 modifier = Modifier
                     .fillMaxSize()
@@ -137,19 +150,14 @@ fun MapScreen(navController: NavController, viewModel: MapViewModel) {
                 cameraPositionState = cameraPositionState,
                 properties = MapProperties(
                     mapStyleOptions = MapStyleOptions(nightMapStyle),
-                    mapType = MapType.NORMAL,
-                    isMyLocationEnabled = true
+                    mapType = MapType.NORMAL
                 ),
             ) {
                 contacts.forEach { user ->
                     if (user.userLatitude != null && user.userLongitude != null) {
                         val latLng = LatLng(user.userLatitude, user.userLongitude)
-
-                        val imageUrl = user.userImageURL ?: null
-                        Log.d("MapScreen", "User image URL: $imageUrl")
-
                         CustomMarker(
-                            imageUrl = imageUrl,
+                            imageUrl = user.userImageURL,
                             fullName = "${user.userFirstname} ${user.userLastname}",
                             location = latLng,
                             onClick = {
@@ -157,14 +165,36 @@ fun MapScreen(navController: NavController, viewModel: MapViewModel) {
                                 showSheet = true
                                 coroutineScope.launch {
                                     cameraPositionState.moveToUserLocation(
-                                        user.userLatitude,
-                                        user.userLongitude
+                                        user.userLatitude, user.userLongitude
                                     )
                                 }
                             },
                             size = 50
                         )
                     }
+
+//                    latestPosition?.let { position ->
+//                        if (position.positionLatitude != null && position.positionLongitude != null) {
+//                            val latLng = LatLng(position.positionLatitude, position.positionLongitude)
+//
+//                            CustomMarker(
+//                                imageUrl = user.userImageURL,
+//                                fullName = "${user.userFirstname} ${user.userLastname}",
+//                                location = latLng,
+//                                onClick = {
+//                                    selectedUser = user
+//                                    showSheet = true
+//                                    coroutineScope.launch {
+//                                        cameraPositionState.moveToUserLocation(
+//                                            position.positionLatitude,
+//                                            position.positionLongitude
+//                                        )
+//                                    }
+//                                },
+//                                size = 50
+//                            )
+//                        }
+//                    }
                 }
 
                 if (routePoints.isNotEmpty()) {
@@ -180,10 +210,10 @@ fun MapScreen(navController: NavController, viewModel: MapViewModel) {
                 AlertDialog(
                     onDismissRequest = { showStopNavigationDialog = false },
                     title = { Text("End Navigation") },
-                    text = { Text("Are you sure you want to end the navigation to your friend?") },
+                    text = { Text("Are you sure you want to end the navigation?") },
                     confirmButton = {
                         Button(onClick = {
-                            routePoints = listOf()
+                            routePoints = emptyList()
                             showStopNavigationDialog = false
                         }) {
                             Text("End Navigation")
@@ -204,26 +234,22 @@ fun MapScreen(navController: NavController, viewModel: MapViewModel) {
                     containerColor = Color.Black
                 ) {
                     if (selectedUser == null) {
-                        Log.d("MapScreen", "Showing UserListSheet")
                         UserListSheet(
                             viewModel = viewModel,
                             onUserSelected = { user ->
                                 selectedUser = user
                                 showSheet = true
                                 coroutineScope.launch {
-                                    user.userLatitude?.let { lat ->
-                                        user.userLongitude?.let { lon ->
-                                            cameraPositionState.moveToUserLocation(lat, lon)
-                                        }
-                                    }
+                                    cameraPositionState.moveToUserLocation(
+                                        user.userLatitude ?: 0.0,
+                                        user.userLongitude ?: 0.0
+                                    )
                                 }
                             }
                         )
                     } else {
-                        Log.d("MapScreen", "Showing UserDetailsSheet")
                         val location by viewModel.fetchLocationById(selectedUser!!.userID).collectAsState(initial = null)
 
-                        Log.d("MapScreen", "Location found: $location for User: $selectedUser")
                         UserDetailsSheet(
                             viewModel = viewModel,
                             user = selectedUser!!,
@@ -242,35 +268,38 @@ fun MapScreen(navController: NavController, viewModel: MapViewModel) {
     }
 }
 
-@SuppressLint("MissingPermission")
-fun getCurrentLocation(context: Context, onLocationReceived: (Double, Double) -> Unit) {
-    val fusedLocationClient = LocationServices.getFusedLocationProviderClient(context)
-    fusedLocationClient.lastLocation.addOnSuccessListener { location ->
-        if (location != null) {
-            onLocationReceived(location.latitude, location.longitude)
-        }
-    }
-}
+//@SuppressLint("MissingPermission")
+//fun getCurrentLocation(context: Context, onLocationReceived: (Double, Double) -> Unit) {
+//    val fusedLocationClient = LocationServices.getFusedLocationProviderClient(context)
+//    fusedLocationClient.lastLocation.addOnSuccessListener { location ->
+//        if (location != null) {
+//            onLocationReceived(location.latitude, location.longitude)
+//        }
+//    }
+//}
 
 suspend fun CameraPositionState.moveToUserLocation(latitude: Double, longitude: Double) {
     animate(
-        CameraUpdateFactory.newLatLngZoom(LatLng(latitude, longitude), 16f)
+        CameraUpdateFactory.newLatLngZoom(LatLng(latitude, longitude), 12f)
     )
 }
 
+@androidx.annotation.OptIn(UnstableApi::class)
 @Composable
 fun StopNavigationButton(onStopNavigation: () -> Unit) {
     Box(
         modifier = Modifier
-            .padding(16.dp)
             .fillMaxSize(),
+//            .padding(bottom = 100.dp), // Adjusts placement
         contentAlignment = Alignment.BottomCenter
     ) {
         Button(
             onClick = onStopNavigation,
-            colors = ButtonDefaults.buttonColors(containerColor = Color.Red)
+            colors = ButtonDefaults.buttonColors(containerColor = Color.Red),
+            modifier = Modifier.padding(16.dp)
         ) {
-            Text("Stop Navigation", color = Color.White)
+            Icon(Icons.Default.LocationOn, contentDescription = "Stop Navigation", tint = Color.White)
+            Text(" Stop Navigation", color = Color.White) // Added space for better layout
         }
     }
 }

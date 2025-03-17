@@ -14,6 +14,7 @@ loggingInterceptor = "4.12.0"
 mapsCompose = "2.15.0"
 mapsKtx = "3.4.0"
 mapsUtilsKtx = "3.4.0"
+materialIconsExtended = "1.7.8"
 okhttp = "4.12.0"
 playServicesMaps = "19.1.0"
 retrofit = "2.9.0"
@@ -28,6 +29,7 @@ firebaseFirestoreKtx = "25.1.2"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
+androidx-material-icons-extended = { module = "androidx.compose.material:material-icons-extended", version.ref = "materialIconsExtended" }
 androidx-room-compiler = { module = "androidx.room:room-compiler", version.ref = "roomCompiler" }
 androidx-room-runtime = { module = "androidx.room:room-runtime", version.ref = "roomCompiler" }
 coil = { module = "io.coil-kt:coil", version.ref = "coil" }

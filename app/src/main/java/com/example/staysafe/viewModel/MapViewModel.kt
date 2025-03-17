@@ -41,13 +41,25 @@ class MapViewModel
     private val _activities = MutableStateFlow<List<Activity>>(emptyList())
     val activities: StateFlow<List<Activity>> = _activities
 
+    // ! Latest Activity for user
+    private val _latestActivityForUser = MutableStateFlow<Activity?>(null)
+    val latestActivityForUser: StateFlow<Activity?> = _latestActivityForUser
+
+    // ! Latest Activities for users
+    private val _latestActivities = MutableStateFlow<Map<Long, Activity?>>(emptyMap())
+    val latestActivities: StateFlow<Map<Long, Activity?>> = _latestActivities
+
     // ! Locations of user
     private val _locations = MutableStateFlow<List<Location>>(emptyList())
     val locations: StateFlow<List<Location>> = _locations
 
-    // ! Positions for live tracking
+    // ! Positions for Map Routing
     private val _positions = MutableStateFlow<List<Position>>(emptyList())
     val positions: StateFlow<List<Position>> = _positions
+
+    // ! Latest Position for user
+    private val _latestPosition = MutableStateFlow<Position?>(null)
+    val latestPosition: StateFlow<Position?> = _latestPosition
 
     // ! User
     private val _user = MutableStateFlow<List<User>>(emptyList())
@@ -118,9 +130,22 @@ class MapViewModel
         }
     }
 
-    fun fetchActivityByUser(userId: Long) {
+    fun fetchLatestActivityForUser(userId: Long) {
         viewModelScope.launch {
-            repository.getActivityByUser(userId).collect { _activities.value = it }
+            repository.getLatestActivityForUser(userId).collect { activity ->
+                _latestActivityForUser.value = activity
+                Log.d("MapViewModel", "Latest Activity for user $userId: $activity")
+            }
+        }
+    }
+
+    fun fetchLatestActivityForUsers(userId: Long) {
+        viewModelScope.launch {
+            repository.getLatestActivityForUser(userId).collect { activity ->
+                _latestActivities.update { currentActivities ->
+                    currentActivities + (userId to activity) // ✅ Store latest activity per user
+                }
+            }
         }
     }
     // //
@@ -153,9 +178,12 @@ class MapViewModel
         }
     }
 
-    fun fetchPositionByUser(userId: Long) {
+    fun fetchLatestPositionForUser(userId: Long) {
         viewModelScope.launch {
-            repository.getPositionById(userId).collect { _positions.value = it }
+            repository.getLatestPositionForUser(userId).collect { position ->
+                _latestPosition.value = position
+                Log.d("MapViewModel", "Latest position: $position")
+            }
         }
     }
     // //
@@ -228,7 +256,6 @@ class MapViewModel
     @RequiresApi(Build.VERSION_CODES.O)
     @OptIn(UnstableApi::class)
     suspend fun fetchDistanceAndDuration(
-        user: User,
         originLat: Double,
         originLng: Double,
         destLat: Double,
@@ -239,8 +266,8 @@ class MapViewModel
 
         Log.d("RoutesAPI", "Calling URL: $url")
 
-        val friendLon = user.userLongitude
-        val friendLat = user.userLatitude
+        val friendLon = originLat
+        val friendLat = originLng
 
         Log.d("RoutesAPI", "Origin: $friendLat, $friendLon")
         Log.d("RoutesAPI", "Destination: $destLat, $destLng")
