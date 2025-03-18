@@ -16,7 +16,7 @@ interface Service {
     fun getAllActivities(): Call<List<Activity>>
 
     @GET("https://softwarehub.uk/unibase/staysafe/v1/api/activities/{activityID}")
-    fun getActivity(@Path("activityID") id:Long): Call<List<Activity>>
+    fun getActivity(@Path("activityID") id: Long): Call<List<Activity>>
 
     @GET("https://softwarehub.uk/unibase/staysafe/v1/api/activities/users/{activityUserID}")
     fun getUserActivities(@Path("activityUserID") activityUserID: Long): Call<List<Activity>>
@@ -37,17 +37,17 @@ interface Service {
 
     // ! Locations
     @GET("https://softwarehub.uk/unibase/staysafe/v1/api/locations")
-    fun getAllLocations():Call<List<Location>>
+    fun getAllLocations(): Call<List<Location>>
 
     @GET("https://softwarehub.uk/unibase/staysafe/v1/api/locations/{locationID}")
-    fun getLocation(@Path("locationID") id:Long): Call<List<Location>>
+    fun getLocation(@Path("locationID") id: Long): Call<List<Location>>
 
     //Just in case (If you do not want just delete it)
     @POST("https://softwarehub.uk/unibase/staysafe/v1/api/locations")
     fun addLocation(@Body location: Location): Call<List<Location>>
 
     @PUT("https://softwarehub.uk/unibase/staysafe/v1/api/locations/{locationID}")
-    fun updateLocation(@Path("locationID") id: Long) :Call<List<Location>>
+    fun updateLocation(@Path("locationID") id: Long): Call<List<Location>>
 
     @DELETE("https://softwarehub.uk/unibase/staysafe/v1/api/locations/{locationID}")
     fun deleteLocation(@Path("locationID") id: Long): Call<Unit>
@@ -59,7 +59,7 @@ interface Service {
     fun getAllPositions(): Call<List<Position>>
 
     @GET("https://softwarehub.uk/unibase/staysafe/v1/api/positions/{positionID}")
-    fun getPositions(@Path("positionID") id:Long): Call<List<Position>>
+    fun getPositions(@Path("positionID") id: Long): Call<List<Position>>
 
     @GET("https://softwarehub.uk/unibase/staysafe/v1/api/positions/{positionActivityID}")
     fun getActivityPosition(@Path("positionActivityID") id: Long): Call<List<Position>>
@@ -69,7 +69,7 @@ interface Service {
     fun addPositions(@Body position: Position): Call<List<Position>>
 
     @PUT("https://softwarehub.uk/unibase/staysafe/v1/api/positions/{positionID}")
-    fun updatePosition(@Path("positionID") id: Long) :Call<List<Position>>
+    fun updatePosition(@Path("positionID") id: Long): Call<List<Position>>
 
     @DELETE("https://softwarehub.uk/unibase/staysafe/v1/api/positions/{positionID}")
     fun deletePosition(@Path("positionID") id: Long): Call<Unit>
@@ -95,7 +95,7 @@ interface Service {
 
     // ? Update user
     @PUT("https://softwarehub.uk/unibase/staysafe/v1/api/users/{userID}")
-    fun updateUser(@Path("userID") id: Long ): Call<List<User>>
+    fun updateUser(@Path("userID") id: Long): Call<List<User>>
 
     // ? Delete user
     @DELETE("https://softwarehub.uk/unibase/staysafe/v1/api/users/{userID}")
@@ -113,5 +113,5 @@ interface Service {
     @DELETE("https://softwarehub.uk/unibase/staysafe/v1/api/contacts/{contactID}")
     fun deleteContact(@Path("contactID") id: Long): Call<List<Unit>>
 
-    // //
+// //
 }
