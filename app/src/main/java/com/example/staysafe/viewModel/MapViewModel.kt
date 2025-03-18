@@ -195,6 +195,12 @@ class MapViewModel
         Log.d("MapViewModel", "Fetching user contacts for userId: $userId")
         viewModelScope.launch { repository.getContactsForUser(userId).collect { _contacts.value = it } }
     }
+
+    fun searchUsers(query: String) {
+        viewModelScope.launch {
+            // TODO: Search through Usernames, First and Last Names, Phone Numbers
+        }
+    }
     // //
 
     // //
