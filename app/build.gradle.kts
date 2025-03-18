@@ -127,4 +127,7 @@ dependencies {
 
     // Permissions
     implementation(libs.accompanist.permissions)
+
+    //Notification
+    implementation(libs.androidx.core.ktx)
 }

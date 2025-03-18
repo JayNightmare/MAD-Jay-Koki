@@ -73,6 +73,11 @@ class MapViewModel
     private val _loggedInUser = MutableStateFlow<User?>(null)
     val loggedInUser: StateFlow<User?> = _loggedInUser
 
+    // ! SearchQuery
+    private val _searchQuery = MutableStateFlow("");
+    val searchQuery: StateFlow<String> = _searchQuery.asStateFlow()
+
+
     @OptIn(UnstableApi::class)
     fun setLoggedInUser(username: String) {
         Log.d("Flow", "Setting logged in user to: $username")
@@ -198,10 +203,23 @@ class MapViewModel
         }
     }
 
-    fun searchUsers(query: String) {
+    fun setSearchQuery(query: String) {
+        _searchQuery.value = query
+    }
+
+    fun searchContacts(): StateFlow<List<User>> {
         viewModelScope.launch {
             // TODO: Search through Usernames, First and Last Names, Phone Numbers
+            val filteredUser: Flow<List<User>> = combine(contacts, searchQuery) { contacts, query ->
+                contacts.filter { contact ->
+                    contact.userUsername.contains(query, ignoreCase = true)
+                    contact.userFirstname.contains(query, ignoreCase = true)
+                    contact.userLastname.contains(query, ignoreCase = true)
+                    contact.userPhone.contains(query, ignoreCase = true)
+                }
+            }.stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
         }
+        return user
     }
     // //
 
