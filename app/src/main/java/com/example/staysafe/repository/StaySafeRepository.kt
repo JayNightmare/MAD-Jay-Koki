@@ -51,7 +51,8 @@ class StaySafeRepository(
             if (latestActivity != null) {
                 Log.d("StaySafeRepository", "Latest Activity: $latestActivity")
 
-                val positions = service.getActivityPositions(latestActivity.activityID).awaitResponse()
+                val positions =
+                    service.getActivityPositions(latestActivity.activityID).awaitResponse()
                 val latestPosition = positions.body()?.maxByOrNull { it.positionTimestamp }
                 emit(latestPosition)
             } else {
@@ -91,7 +92,11 @@ class StaySafeRepository(
                 println("DEBUG: Received locations: $locations")  // ✅ Log the received locations
                 emit(locations)
             } else {
-                println("DEBUG: API returned error: ${response.errorBody()?.string()}")  // Log API error
+                println(
+                    "DEBUG: API returned error: ${
+                        response.errorBody()?.string()
+                    }"
+                )  // Log API error
                 emit(emptyList()) // Emit an empty list if API fails
             }
         }.catch { e ->
@@ -164,7 +169,7 @@ class StaySafeRepository(
     suspend fun getUserById(id: Long): Flow<List<User>> = flow {
         try {
             val user = service.getUser(id).awaitResponse()
-            user.body()?.let { emit(it) }?:emit(emptyList())
+            user.body()?.let { emit(it) } ?: emit(emptyList())
         } catch (e: Exception) {
             e.printStackTrace()
             emit(emptyList())

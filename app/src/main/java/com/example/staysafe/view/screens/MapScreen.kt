@@ -75,7 +75,9 @@ fun MapScreen(navController: NavController, viewModel: MapViewModel) {
 
     val coroutineScope = rememberCoroutineScope()
 
-    val nightMapStyle = remember { context.resources.openRawResource(R.raw.map_style).bufferedReader().use { it.readText() } }
+    val nightMapStyle = remember {
+        context.resources.openRawResource(R.raw.map_style).bufferedReader().use { it.readText() }
+    }
 
 //    val permissionLauncher = rememberLauncherForActivityResult(
 //        contract = ActivityResultContracts.RequestPermission()
@@ -250,7 +252,8 @@ fun MapScreen(navController: NavController, viewModel: MapViewModel) {
                             }
                         )
                     } else {
-                        val location by viewModel.fetchLocationById(selectedUser!!.userID).collectAsState(initial = null)
+                        val location by viewModel.fetchLocationById(selectedUser!!.userID)
+                            .collectAsState(initial = null)
 
                         UserDetailsSheet(
                             viewModel = viewModel,
@@ -300,7 +303,11 @@ fun StopNavigationButton(onStopNavigation: () -> Unit) {
             colors = ButtonDefaults.buttonColors(containerColor = Color.Red),
             modifier = Modifier.padding(16.dp)
         ) {
-            Icon(Icons.Default.LocationOn, contentDescription = "Stop Navigation", tint = Color.White)
+            Icon(
+                Icons.Default.LocationOn,
+                contentDescription = "Stop Navigation",
+                tint = Color.White
+            )
             Text(" Stop Navigation", color = Color.White) // Added space for better layout
         }
     }

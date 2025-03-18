@@ -44,16 +44,18 @@ fun Navigation() {
 
     val service = retrofit.create(Service::class.java)
 
-    val sharedViewModel: MapViewModel = remember { MapViewModel(
-        repository = StaySafeRepository(
-            service = service
+    val sharedViewModel: MapViewModel = remember {
+        MapViewModel(
+            repository = StaySafeRepository(
+                service = service
+            )
         )
-    )}
+    }
 
     NavHost(
         navController = nav,
         startDestination = Screen.LoginScreen.route
-    ){
+    ) {
         // //
         composable(Screen.LoginScreen.route) {
             LoginScreen(

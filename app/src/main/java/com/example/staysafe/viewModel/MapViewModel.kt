@@ -193,7 +193,9 @@ class MapViewModel
     @OptIn(UnstableApi::class)
     fun fetchUserContacts(userId: Long) {
         Log.d("MapViewModel", "Fetching user contacts for userId: $userId")
-        viewModelScope.launch { repository.getContactsForUser(userId).collect { _contacts.value = it } }
+        viewModelScope.launch {
+            repository.getContactsForUser(userId).collect { _contacts.value = it }
+        }
     }
 
     fun searchUsers(query: String) {
@@ -236,7 +238,8 @@ class MapViewModel
     @OptIn(UnstableApi::class)
     fun fetchRoute(start: LatLng, end: LatLng, apiKey: String, onResult: (List<LatLng>) -> Unit) {
         viewModelScope.launch {
-            val url = "https://maps.googleapis.com/maps/api/directions/json?origin=${start.latitude},${start.longitude}&destination=${end.latitude},${end.longitude}&key=$apiKey"
+            val url =
+                "https://maps.googleapis.com/maps/api/directions/json?origin=${start.latitude},${start.longitude}&destination=${end.latitude},${end.longitude}&key=$apiKey"
             try {
                 val response = withContext(Dispatchers.IO) { URL(url).readText() }
                 val jsonObject = JSONObject(response)

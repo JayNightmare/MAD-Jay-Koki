@@ -59,15 +59,29 @@ fun UserListSheet(
     ) {
         Column {
             Row {
-                Text("Your Friends", fontSize = 20.sp, fontWeight = FontWeight.Bold, color = Color.White)
+                Text(
+                    "Your Friends",
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.White
+                )
                 Spacer(modifier = Modifier.weight(1f))
-                Text("Status", fontSize = 15.sp, fontWeight = FontWeight.Bold, color = Color.White, modifier = Modifier.padding(top = 5.dp, end = 5.dp))
+                Text(
+                    "Status",
+                    fontSize = 15.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.White,
+                    modifier = Modifier.padding(top = 5.dp, end = 5.dp)
+                )
             }
 
             Spacer(modifier = Modifier.height(8.dp))
 
             if (contacts.isEmpty()) {
-                Text("No contacts found", color = Color.White)  // Debugging: Display when user list is empty
+                Text(
+                    "No contacts found",
+                    color = Color.White
+                )  // Debugging: Display when user list is empty
             } else {
                 LazyColumn(
                     modifier = Modifier.fillMaxSize()
@@ -89,7 +103,10 @@ fun UserListSheet(
 
 @Composable
 fun UserListItem(user: User, statusName: String, onClick: () -> Unit) {
-    Row(modifier = Modifier.fillMaxWidth().clickable { onClick() }.padding(12.dp)) {
+    Row(modifier = Modifier
+        .fillMaxWidth()
+        .clickable { onClick() }
+        .padding(12.dp)) {
         // White icon
         Icon(Icons.Default.Person, contentDescription = null, tint = Color.White)
         Spacer(modifier = Modifier.width(8.dp))

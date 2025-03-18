@@ -52,7 +52,8 @@ fun CustomMarker(
             .allowHardware(false)
             .error(R.drawable.avataaars)
             .placeholder(R.drawable.avataaars)
-            .build())
+            .build()
+    )
 
 
     MarkerComposable(
@@ -78,7 +79,9 @@ fun CustomMarker(
             Image(
                 painter = painter,
                 contentDescription = "Profile Image",
-                modifier = Modifier.fillMaxSize().clip(innerShape),
+                modifier = Modifier
+                    .fillMaxSize()
+                    .clip(innerShape),
                 contentScale = ContentScale.Crop
             )
         }

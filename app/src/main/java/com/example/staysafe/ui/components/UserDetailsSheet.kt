@@ -109,7 +109,12 @@ fun UserDetailsSheet(
     ) {
         // * Header
         Row(horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier.fillMaxWidth()) {
-            Text("${user.userFirstname} ${user.userLastname}", fontSize = 22.sp, fontWeight = FontWeight.Bold, color = Color.White)
+            Text(
+                "${user.userFirstname} ${user.userLastname}",
+                fontSize = 22.sp,
+                fontWeight = FontWeight.Bold,
+                color = Color.White
+            )
             IconButton(onClick = onClose) {
                 Icon(Icons.Default.Close, contentDescription = "Close", tint = Color.White)
             }
@@ -126,10 +131,13 @@ fun UserDetailsSheet(
         if (location != null) {
             Text("Destination:", fontSize = 16.sp, color = Color.White)
             Text("Location: ${location.locationName ?: "Unknown"}", color = Color.White)
-            Text("Address: ${location.locationAddress ?: "No address available"}", color = Color.White)
+            Text(
+                "Address: ${location.locationAddress ?: "No address available"}",
+                color = Color.White
+            )
             Spacer(modifier = Modifier.height(12.dp))
 
-            Text("Estimated Travel Time", fontSize = 16.sp,  color = Color.White)
+            Text("Estimated Travel Time", fontSize = 16.sp, color = Color.White)
             Text("$distance • $duration", color = Color.White)
         } else {
             Text("No planned destination", color = Color.Gray)
@@ -140,7 +148,12 @@ fun UserDetailsSheet(
         Spacer(modifier = Modifier.height(16.dp))
 
         if (location != null) {
-            Text("Activity Details", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = Color.White)
+            Text(
+                "Activity Details",
+                fontSize = 18.sp,
+                fontWeight = FontWeight.Bold,
+                color = Color.White
+            )
             Spacer(modifier = Modifier.height(8.dp))
             Text("Name: ${latestActivity?.activityName}", color = Color.White)
             Text("Description: ${latestActivity?.activityDescription}", color = Color.White)
@@ -179,7 +192,12 @@ fun UserDetailsSheet(
                     imageUrl = user.userImageURL,
                     fullName = "${user.userFirstname} ${user.userLastname}",
                     location = friendLatLng,
-                    onClick = { Log.d("CustomMarker", "Clicked on ${user.userFirstname}'s marker") },
+                    onClick = {
+                        Log.d(
+                            "CustomMarker",
+                            "Clicked on ${user.userFirstname}'s marker"
+                        )
+                    },
                     size = 25
                 )
 

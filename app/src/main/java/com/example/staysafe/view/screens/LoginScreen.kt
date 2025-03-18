@@ -29,7 +29,9 @@ fun LoginScreen(navController: NavController, viewModel: MapViewModel) {
     }
 
     Column(
-        modifier = Modifier.fillMaxSize().padding(16.dp),
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp),
         verticalArrangement = Arrangement.Center
     ) {
         Text("Login", style = MaterialTheme.typography.headlineLarge)
@@ -69,7 +71,8 @@ fun LoginScreen(navController: NavController, viewModel: MapViewModel) {
                     viewModel.setLoggedInUser(matchUser.userUsername)
                     navController.navigate("map")
                 } else {
-                    Toast.makeText(context, "Invalid username or password", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(context, "Invalid username or password", Toast.LENGTH_SHORT)
+                        .show()
                 }
             },
             modifier = Modifier.fillMaxWidth()
