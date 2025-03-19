@@ -203,23 +203,27 @@ class MapViewModel
         }
     }
 
+    fun sendCallNotification(userId: Long) {
+        // TODO: Implement notification sending
+        Log.d("MapViewModel", "Sending call notification to user: $userId")
+        // This would typically involve making an API call to your backend
+        // For now, we'll just log it
+    }
+
     fun setSearchQuery(query: String) {
         _searchQuery.value = query
     }
 
     fun searchContacts(): StateFlow<List<User>> {
-        viewModelScope.launch {
-            // TODO: Search through Usernames, First and Last Names, Phone Numbers
-            val filteredUser: Flow<List<User>> = combine(contacts, searchQuery) { contacts, query ->
-                contacts.filter { contact ->
-                    contact.userUsername.contains(query, ignoreCase = true)
-                    contact.userFirstname.contains(query, ignoreCase = true)
-                    contact.userLastname.contains(query, ignoreCase = true)
-                    contact.userPhone.contains(query, ignoreCase = true)
-                }
-            }.stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
-        }
-        return user
+        return combine(contacts, searchQuery) { contacts, query ->
+            if (query.isEmpty()) contacts
+            else contacts.filter { contact ->
+                contact.userUsername.contains(query, ignoreCase = true) ||
+                contact.userFirstname.contains(query, ignoreCase = true) ||
+                contact.userLastname.contains(query, ignoreCase = true) ||
+                contact.userPhone.contains(query, ignoreCase = true)
+            }
+        }.stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
     }
     // //
 

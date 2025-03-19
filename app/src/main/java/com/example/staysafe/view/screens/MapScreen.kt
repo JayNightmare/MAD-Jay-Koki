@@ -37,7 +37,9 @@ import com.example.staysafe.BuildConfig
 import com.example.staysafe.R
 import com.example.staysafe.map.CustomMarker
 import com.example.staysafe.model.data.User
+import com.example.staysafe.ui.components.ActivitySheet
 import com.example.staysafe.ui.components.BottomNavigationBar
+import com.example.staysafe.ui.components.CallUserSheet
 import com.example.staysafe.ui.components.TopNavigationBar
 import com.example.staysafe.ui.components.UserDetailsSheet
 import com.example.staysafe.ui.components.UserListSheet
@@ -62,7 +64,10 @@ fun MapScreen(navController: NavController, viewModel: MapViewModel) {
     var selectedUser by remember { mutableStateOf<User?>(null) }
     val contacts by viewModel.contacts.collectAsState(emptyList())
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-    var showSheet by remember { mutableStateOf(true) }
+
+    var showPeopleSheet by remember { mutableStateOf(false) }
+    var showCallUserDialog by remember { mutableStateOf(false) }
+    var showActivitySheet by remember { mutableStateOf(false) }
 
     val context = LocalContext.current
     var currentDeviceLat by remember { mutableDoubleStateOf(0.0) }
@@ -133,10 +138,19 @@ fun MapScreen(navController: NavController, viewModel: MapViewModel) {
         topBar = { TopNavigationBar() },
         bottomBar = {
             BottomNavigationBar(
+                navController = navController,
                 onPeopleClicked = {
                     selectedUser = null
-                    showSheet = true
-                }
+                    showPeopleSheet = true
+                    showCallUserDialog = false
+                    showActivitySheet = false
+                },
+                onCallClicked = {
+                    showPeopleSheet = true
+                    showCallUserDialog = true
+                    showActivitySheet = false
+                },
+                userId = loggedInUser?.userID ?: 0
             )
         },
         floatingActionButton = {
@@ -166,7 +180,7 @@ fun MapScreen(navController: NavController, viewModel: MapViewModel) {
                             location = latLng,
                             onClick = {
                                 selectedUser = user
-                                showSheet = true
+                                showPeopleSheet = true
                                 coroutineScope.launch {
                                     cameraPositionState.moveToUserLocation(
                                         user.userLatitude, user.userLongitude
@@ -187,7 +201,7 @@ fun MapScreen(navController: NavController, viewModel: MapViewModel) {
 //                                location = latLng,
 //                                onClick = {
 //                                    selectedUser = user
-//                                    showSheet = true
+//                                    showPeopleSheet = true
 //                                    coroutineScope.launch {
 //                                        cameraPositionState.moveToUserLocation(
 //                                            position.positionLatitude,
@@ -210,63 +224,76 @@ fun MapScreen(navController: NavController, viewModel: MapViewModel) {
                 }
             }
 
-            if (showStopNavigationDialog) {
-                AlertDialog(
-                    onDismissRequest = { showStopNavigationDialog = false },
-                    title = { Text("End Navigation") },
-                    text = { Text("Are you sure you want to end the navigation?") },
-                    confirmButton = {
-                        Button(onClick = {
-                            routePoints = emptyList()
-                            showStopNavigationDialog = false
-                        }) {
-                            Text("End Navigation")
-                        }
-                    },
-                    dismissButton = {
-                        Button(onClick = { showStopNavigationDialog = false }) {
-                            Text("Cancel")
-                        }
-                    }
-                )
-            }
-
-            if (showSheet) {
+            if (showPeopleSheet) {
                 ModalBottomSheet(
-                    onDismissRequest = { showSheet = false },
+                    onDismissRequest = {
+                        showPeopleSheet = false
+                        showCallUserDialog = false
+                    },
                     sheetState = sheetState,
                     containerColor = Color.Black
                 ) {
-                    if (selectedUser == null) {
-                        UserListSheet(
+                    if (showCallUserDialog) {
+                        CallUserSheet(
+                            contacts = contacts,
                             viewModel = viewModel,
-                            onUserSelected = { user ->
-                                selectedUser = user
-                                showSheet = true
-                                coroutineScope.launch {
-                                    cameraPositionState.moveToUserLocation(
-                                        user.userLatitude ?: 0.0,
-                                        user.userLongitude ?: 0.0
-                                    )
-                                }
-                            }
                         )
                     } else {
-                        val location by viewModel.fetchLocationById(selectedUser!!.userID)
-                            .collectAsState(initial = null)
+                        if (selectedUser == null) {
+                            UserListSheet(
+                                viewModel = viewModel,
+                                onUserSelected = { user ->
+                                    selectedUser = user
+                                    showPeopleSheet = true
+                                    coroutineScope.launch {
+                                        cameraPositionState.moveToUserLocation(
+                                            user.userLatitude ?: 0.0,
+                                            user.userLongitude ?: 0.0
+                                        )
+                                    }
+                                }
+                            )
+                        } else {
+                            val location by viewModel.fetchLocationById(selectedUser!!.userID)
+                                .collectAsState(initial = null)
 
-                        UserDetailsSheet(
-                            viewModel = viewModel,
-                            user = selectedUser!!,
-                            location = location,
-                            userLat = currentDeviceLat,
-                            userLon = currentDeviceLon,
-                            apiKey = BuildConfig.MAP_API_GOOGLE,
-                            onClose = { selectedUser = null },
-                            mapStyle = nightMapStyle,
-                            onRoutePlotted = { route -> routePoints = route }
-                        )
+                            UserDetailsSheet(
+                                viewModel = viewModel,
+                                user = selectedUser!!,
+                                location = location,
+                                userLat = 0.0,
+                                userLon = 0.0,
+                                apiKey = BuildConfig.MAP_API_GOOGLE,
+                                onClose = { selectedUser = null },
+                                mapStyle = nightMapStyle,
+                                onRoutePlotted = { route -> routePoints = route },
+
+                                onActivityClicked = {
+                                    showPeopleSheet = false
+                                    showCallUserDialog = false
+                                    showActivitySheet = true
+                                }
+                            )
+                        }
                     }
+                }
+            }
+
+            if (showActivitySheet) {
+                ModalBottomSheet(
+                    onDismissRequest = { showActivitySheet = false },
+                    sheetState = sheetState,
+                    containerColor = Color.Black
+                ) {
+                    ActivitySheet(
+                        viewModel = viewModel,
+                        userId = selectedUser?.userID ?: 0,
+
+                        onClose = {
+                            showActivitySheet = false
+                            showPeopleSheet = true
+                        }
+                    )
                 }
             }
         }

@@ -10,13 +10,15 @@ import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
-
-// import androidx.navigation.NavController
+import androidx.navigation.NavController
+import com.example.staysafe.nav.Screen
 
 @Composable
 fun BottomNavigationBar(
-//    navController: NavController,
-    onPeopleClicked: () -> Unit
+    navController: NavController,
+    onPeopleClicked: () -> Unit,
+    onCallClicked: () -> Unit,
+    userId: Long
 ) {
     NavigationBar(
         containerColor = Color.Black,
@@ -31,7 +33,7 @@ fun BottomNavigationBar(
             icon = { Icon(Icons.Outlined.Call, contentDescription = "Call", tint = Color.White) },
             label = { Text("Call", color = Color.White) },
             selected = false,
-            onClick = { /* TODO: Navigate to Call Screen */ }
+            onClick = { onCallClicked() }
         )
         NavigationBarItem(
             icon = {

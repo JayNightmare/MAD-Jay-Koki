@@ -6,9 +6,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.navigation.compose.*
 import com.example.staysafe.API.Service
-import com.example.staysafe.view.screens.MapScreen
+import com.example.staysafe.view.screens.*
 import com.example.staysafe.repository.StaySafeRepository
-import com.example.staysafe.view.screens.LoginScreen
 import com.example.staysafe.viewModel.MapViewModel
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
@@ -20,7 +19,6 @@ import java.util.concurrent.TimeUnit
 @Composable
 fun Navigation() {
     val nav = rememberNavController()
-    val repository: StaySafeRepository
 
     // Debugging purposes
     // * ✅ Add Logging Interceptor
@@ -70,6 +68,19 @@ fun Navigation() {
                 viewModel = sharedViewModel
             )
         }
+        // //
+//        composable(
+//            route = Screen.CallUserScreen.route,
+//            arguments = listOf(
+//                navArgument("userId") { type = NavType.LongType }
+//            )
+//        ) { backStackEntry ->
+//            val userId = backStackEntry.arguments?.getLong("userId") ?: return@composable
+//            CallUserScreen(
+//                viewModel = sharedViewModel,
+//                userID = userId
+//            )
+//        }
         // //
     }
 }

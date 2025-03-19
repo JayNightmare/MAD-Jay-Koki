@@ -20,6 +20,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.net.toUri
 import androidx.media3.common.util.Log
 import androidx.media3.common.util.UnstableApi
 import com.example.staysafe.map.CustomMarker
@@ -46,7 +47,8 @@ fun UserDetailsSheet(
     apiKey: String,
     onClose: () -> Unit,
     mapStyle: String,
-    onRoutePlotted: (List<LatLng>) -> Unit
+    onRoutePlotted: (List<LatLng>) -> Unit,
+    onActivityClicked: () -> Unit,
 ) {
     var distance by remember { mutableStateOf("Calculating...") }
     var duration by remember { mutableStateOf("Calculating...") }
@@ -54,9 +56,9 @@ fun UserDetailsSheet(
 
     val cameraPositionState = rememberCameraPositionState()
     val coroutineScope = rememberCoroutineScope()
+    val context = LocalContext.current
 
     val friendLatLng = LatLng(user.userLatitude!!, user.userLongitude!!)
-    val latestActivity by viewModel.latestActivityForUser.collectAsState()
 
     LaunchedEffect(user.userID, user.userLatitude, user.userLongitude, location, apiKey) {
         viewModel.fetchLatestActivityForUser(user.userID)
@@ -144,26 +146,8 @@ fun UserDetailsSheet(
         }
 
         Spacer(modifier = Modifier.height(16.dp))
-        HorizontalDivider(color = Color.White, thickness = 1.dp)
-        Spacer(modifier = Modifier.height(16.dp))
 
         if (location != null) {
-            Text(
-                "Activity Details",
-                fontSize = 18.sp,
-                fontWeight = FontWeight.Bold,
-                color = Color.White
-            )
-            Spacer(modifier = Modifier.height(8.dp))
-            Text("Name: ${latestActivity?.activityName}", color = Color.White)
-            Text("Description: ${latestActivity?.activityDescription}", color = Color.White)
-            Text("From: ${latestActivity?.activityFromName}", color = Color.White)
-            Text("To: ${latestActivity?.activityToName}", color = Color.White)
-            Text("Arrive: ${latestActivity?.activityArrive}", color = Color.White)
-            Text("Status: ${latestActivity?.activityStatusName}", color = Color.White)
-
-            Spacer(modifier = Modifier.height(8.dp))
-
             Text("Route Preview", fontSize = 16.sp, color = Color.White)
 
             Spacer(modifier = Modifier.height(8.dp))
@@ -212,9 +196,27 @@ fun UserDetailsSheet(
             Spacer(modifier = Modifier.height(12.dp))
         }
 
+        Button(
+            onClick = { onActivityClicked() }, // Switches sheet
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Text("View Activity")
+        }
+
+        Spacer(modifier = Modifier.height(8.dp))
+        HorizontalDivider(color = Color.White, thickness = 1.dp)
+        Spacer(modifier = Modifier.height(16.dp))
+
         // * Contact and Directions Buttons
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
-            ContactButton()
+            ContactButton(
+                onCallClick = {
+                    val intent = Intent(Intent.ACTION_DIAL).apply {
+                        data = "tel:${user.userPhone}".toUri()
+                    }
+                    context.startActivity(intent)
+                }
+            )
             DirectionsButton(
                 viewModel = viewModel,
                 userLat = userLat,
@@ -233,8 +235,8 @@ fun UserDetailsSheet(
 }
 
 @Composable
-fun ContactButton() {
-    Button(onClick = { /* Open contact */ }) {
+fun ContactButton(onCallClick: () -> Unit) {
+    Button(onClick = { onCallClick() }) {
         Icon(Icons.Default.Call, contentDescription = "Contact")
         Spacer(modifier = Modifier.width(8.dp))
         Text("Contact")

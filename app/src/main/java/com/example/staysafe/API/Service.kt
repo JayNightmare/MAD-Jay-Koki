@@ -1,6 +1,5 @@
 package com.example.staysafe.API
 
-import androidx.room.Delete
 import com.example.staysafe.model.data.*
 import retrofit2.*
 import retrofit2.http.Body
