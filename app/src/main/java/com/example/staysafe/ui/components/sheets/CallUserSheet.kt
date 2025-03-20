@@ -1,7 +1,6 @@
-package com.example.staysafe.ui.components
+package com.example.staysafe.ui.components.sheets
 
 import android.content.Intent
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -14,11 +13,10 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.example.staysafe.model.data.Status
 import com.example.staysafe.viewModel.MapViewModel
 import androidx.core.net.toUri
 import com.example.staysafe.model.data.User
-import kotlin.text.get
+import com.example.staysafe.ui.components.StatusIcon
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -44,25 +42,31 @@ fun CallUserSheet(
             modifier = Modifier.padding(bottom = 16.dp)
         )
 
-        LazyColumn(
-            modifier = Modifier.fillMaxWidth(),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            items(contacts) { contact ->
-                val userActivity = latestActivities[contact.userID]
+        if (contacts.isEmpty()) {
+            Text(
+                "No contacts found",
+                color = Color.White
+            )
+        } else {
+            LazyColumn(
+                modifier = Modifier.fillMaxWidth(),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                items(contacts) { contact ->
+                    val userActivity = latestActivities[contact.userID]
 
-                ContactItem(
-                    contact = contact,
-                    viewModel = viewModel,
-                    onCallClick = {
-//                        onCallUser(contact)
-                        val intent = Intent(Intent.ACTION_DIAL).apply {
-                            data = "tel:${contact.userPhone}".toUri()
-                        }
-                        context.startActivity(intent)
-                    },
-                    statusName = userActivity?.activityStatusName ?: "Unknown"
-                )
+                    ContactItem(
+                        contact = contact,
+                        viewModel = viewModel,
+                        onCallClick = {
+                            val intent = Intent(Intent.ACTION_DIAL).apply {
+                                data = "tel:${contact.userPhone}".toUri()
+                            }
+                            context.startActivity(intent)
+                        },
+                        statusName = userActivity?.activityStatusName ?: "Unknown"
+                    )
+                }
             }
         }
     }

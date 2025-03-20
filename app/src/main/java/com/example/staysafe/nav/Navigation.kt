@@ -1,5 +1,6 @@
 package com.example.staysafe.nav
 
+import RegisterUserScreen
 import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.compose.runtime.Composable
@@ -23,15 +24,15 @@ fun Navigation() {
     // Debugging purposes
     // * ✅ Add Logging Interceptor
     val loggingInterceptor = HttpLoggingInterceptor().apply {
-        level = HttpLoggingInterceptor.Level.BODY  // Logs request & response body
+        level = HttpLoggingInterceptor.Level.BODY
     }
 
     // * ✅ Create OkHttpClient with Logging
     val client = OkHttpClient.Builder()
-        .connectTimeout(30, TimeUnit.SECONDS)  // Timeout settings
+        .connectTimeout(30, TimeUnit.SECONDS)
         .readTimeout(30, TimeUnit.SECONDS)
         .writeTimeout(30, TimeUnit.SECONDS)
-        .addInterceptor(loggingInterceptor)  // Attach logging interceptor
+        .addInterceptor(loggingInterceptor)
         .build()
 
     val retrofit = Retrofit.Builder()
@@ -69,18 +70,18 @@ fun Navigation() {
             )
         }
         // //
-//        composable(
-//            route = Screen.CallUserScreen.route,
-//            arguments = listOf(
-//                navArgument("userId") { type = NavType.LongType }
-//            )
-//        ) { backStackEntry ->
-//            val userId = backStackEntry.arguments?.getLong("userId") ?: return@composable
-//            CallUserScreen(
-//                viewModel = sharedViewModel,
-//                userID = userId
-//            )
-//        }
+        composable(Screen.RegisterUserScreen.route) {
+            RegisterUserScreen(
+                navController = nav,
+                viewModel = sharedViewModel
+            )
+        }
         // //
+        composable(Screen.AddUserScreen.route) {
+            AddUserScreen(
+                navController = nav,
+                viewModel = sharedViewModel
+            )
+        }
     }
 }

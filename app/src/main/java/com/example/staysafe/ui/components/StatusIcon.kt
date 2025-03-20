@@ -15,16 +15,16 @@ fun StatusIcon(statusName: String) {
         "Paused" -> Icons.Default.Pause
         "Cancelled" -> Icons.Default.Clear
         "Completed" -> Icons.Default.Check
-        else -> Icons.AutoMirrored.Filled.Help
+        else -> Icons.Default.HorizontalRule
     }
 
     val color = when (statusName) {
         "Planned" -> Color.White
         "Started" -> Color.Yellow
         "Paused" -> Color.Gray
-        "Cancelled" -> Color.Gray
+        "Cancelled" -> Color.Red
         "Completed" -> Color.Green
-        else -> Color.White
+        else -> Color.Gray
     }
 
     Icon(icon, contentDescription = statusName, tint = color)

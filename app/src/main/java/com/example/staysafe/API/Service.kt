@@ -90,7 +90,7 @@ interface Service {
 
     // ? Insert user
     @POST("https://softwarehub.uk/unibase/staysafe/v1/api/users")
-    fun addUsers(@Body user: User): Call<List<User>>
+    fun addUser(@Body user: User): Call<List<User>>
 
     // ? Update user
     @PUT("https://softwarehub.uk/unibase/staysafe/v1/api/users/{userID}")

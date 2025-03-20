@@ -1,4 +1,4 @@
-package com.example.staysafe.ui.components
+package com.example.staysafe.ui.components.sheets
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.verticalScroll

@@ -1,4 +1,4 @@
-package com.example.staysafe.ui.components
+package com.example.staysafe.ui.components.sheets
 
 import android.util.Log
 import androidx.compose.foundation.clickable
@@ -6,7 +6,6 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
@@ -21,6 +20,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.staysafe.model.data.*
+import com.example.staysafe.ui.components.StatusIcon
 import com.example.staysafe.viewModel.MapViewModel
 
 @Composable
@@ -54,7 +54,7 @@ fun UserListSheet(
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .heightIn(max = 400.dp) // Set max height to enable scrolling
+            .heightIn(max = 400.dp)
             .padding(16.dp)
     ) {
         Column {

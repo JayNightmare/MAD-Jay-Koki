@@ -7,7 +7,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.LocationOn
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -37,12 +36,12 @@ import com.example.staysafe.BuildConfig
 import com.example.staysafe.R
 import com.example.staysafe.map.CustomMarker
 import com.example.staysafe.model.data.User
-import com.example.staysafe.ui.components.ActivitySheet
+import com.example.staysafe.ui.components.sheets.ActivitySheet
 import com.example.staysafe.ui.components.BottomNavigationBar
-import com.example.staysafe.ui.components.CallUserSheet
+import com.example.staysafe.ui.components.sheets.CallUserSheet
 import com.example.staysafe.ui.components.TopNavigationBar
-import com.example.staysafe.ui.components.UserDetailsSheet
-import com.example.staysafe.ui.components.UserListSheet
+import com.example.staysafe.ui.components.sheets.UserDetailsSheet
+import com.example.staysafe.ui.components.sheets.UserListSheet
 import com.example.staysafe.viewModel.MapViewModel
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.model.CameraPosition

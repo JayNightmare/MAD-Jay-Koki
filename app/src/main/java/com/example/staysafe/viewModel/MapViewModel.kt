@@ -125,6 +125,40 @@ class MapViewModel
             }
         }
     }
+
+    fun createUser(
+        firstName: String,
+        lastName: String,
+        phone: String,
+        username: String,
+        password: String,
+        userLatitude: Double?,
+        userLongitude: Double?
+    ): User? {
+        val existingUser = _user.value.find { it.userUsername == username }
+        if (existingUser != null) return null
+
+        val newUser = User(
+            userID = (_user.value.maxOfOrNull { it.userID } ?: 0) + 1L,
+            userFirstname = firstName,
+            userLastname = lastName,
+            userPhone = phone,
+            userUsername = username,
+            userPassword = password,
+            userLatitude = userLatitude,
+            userLongitude = userLongitude,
+            userTimestamp = System.currentTimeMillis(),
+            userImageURL = "https://avatar.iran.liara.run/public"
+        )
+
+        _user.value += newUser
+
+        viewModelScope.launch {
+            repository.addUser(newUser).collect()
+        }
+
+        return newUser
+    }
     // //
 
     // //

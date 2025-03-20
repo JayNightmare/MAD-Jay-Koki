@@ -1,4 +1,4 @@
-package com.example.staysafe.ui.components
+package com.example.staysafe.ui.components.sheets
 
 import android.content.Intent
 import android.net.Uri

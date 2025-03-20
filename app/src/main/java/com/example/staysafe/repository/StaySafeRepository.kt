@@ -175,6 +175,24 @@ class StaySafeRepository(
             emit(emptyList())
         }
     }
+
+    suspend fun addUser(user: User): Flow<Any> = flow {
+        try {
+            val response = service.addUser(user).awaitResponse()
+            Log.d("addUser", "Response: $response")
+
+            if (response.isSuccessful) {
+                response.body()?.let { emit(it) } ?: emit(user)
+            } else {
+                Log.e("addUser", "Error adding user: ${response.errorBody()?.string()}")
+                emit(user)
+            }
+        } catch (e: Exception) {
+            Log.e("addUser", "Exception: ${e.message}")
+            e.printStackTrace()
+            emit(user)
+        }
+    }.flowOn(Dispatchers.IO)
     // //
 
     // //
