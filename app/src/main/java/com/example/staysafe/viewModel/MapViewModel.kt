@@ -17,8 +17,11 @@ import kotlinx.coroutines.withContext
 import org.json.JSONObject
 import java.net.HttpURLConnection
 import java.net.URL
+import java.text.SimpleDateFormat
 import java.time.Duration
 import java.time.Instant
+import java.util.Date
+import java.util.Locale
 
 @OptIn(UnstableApi::class)
 class MapViewModel
@@ -32,6 +35,9 @@ class MapViewModel
     // ! Contacts (Only show users in the Contact Table)
     private val _contacts = MutableStateFlow<List<User>>(emptyList())
     val contacts: StateFlow<List<User>> = _contacts
+
+    private val _contact = MutableStateFlow<List<Contact>>(emptyList())
+    val contact: StateFlow<List<Contact>> = _contact
 
     // ! Status of user (planned, active, completed)
     private val _userStatus = MutableStateFlow<Status?>(null)
@@ -237,11 +243,56 @@ class MapViewModel
         }
     }
 
+    fun addContact(username: String, phone: String, label: String = "Friend") {
+        viewModelScope.launch {
+            repository.getAllUsers().collect { users ->
+                val matchingUser = users.find { it.userUsername == username && it.userPhone == phone }
+
+                if (matchingUser != null) {
+                    val loggedInUserId = _loggedInUser.value?.userID ?: return@collect
+
+                    val existingContact = _contact.value.find {
+                        it.contactContactID == matchingUser.userID && it.contactUserID == loggedInUserId
+                    }
+
+                    if (existingContact != null) {
+                        Log.e("addContact", "❌ User is already in your contacts!")
+                        return@collect
+                    }
+
+                    Log.d("addContact", "✅ User found! Adding to contacts...")
+
+                    val newContactID = (_contact.value.maxOfOrNull { it.contactID } ?: 0) + 1L
+
+                    val dateFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX", Locale.getDefault())
+                    val formattedDate = dateFormat.format(Date())
+
+                    val newContact = Contact(
+                        contactID = newContactID,
+                        contactUserID = loggedInUserId,
+                        contactContactID = matchingUser.userID,
+                        contactLabel = label,
+                        contactDateCreated = formattedDate
+                    )
+
+                    repository.addContact(newContact).collect { response ->
+                        if (response != null) {
+                            Log.d("addContact", "✅ Contact added successfully!")
+                            _contact.value += response
+                        } else {
+                            Log.e("addContact", "❌ Failed to add contact!")
+                        }
+                    }
+                } else {
+                    Log.e("addContact", "❌ User not found!")
+                }
+            }
+        }
+    }
+
     fun sendCallNotification(userId: Long) {
         // TODO: Implement notification sending
         Log.d("MapViewModel", "Sending call notification to user: $userId")
-        // This would typically involve making an API call to your backend
-        // For now, we'll just log it
     }
 
     fun setSearchQuery(query: String) {

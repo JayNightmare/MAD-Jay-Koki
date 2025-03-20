@@ -101,7 +101,7 @@ interface Service {
     fun deleteUser(@Path("userID") id: Long): Call<Unit>
 
     @GET("https://softwarehub.uk/unibase/staysafe/v1/api/users/contacts/{userID}")
-    fun getUserContact(@Path("userID") userID: Long): Call<List<ContactUser>>
+    fun getUserContact(@Path("userID") userID: Long): Call<List<User>>
 
     // //
 

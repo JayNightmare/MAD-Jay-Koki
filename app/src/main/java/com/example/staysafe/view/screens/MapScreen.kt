@@ -134,7 +134,7 @@ fun MapScreen(navController: NavController, viewModel: MapViewModel) {
     }
 
     Scaffold(
-        topBar = { TopNavigationBar() },
+        topBar = { TopNavigationBar(navController = navController) },
         bottomBar = {
             BottomNavigationBar(
                 navController = navController,

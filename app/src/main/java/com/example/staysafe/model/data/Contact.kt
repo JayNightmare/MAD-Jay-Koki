@@ -7,5 +7,5 @@ data class Contact(
     @SerializedName("ContactUserID") val contactUserID: Long,
     @SerializedName("ContactContactID") val contactContactID: Long,
     @SerializedName("ContactLabel") val contactLabel: String,
-    @SerializedName("ContactDatecreated") val contactDateCreated: Long
+    @SerializedName("ContactDatecreated") val contactDateCreated: String
 )

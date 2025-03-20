@@ -77,8 +77,8 @@ fun Navigation() {
             )
         }
         // //
-        composable(Screen.AddUserScreen.route) {
-            AddUserScreen(
+        composable(Screen.AddScreen.route) {
+            AddScreen(
                 navController = nav,
                 viewModel = sharedViewModel
             )

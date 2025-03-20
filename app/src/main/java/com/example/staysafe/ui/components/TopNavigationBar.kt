@@ -10,10 +10,13 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
+import androidx.navigation.NavController
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun TopNavigationBar() {
+fun TopNavigationBar(
+    navController: NavController,
+) {
     TopAppBar(
         title = { /* Empty title to focus on icons */ },
         navigationIcon = {
@@ -22,7 +25,7 @@ fun TopNavigationBar() {
             }
         },
         actions = {
-            IconButton(onClick = { /* TODO: Implement add new marker functionality */ }) {
+            IconButton(onClick = { navController.navigate("add") }) {
                 Icon(Icons.Default.Add, contentDescription = "Add", tint = Color.White)
             }
         },

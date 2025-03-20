@@ -207,6 +207,24 @@ class StaySafeRepository(
 //        }
 //    }
 
+    suspend fun addContact(contact: Contact): Flow<Contact?> = flow {
+        try {
+            val response = service.addContact(contact).awaitResponse()
+
+            if (response.isSuccessful) {
+                response.body()?.let { emit(it.firstOrNull()) } ?: emit(null)
+            } else {
+                Log.e("addContact", "❌ Error adding contact: ${response.errorBody()?.string()}")
+                emit(null)
+            }
+        } catch (e: Exception) {
+            Log.e("addContact", "❌ Exception: ${e.message}")
+            e.printStackTrace()
+            emit(null)
+        }
+    }.flowOn(Dispatchers.IO)
+
+
     suspend fun getContactsForUser(userId: Long): Flow<List<User>> = flow {
         try {
             Log.d("MapViewModel", "Fetching user contacts for userId: $userId")
