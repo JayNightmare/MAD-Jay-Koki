@@ -24,6 +24,7 @@ import androidx.core.net.toUri
 import androidx.media3.common.util.Log
 import androidx.media3.common.util.UnstableApi
 import com.example.staysafe.map.CustomMarker
+import com.example.staysafe.model.data.Activity
 import com.example.staysafe.model.data.Location
 import com.example.staysafe.model.data.User
 import com.example.staysafe.viewModel.MapViewModel
@@ -50,20 +51,27 @@ fun UserDetailsSheet(
     onRoutePlotted: (List<LatLng>) -> Unit,
     onActivityClicked: () -> Unit,
 ) {
+    var latestActivity by remember { mutableStateOf<Activity?>(null) }
+    var routePoints by remember { mutableStateOf<List<LatLng>>(emptyList()) }
     var distance by remember { mutableStateOf("Calculating...") }
     var duration by remember { mutableStateOf("Calculating...") }
-    var routePoints by remember { mutableStateOf<List<LatLng>>(emptyList()) }
-
-    val cameraPositionState = rememberCameraPositionState()
     val coroutineScope = rememberCoroutineScope()
+    val cameraPositionState = rememberCameraPositionState()
     val context = LocalContext.current
 
     val friendLatLng = LatLng(user.userLatitude!!, user.userLongitude!!)
 
-    LaunchedEffect(user.userID, user.userLatitude, user.userLongitude, location, apiKey) {
+    // **Fetch latest activity for the friend**
+    LaunchedEffect(user.userID) {
         viewModel.fetchLatestActivityForUser(user.userID)
+    }
 
-        if (location != null) {
+    // **Observe latest activity from ViewModel**
+    latestActivity = viewModel.latestActivityForUser.collectAsState().value
+
+    // **If an active activity exists, fetch route**
+    LaunchedEffect(latestActivity) {
+        if (latestActivity != null && location != null) {
             val result = viewModel.fetchDistanceAndDuration(
                 originLat = user.userLatitude,
                 originLng = user.userLongitude,
@@ -122,7 +130,7 @@ fun UserDetailsSheet(
             }
         }
 
-        Text("User Information:", fontSize = 16.sp, color = Color.White)
+        Text("User Information:", fontSize = 16.sp, fontWeight = FontWeight.Bold, color = Color.White)
         Text("Username: ${user.userUsername}", color = Color.White)
         Text("Phone: ${user.userPhone}", color = Color.White)
 
@@ -130,77 +138,55 @@ fun UserDetailsSheet(
         HorizontalDivider(color = Color.White, thickness = 1.dp)
         Spacer(modifier = Modifier.height(12.dp))
 
-        if (location != null) {
-            Text("Destination:", fontSize = 16.sp, color = Color.White)
-            Text("Location: ${location.locationName ?: "Unknown"}", color = Color.White)
-            Text(
-                "Address: ${location.locationAddress ?: "No address available"}",
-                color = Color.White
-            )
+        // **Only show the route preview if the user has an ongoing activity**
+        if (latestActivity != null) {
+            Text("Active Activity:", fontSize = 16.sp, fontWeight = FontWeight.Bold, color = Color.White)
+            Text("Activity Name: ${latestActivity?.activityName}", color = Color.White)
+            Text("From: ${latestActivity?.activityFromName}", color = Color.White)
+            Text("To: ${latestActivity?.activityToName}", color = Color.White)
+            Text("Status: ${latestActivity?.activityStatusName}", color = Color.White)
             Spacer(modifier = Modifier.height(12.dp))
 
-            Text("Estimated Travel Time", fontSize = 16.sp, color = Color.White)
-            Text("$distance • $duration", color = Color.White)
-        } else {
-            Text("No planned destination", color = Color.Gray)
-        }
+            if (routePoints.isNotEmpty()) {
+                Text("Route Preview", fontSize = 16.sp, color = Color.White)
 
-        Spacer(modifier = Modifier.height(16.dp))
+                Spacer(modifier = Modifier.height(8.dp))
+                Text("Use 2 fingers to interact with the map", color = Color.Gray)
 
-        if (location != null) {
-            Text("Route Preview", fontSize = 16.sp, color = Color.White)
+                GoogleMap(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(350.dp),
+                    cameraPositionState = cameraPositionState,
+                    properties = MapProperties(
+                        mapStyleOptions = MapStyleOptions(mapStyle)
+                    )
+                ) {
+                    // **Draw route on the map**
+                    Polyline(points = routePoints, color = Color.Blue, width = 8f)
 
-            Spacer(modifier = Modifier.height(8.dp))
-
-            Text("Use 2 fingers to interact with the map", color = Color.Gray)
-
-            GoogleMap(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(350.dp),
-                cameraPositionState = cameraPositionState,
-                properties = MapProperties(
-                    mapStyleOptions = MapStyleOptions(mapStyle)
-                )
-            ) {
-                // Draw the route in Orange
-                if (routePoints.isNotEmpty()) {
-                    Polyline(
-                        points = routePoints,
-                        color = Color(255, 165, 0),
-                        width = 8f
+                    CustomMarker(
+                        imageUrl = user.userImageURL,
+                        fullName = "${user.userFirstname} ${user.userLastname}",
+                        location = friendLatLng,
+                        onClick = { Log.d("CustomMarker", "Clicked on ${user.userFirstname}") },
+                        size = 25
                     )
                 }
-
-                CustomMarker(
-                    imageUrl = user.userImageURL,
-                    fullName = "${user.userFirstname} ${user.userLastname}",
-                    location = friendLatLng,
-                    onClick = {
-                        Log.d(
-                            "CustomMarker",
-                            "Clicked on ${user.userFirstname}'s marker"
-                        )
-                    },
-                    size = 25
-                )
-
-//                if (location != null) {
-//                    Marker(
-//                        state = rememberMarkerState(position = LatLng(location.locationLatitude, location.locationLongitude)),
-//                        title = "Destination: ${location.locationName}"
-//                    )
-//                }
             }
 
             Spacer(modifier = Modifier.height(12.dp))
+        } else {
+            Text("No Active Activity", color = Color.Gray)
         }
+
+        Spacer(modifier = Modifier.height(8.dp))
 
         Button(
             onClick = { onActivityClicked() }, // Switches sheet
             modifier = Modifier.fillMaxWidth()
         ) {
-            Text("View Activity")
+            Text("View All Activity")
         }
 
         Spacer(modifier = Modifier.height(8.dp))
@@ -233,6 +219,7 @@ fun UserDetailsSheet(
         Spacer(modifier = Modifier.height(16.dp))
     }
 }
+
 
 @Composable
 fun ContactButton(onCallClick: () -> Unit) {

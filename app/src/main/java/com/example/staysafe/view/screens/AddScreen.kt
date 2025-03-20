@@ -54,7 +54,7 @@ fun AddScreen(navController: NavController, viewModel: MapViewModel) {
 
         when (selectedTab) {
             0 -> AddContactForm(viewModel) { navController.popBackStack() }
-            1 -> AddActivityForm(viewModel)
+            1 -> AddActivityForm(viewModel) { navController.popBackStack() }
         }
     }
 }

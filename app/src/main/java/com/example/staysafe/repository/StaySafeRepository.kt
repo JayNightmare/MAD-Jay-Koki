@@ -3,14 +3,18 @@ package com.example.staysafe.repository
 import android.util.Log
 import com.example.staysafe.API.Service
 import com.example.staysafe.model.data.*
+import com.google.android.gms.maps.model.LatLng
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.withContext
+import org.json.JSONObject
 import retrofit2.await
 import retrofit2.awaitResponse
+import java.net.URL
 
 class StaySafeRepository(
     private val service: Service
@@ -64,6 +68,40 @@ class StaySafeRepository(
         }
     }.flowOn(Dispatchers.IO)
 
+    suspend fun getActivitiesForUser(userId: Long): Flow<List<Activity>> = flow {
+        try {
+            val response = service.getUserActivities(userId).awaitResponse()
+
+            if (response.isSuccessful) {
+                response.body()?.let { emit(it) } ?: emit(emptyList())
+            } else {
+                Log.e("getActivitiesForUser", "❌ Error fetching activities: ${response.errorBody()?.string()}")
+                emit(emptyList())
+            }
+        } catch (e: Exception) {
+            Log.e("getActivitiesForUser", "❌ Exception: ${e.message}")
+            e.printStackTrace()
+            emit(emptyList())
+        }
+    }.flowOn(Dispatchers.IO)
+
+    suspend fun addActivity(activity: Activity): Flow<Activity?> = flow {
+        try {
+            val response = service.addActivities(activity).awaitResponse()
+
+            if (response.isSuccessful) {
+                response.body()?.let { emit(it.firstOrNull()) } ?: emit(null)
+                Log.d("addActivity", "✅ Activity added successfully! Response: $response")
+            } else {
+                Log.e("addActivity", "❌ Error adding activity: ${response.errorBody()?.string()}")
+                emit(null)
+            }
+        } catch (e: Exception) {
+            Log.e("addActivity", "❌ Exception: ${e.message}")
+            e.printStackTrace()
+            emit(null)
+        }
+    }.flowOn(Dispatchers.IO)
     // //
 
     // //
