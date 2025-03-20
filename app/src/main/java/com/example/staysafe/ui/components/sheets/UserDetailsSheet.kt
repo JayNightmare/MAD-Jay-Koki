@@ -145,9 +145,10 @@ fun UserDetailsSheet(
             Text("From: ${latestActivity?.activityFromName}", color = Color.White)
             Text("To: ${latestActivity?.activityToName}", color = Color.White)
             Text("Status: ${latestActivity?.activityStatusName}", color = Color.White)
-            Spacer(modifier = Modifier.height(12.dp))
 
             if (routePoints.isNotEmpty()) {
+                Spacer(modifier = Modifier.height(12.dp))
+
                 Text("Route Preview", fontSize = 16.sp, color = Color.White)
 
                 Spacer(modifier = Modifier.height(8.dp))
