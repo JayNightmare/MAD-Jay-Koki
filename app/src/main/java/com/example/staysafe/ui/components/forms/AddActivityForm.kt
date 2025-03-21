@@ -96,14 +96,13 @@ fun AddActivityForm(viewModel: MapViewModel, onClose: () -> Unit) {
             )
         )
 
-        Spacer(modifier = Modifier.height(8.dp))
+        Spacer(modifier = Modifier.height(20.dp))
 
         Text("Starting Location", color = Color.White, style = MaterialTheme.typography.titleSmall)
         OutlinedTextField(
             value = startPostCode,
             onValueChange = { startPostCode = it },
             label = { Text("Post Code") },
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
             modifier = Modifier.fillMaxWidth(),
             colors = TextFieldDefaults.colors(
                 focusedTextColor = Color.White,
@@ -130,14 +129,13 @@ fun AddActivityForm(viewModel: MapViewModel, onClose: () -> Unit) {
             )
         )
 
-        Spacer(modifier = Modifier.height(8.dp))
+        Spacer(modifier = Modifier.height(20.dp))
 
         Text("Destination Location", color = Color.White, style = MaterialTheme.typography.titleSmall)
         OutlinedTextField(
             value = destPostCode,
             onValueChange = { destPostCode = it },
             label = { Text("Post Code") },
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
             modifier = Modifier.fillMaxWidth(),
             colors = TextFieldDefaults.colors(
                 focusedTextColor = Color.White,
@@ -164,7 +162,7 @@ fun AddActivityForm(viewModel: MapViewModel, onClose: () -> Unit) {
             )
         )
 
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(20.dp))
 
         OutlinedTextField(
             value = description,
