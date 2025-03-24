@@ -167,6 +167,16 @@ class MapViewModel
 
         return newUser
     }
+
+    fun deleteUserByID (userId: Long):User?{
+        val existingUser = _user.value.find { it.userID == userId } ?: return null
+        _user.value -= existingUser
+
+        viewModelScope.launch {
+            repository.deleteUser(userId).collect()
+        }
+        return existingUser
+    }
     // //
 
     // //
@@ -668,4 +678,5 @@ class MapViewModel
         }
     }.flowOn(Dispatchers.IO)
     // //
+
 }

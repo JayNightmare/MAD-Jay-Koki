@@ -220,9 +220,32 @@ fun UserDetailsSheet(
         Spacer(modifier = Modifier.height(16.dp))
 
 //        TODO: Add Delete Contacts button
-        Button(onClick = { /*TODO*/ }) {
+        var showDialog by remember { mutableStateOf(false) }
+        Button(onClick = {showDialog = true }) {
             Text("Delete Contact", color = Color.Red)
         }
+
+        if (showDialog) {
+            AlertDialog(
+                onDismissRequest = { showDialog = false },
+                title = { Text("Delete user") },
+                text = { Text("Are you sure you want to delete your friend's contact?") },
+                confirmButton = {
+                    Button(onClick = {
+                        viewModel.deleteUserByID(user.userID)
+                        showDialog = false
+                    }) {
+                        Text("Delete")
+                    }
+                },
+                dismissButton = {
+                    Button(onClick = { showDialog = false }) {
+                        Text("Cancel")
+                    }
+                }
+            )
+        }
+
         Spacer(modifier = Modifier.height(16.dp))
     }
 }

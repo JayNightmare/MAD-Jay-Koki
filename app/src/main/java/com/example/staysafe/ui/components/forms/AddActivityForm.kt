@@ -2,6 +2,7 @@ package com.example.staysafe.ui.components.forms
 
 import android.app.DatePickerDialog
 import android.app.TimePickerDialog
+import android.util.Log
 import android.widget.Toast
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -23,6 +24,7 @@ import com.google.android.gms.maps.model.MapStyleOptions
 import com.google.maps.android.compose.*
 import java.text.SimpleDateFormat
 import java.util.*
+import kotlin.math.log
 
 @Composable
 fun AddActivityForm(viewModel: MapViewModel, onClose: () -> Unit) {
@@ -241,7 +243,12 @@ fun AddActivityForm(viewModel: MapViewModel, onClose: () -> Unit) {
                         description,
                         convertToISO8601(fromDate, fromTime),
                         convertToISO8601(toDate, toTime),
+
                     )
+
+                    Log.d("AddActivityLog", "Activity from: $startAddressLine")
+                    Log.d("AddActivityLog", "Activity Dest: $destAddressLine")
+
                     Toast.makeText(context, "Adding Activity...", Toast.LENGTH_SHORT).show()
                 } else {
                     Toast.makeText(context, "Please fill in all fields", Toast.LENGTH_SHORT).show()

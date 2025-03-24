@@ -11,6 +11,7 @@ import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.withContext
+import okhttp3.Response
 import org.json.JSONObject
 import retrofit2.await
 import retrofit2.awaitResponse
@@ -229,6 +230,25 @@ class StaySafeRepository(
             Log.e("addUser", "Exception: ${e.message}")
             e.printStackTrace()
             emit(user)
+        }
+    }.flowOn(Dispatchers.IO)
+
+    suspend fun deleteUser (userID: Long): Flow<Any> = flow {
+        try {
+            val response = service.deleteUser(userID).awaitResponse()
+            Log.d("Delete user", "Response: $response")
+
+            if (response.isSuccessful){
+                response.body()?.let { emit(it) } ?: emit(userID)
+            }
+            else{
+                Log.d("Delete user","Error deleting user: ${response.errorBody()?.string()}" )
+                emit(userID)
+            }
+        }catch (e:Exception){
+            Log.e("Delete user", "Exception: ${e.message}")
+            e.printStackTrace()
+            emit(userID)
         }
     }.flowOn(Dispatchers.IO)
     // //
