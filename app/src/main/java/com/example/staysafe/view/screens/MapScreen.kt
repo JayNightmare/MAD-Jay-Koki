@@ -190,28 +190,28 @@ fun MapScreen(navController: NavController, viewModel: MapViewModel) {
                         )
                     }
 
-//                    latestPosition?.let { position ->
-//                        if (position.positionLatitude != null && position.positionLongitude != null) {
-//                            val latLng = LatLng(position.positionLatitude, position.positionLongitude)
-//
-//                            CustomMarker(
-//                                imageUrl = user.userImageURL,
-//                                fullName = "${user.userFirstname} ${user.userLastname}",
-//                                location = latLng,
-//                                onClick = {
-//                                    selectedUser = user
-//                                    showPeopleSheet = true
-//                                    coroutineScope.launch {
-//                                        cameraPositionState.moveToUserLocation(
-//                                            position.positionLatitude,
-//                                            position.positionLongitude
-//                                        )
-//                                    }
-//                                },
-//                                size = 50
-//                            )
-//                        }
-//                    }
+                    loggedInUser?.let { position ->
+                        if (position.userLatitude != null && position.userLongitude != null) {
+                            val latLng = LatLng(position.userLatitude, position.userLongitude)
+
+                            CustomMarker(
+                                imageUrl = user.userImageURL,
+                                fullName = "${user.userFirstname} ${user.userLastname}",
+                                location = latLng,
+                                onClick = {
+                                    selectedUser = user
+                                    showPeopleSheet = true
+                                    coroutineScope.launch {
+                                        cameraPositionState.moveToUserLocation(
+                                            position.userLatitude,
+                                            position.userLongitude
+                                        )
+                                    }
+                                },
+                                size = 50
+                            )
+                        }
+                    }
                 }
 
                 if (routePoints.isNotEmpty()) {
@@ -297,6 +297,11 @@ fun MapScreen(navController: NavController, viewModel: MapViewModel) {
             }
         }
     }
+}
+
+@Composable
+fun MapStyleOptions(x0: String) {
+    TODO("Not yet implemented")
 }
 
 //@SuppressLint("MissingPermission")

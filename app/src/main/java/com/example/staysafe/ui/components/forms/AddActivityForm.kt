@@ -96,7 +96,7 @@ fun AddActivityForm(viewModel: MapViewModel, onClose: () -> Unit) {
             )
         )
 
-        Spacer(modifier = Modifier.height(8.dp))
+        Spacer(modifier = Modifier.height(20.dp))
 
         Text("Starting Location", color = Color.White, style = MaterialTheme.typography.titleSmall)
         OutlinedTextField(
@@ -129,7 +129,7 @@ fun AddActivityForm(viewModel: MapViewModel, onClose: () -> Unit) {
             )
         )
 
-        Spacer(modifier = Modifier.height(8.dp))
+        Spacer(modifier = Modifier.height(20.dp))
 
         Text("Destination Location", color = Color.White, style = MaterialTheme.typography.titleSmall)
         OutlinedTextField(
@@ -162,7 +162,7 @@ fun AddActivityForm(viewModel: MapViewModel, onClose: () -> Unit) {
             )
         )
 
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(20.dp))
 
         OutlinedTextField(
             value = description,

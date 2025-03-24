@@ -42,7 +42,7 @@ fun RegisterUserScreen(navController: NavController, viewModel: MapViewModel) {
 
     val context = LocalContext.current
 
-    val permissionLauncher = rememberLauncherForActivityResult(
+    val  permissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestPermission()
     )
     { isGranted ->
