@@ -1,5 +1,16 @@
 package com.example.staysafe.view.screens
 
-fun ProfileScreen() {
-    
-}
+import androidx.compose.foundation.layout.Column
+import androidx.compose.material3.Scaffold
+
+//fun ProfileScreen() {
+//    Scaffold(
+//        topBar = {
+//            // TopAppBar
+//        }
+//    ) {
+//        Column {
+//
+//        }
+//    }
+//}

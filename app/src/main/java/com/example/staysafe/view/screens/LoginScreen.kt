@@ -87,7 +87,8 @@ fun LoginScreen(navController: NavController, viewModel: MapViewModel) {
 
         Spacer(modifier = Modifier.height(8.dp))
 
-        // Login Button
+        // ! Login Button
+        // TODO: Implement Current Location Tracking When User Logs In or Via the Map Screen
         Button(
             onClick = {
                 val matchUser = users.find { it.userUsername == username }
