@@ -218,6 +218,12 @@ fun UserDetailsSheet(
         Spacer(modifier = Modifier.height(16.dp))
         HorizontalDivider(color = Color.White, thickness = 1.dp)
         Spacer(modifier = Modifier.height(16.dp))
+
+//        TODO: Add Delete Contacts button
+        Button(onClick = { /*TODO*/ }) {
+            Text("Delete Contact", color = Color.Red)
+        }
+        Spacer(modifier = Modifier.height(16.dp))
     }
 }
 

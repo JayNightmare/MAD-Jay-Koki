@@ -224,29 +224,30 @@ class MapViewModel
 
             // Generate unique Activity ID
             val newActivityID = (_activities.value.maxOfOrNull { it.activityID } ?: 0) + 1L
-            val activityFromID = (_activities.value.maxOfOrNull { it.activityID } ?: 0) + 1L
-            val activityToID = (_activities.value.maxOfOrNull { it.activityID } ?: 0) + 1L
+            val activityFromID = (_locations.value.maxOfOrNull { it.locationID } ?: 0) + 1L
+            val activityToID = (_locations.value.maxOfOrNull { it.locationID } ?: 0) + 1L
 
-            // Create new activity object
+            // * Create new activity object
             val newActivity = Activity(
                 activityID = newActivityID,
                 activityName = activityName,
                 activityUserID = loggedInUser.userID,
-                activityUserUsername = loggedInUser.userUsername,
                 activityDescription = description,
                 activityFromID = activityFromID,
-                activityFromName = startAddressLine,
                 activityLeave = fromISOTime,
                 activityToID = activityToID,
-                activityToName = destAddressLine,
                 activityArrive = toisoTime,
                 activityStatusID = 1L,
+                activityUsername = loggedInUser.userUsername,
+                activityFromName = startAddressLine,
+                activityToName = destAddressLine,
                 activityStatusName = "Planned"
             )
 
             repository.addActivity(newActivity).collect { response ->
                 if (response != null) {
                     Log.d("addActivity", "✅ Activity added successfully!")
+                    Log.d("addActivity", "✅ Response: $response")
                     _activities.value += response // Update activities list
                 } else {
                     Log.e("addActivity", "❌ Failed to add activity!")

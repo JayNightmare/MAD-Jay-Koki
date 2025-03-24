@@ -203,6 +203,11 @@ fun RegisterUserScreen(navController: NavController, viewModel: MapViewModel) {
                     return@Button
                 }
 
+                if (username.length < 8) {
+                    Toast.makeText(context, "Username must be at least 8 characters long!", Toast.LENGTH_SHORT).show()
+                    return@Button
+                }
+
                 if (password != confirmPassword) {
                     Toast.makeText(context, "Passwords do not match!", Toast.LENGTH_SHORT).show()
                     return@Button

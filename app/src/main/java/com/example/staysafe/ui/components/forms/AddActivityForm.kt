@@ -103,7 +103,6 @@ fun AddActivityForm(viewModel: MapViewModel, onClose: () -> Unit) {
             value = startPostCode,
             onValueChange = { startPostCode = it },
             label = { Text("Post Code") },
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
             modifier = Modifier.fillMaxWidth(),
             colors = TextFieldDefaults.colors(
                 focusedTextColor = Color.White,
@@ -137,7 +136,6 @@ fun AddActivityForm(viewModel: MapViewModel, onClose: () -> Unit) {
             value = destPostCode,
             onValueChange = { destPostCode = it },
             label = { Text("Post Code") },
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
             modifier = Modifier.fillMaxWidth(),
             colors = TextFieldDefaults.colors(
                 focusedTextColor = Color.White,
