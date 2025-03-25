@@ -27,6 +27,7 @@ import com.example.staysafe.map.CustomMarker
 import com.example.staysafe.model.data.Activity
 import com.example.staysafe.model.data.Location
 import com.example.staysafe.model.data.User
+import com.example.staysafe.model.data.UserWithContact
 import com.example.staysafe.viewModel.MapViewModel
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.model.LatLng

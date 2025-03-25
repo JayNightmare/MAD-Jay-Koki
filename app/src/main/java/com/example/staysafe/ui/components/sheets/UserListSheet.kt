@@ -26,7 +26,7 @@ import com.example.staysafe.viewModel.MapViewModel
 @Composable
 fun UserListSheet(
     viewModel: MapViewModel,
-    onUserSelected: (User) -> Unit
+    onUserSelected: (UserWithContact) -> Unit
 ) {
     val loggedInUser by viewModel.loggedInUser.collectAsStateWithLifecycle()
 
@@ -102,7 +102,7 @@ fun UserListSheet(
 }
 
 @Composable
-fun UserListItem(user: User, statusName: String, onClick: () -> Unit) {
+fun UserListItem(user: UserWithContact, statusName: String, onClick: () -> Unit) {
     Row(modifier = Modifier
         .fillMaxWidth()
         .clickable { onClick() }

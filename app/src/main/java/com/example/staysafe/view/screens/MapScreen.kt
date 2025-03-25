@@ -35,8 +35,7 @@ import androidx.navigation.NavController
 import com.example.staysafe.BuildConfig
 import com.example.staysafe.R
 import com.example.staysafe.map.CustomMarker
-import com.example.staysafe.model.data.User
-import com.example.staysafe.model.data.UserWithContact
+import com.example.staysafe.model.data.*
 import com.example.staysafe.ui.components.sheets.ActivitySheet
 import com.example.staysafe.ui.components.BottomNavigationBar
 import com.example.staysafe.ui.components.sheets.CallUserSheet
@@ -205,7 +204,7 @@ fun MapScreen(navController: NavController, viewModel: MapViewModel) {
                 ) {
                     if (showCallUserDialog) {
                         CallUserSheet(
-                            contacts = contacts.map { it.toUser() },
+                            contacts = contacts,
                             viewModel = viewModel,
                         )
                     } else {

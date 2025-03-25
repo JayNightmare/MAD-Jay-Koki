@@ -16,15 +16,16 @@ import androidx.compose.ui.unit.dp
 import com.example.staysafe.viewModel.MapViewModel
 import androidx.core.net.toUri
 import com.example.staysafe.model.data.User
+import com.example.staysafe.model.data.UserWithContact
 import com.example.staysafe.ui.components.StatusIcon
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CallUserSheet(
-    contacts: List<User>,
+    contacts: List<UserWithContact>,
     viewModel: MapViewModel,
 //    onClose: () -> Unit,
-//    onCallUser: (User) -> Unit
+//    onCallUser: (UserWithContact) -> Unit
 ) {
     val context = LocalContext.current
 
@@ -53,14 +54,15 @@ fun CallUserSheet(
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 items(contacts) { contact ->
-                    val userActivity = latestActivities[contact.userID]
+                    val user = contact.toUser()
+                    val userActivity = latestActivities[user.userID]
 
                     ContactItem(
                         contact = contact,
                         viewModel = viewModel,
                         onCallClick = {
                             val intent = Intent(Intent.ACTION_DIAL).apply {
-                                data = "tel:${contact.userPhone}".toUri()
+                                data = "tel:${user.userPhone}".toUri()
                             }
                             context.startActivity(intent)
                         },
@@ -74,7 +76,7 @@ fun CallUserSheet(
 
 @Composable
 private fun ContactItem(
-    contact: User,
+    contact: UserWithContact,
     viewModel: MapViewModel,
     onCallClick: () -> Unit,
     statusName: String
@@ -82,7 +84,8 @@ private fun ContactItem(
     // Fetch status for this contact
     LaunchedEffect(viewModel.contacts.collectAsState().value) {
         viewModel.contacts.value.forEach { contact ->
-            viewModel.fetchLatestActivityForUsers(contact.userID)
+            val user = contact.toUser()
+            viewModel.fetchLatestActivityForUsers(user.userID)
         }
     }
 
@@ -102,14 +105,15 @@ private fun ContactItem(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Column {
+                val user = contact.toUser()
                 Text(
-                    text = "${contact.userFirstname} ${contact.userLastname}",
+                    text = "${user.userFirstname} ${user.userLastname}",
                     style = MaterialTheme.typography.titleMedium,
                     color = Color.White,
                     fontWeight = FontWeight.Bold
                 )
                 Text(
-                    text = contact.userPhone,
+                    text = user.userPhone,
                     color = Color.White,
                     style = MaterialTheme.typography.bodyMedium
                 )

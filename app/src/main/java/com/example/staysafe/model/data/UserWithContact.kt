@@ -3,28 +3,17 @@ package com.example.staysafe.model.data
 import com.google.gson.annotations.SerializedName
 
 data class UserWithContact(
-    @SerializedName("userID")
-    val userID: Long,
-    @SerializedName("userFirstname")
-    val userFirstname: String,
-    @SerializedName("userLastname")
-    val userLastname: String,
-    @SerializedName("userPhone")
-    val userPhone: String,
-    @SerializedName("userUsername")
-    val userUsername: String,
-    @SerializedName("userPassword")
-    val userPassword: String,
-    @SerializedName("userLatitude")
-    val userLatitude: Double?,
-    @SerializedName("userLongitude")
-    val userLongitude: Double?,
-    @SerializedName("userTimestamp")
-    val userTimestamp: Long,
-    @SerializedName("userImageURL")
-    val userImageURL: String,
-    @SerializedName("userContactID")
-    val userContactID: Long
+    @SerializedName("UserID") val userID: Long,
+    @SerializedName("UserFirstname") val userFirstname: String,
+    @SerializedName("UserLastname") val userLastname: String,
+    @SerializedName("UserPhone") val userPhone: String,
+    @SerializedName("UserUsername") val userUsername: String,
+    @SerializedName("UserPassword") val userPassword: String,
+    @SerializedName("UserLatitude") val userLatitude: Double?,
+    @SerializedName("UserLongitude") val userLongitude: Double?,
+    @SerializedName("UserTimestamp") val userTimestamp: Long?,
+    @SerializedName("UserImageURL") val userImageURL: String,
+    @SerializedName("UserContactID") val userContactID: Long
 ) {
     fun toUser(): User = User(
         userID = userID,
@@ -35,7 +24,7 @@ data class UserWithContact(
         userPassword = userPassword,
         userLatitude = userLatitude,
         userLongitude = userLongitude,
-        userTimestamp = userTimestamp,
+        userTimestamp = userTimestamp ?: System.currentTimeMillis(),
         userImageURL = userImageURL
     )
-} 
+}

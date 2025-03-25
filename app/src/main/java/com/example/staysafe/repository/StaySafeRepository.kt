@@ -336,20 +336,12 @@ class StaySafeRepository(
             val contacts = service.getUserContact(userId).awaitResponse()
             Log.d("MapViewModel", "Received contacts: ${contacts.body()}")
             
-            // Convert UserWithContact to User objects
-//            val users = contacts.body()?.map { it.toUser() } ?: emptyList()
-//            Log.d("MapViewModel", "Converted to users: $users")
-//
-//            emit(users)
-
-            val userWithContacts = contacts.body() ?: emptyList()
-            Log.d("MapViewModel", "Converted to users: $userWithContacts")
-
-            emit(userWithContacts)
+            emit(contacts.body() ?: emptyList())
         } catch (e: Exception) {
+            Log.e("MapViewModel", "Error fetching contacts: ${e.message}")
             e.printStackTrace()
             emit(emptyList())
         }
-    }
+    }.flowOn(Dispatchers.IO)
     // //
 }
