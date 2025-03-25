@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -165,7 +166,7 @@ fun SettingsScreen(
                 }
             }
 
-            // Account Management
+            // * Account Management
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -209,12 +210,11 @@ fun SettingsScreen(
                         }
                     }
 
+                    // * Delete Account Button
                     Button(
                         onClick = {
-                            // TODO: Implement logout
-                            navController.navigate(Screen.LoginScreen.route) {
-                                popUpTo(Screen.MapScreen.route) { inclusive = true }
-                            }
+                            // TODO: Implement account deletion
+                            Toast.makeText(context, "Account deletion requested", Toast.LENGTH_SHORT).show()
                         },
                         modifier = Modifier
                             .fillMaxWidth()
@@ -228,8 +228,8 @@ fun SettingsScreen(
                             horizontalArrangement = Arrangement.spacedBy(8.dp),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Icon(Icons.Default.Logout, contentDescription = null)
-                            Text("Logout")
+                            Icon(Icons.Default.Delete, contentDescription = null)
+                            Text("Delete Account")
                         }
                     }
                 }
