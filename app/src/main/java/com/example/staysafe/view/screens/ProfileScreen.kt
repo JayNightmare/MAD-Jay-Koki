@@ -159,12 +159,30 @@ fun ProfileScreen(
                                 focusedContainerColor = Color.Transparent,
                             )
                         )
+                        val updateResult by viewModel.updateResult.collectAsState()
+
+                        LaunchedEffect(updateResult) {
+                            updateResult?.let {
+                                Toast.makeText(context, "✅ Profile updated", Toast.LENGTH_SHORT).show()
+                                //viewModel.clearUpdateResult()
+                            }
+                        }
 
                         Button(
                             onClick = {
                                 // TODO: Implement update user functionality
                                 isEditing = false
-                                Toast.makeText(context, "Profile updated", Toast.LENGTH_SHORT).show()
+                                loggedInUser?.let { user ->
+                                    val updateUser = user.copy(
+                                        userFirstname = firstName,
+                                        userLastname = lastName,
+                                        userPhone = phone
+                                    )
+                                    viewModel.updateUserProfile(updateUser)
+                                    isEditing = false
+                                } ?: run {
+                                    Toast.makeText(context, "❌ User is null", Toast.LENGTH_SHORT).show()
+                                }
                             },
                             modifier = Modifier
                                 .fillMaxWidth()

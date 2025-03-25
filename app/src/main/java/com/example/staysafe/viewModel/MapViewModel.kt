@@ -173,6 +173,24 @@ class MapViewModel
     }
     // //
 
+    private val _updateResult = MutableStateFlow<Any?>(null)
+    val updateResult: StateFlow<Any?> = _updateResult
+
+    /*fun clearUpdateResult() {
+        _updateResult.value = null
+    }
+
+     */
+
+
+    fun updateUserProfile(user: User) {
+        viewModelScope.launch {
+            repository.updateUser(user).collect {
+                _updateResult.value = it
+            }
+        }
+    }
+
     // //
     // * Activities
     private fun fetchAllActivities() {
