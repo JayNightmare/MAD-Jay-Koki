@@ -83,5 +83,19 @@ fun Navigation() {
                 viewModel = sharedViewModel
             )
         }
+        // //
+        composable(Screen.ProfileScreen.route) {
+            ProfileScreen(
+                navController = nav,
+                viewModel = sharedViewModel
+            )
+        }
+        // //
+        composable(Screen.SettingsScreen.route) {
+            SettingsScreen(
+                navController = nav,
+                viewModel = sharedViewModel
+            )
+        }
     }
 }
