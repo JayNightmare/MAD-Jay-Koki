@@ -36,6 +36,7 @@ import com.example.staysafe.BuildConfig
 import com.example.staysafe.R
 import com.example.staysafe.map.CustomMarker
 import com.example.staysafe.model.data.User
+import com.example.staysafe.model.data.UserWithContact
 import com.example.staysafe.ui.components.sheets.ActivitySheet
 import com.example.staysafe.ui.components.BottomNavigationBar
 import com.example.staysafe.ui.components.sheets.CallUserSheet
@@ -60,7 +61,7 @@ import kotlinx.coroutines.launch
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MapScreen(navController: NavController, viewModel: MapViewModel) {
-    var selectedUser by remember { mutableStateOf<User?>(null) }
+    var selectedUser by remember { mutableStateOf<UserWithContact?>(null) }
     val contacts by viewModel.contacts.collectAsState(emptyList())
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
 
@@ -83,33 +84,11 @@ fun MapScreen(navController: NavController, viewModel: MapViewModel) {
         context.resources.openRawResource(R.raw.map_style).bufferedReader().use { it.readText() }
     }
 
-//    val permissionLauncher = rememberLauncherForActivityResult(
-//        contract = ActivityResultContracts.RequestPermission()
-//    )
-//    {
-//            isGranted ->
-//        if (isGranted) {
-//            getCurrentLocation(context) { lat, lon ->
-//                currentDeviceLat = lat
-//                currentDeviceLon = lon
-//                coroutineScope.launch {
-//                    cameraPositionState.moveToUserLocation(lat, lon)
-//                }
-//            }
-//        } else {
-//            Log.d("MapScreen", "Location permission denied")
-//        }
-//    }
-
     val loggedInUser = viewModel.loggedInUser.collectAsState().value
     Log.d("Flow", "Logged in user: $loggedInUser")
 
     // * Fetch device location when screen loads
     LaunchedEffect(Unit) {
-//        permissionLauncher.launch(android.Manifest.permission.ACCESS_FINE_LOCATION)
-//        permissionLauncher.launch(android.Manifest.permission.ACCESS_COARSE_LOCATION)
-//        permissionLauncher.launch(android.Manifest.permission.INTERNET)
-
         if (loggedInUser != null) {
             viewModel.fetchUserContacts(userId = loggedInUser.userID)
             Log.d("Flow", "User logged in: $loggedInUser")
@@ -134,7 +113,22 @@ fun MapScreen(navController: NavController, viewModel: MapViewModel) {
     }
 
     Scaffold(
-        topBar = { TopNavigationBar(navController = navController) },
+        topBar = { 
+            TopNavigationBar(
+                navController = navController,
+                viewModel = viewModel,
+                onUserSelected = { user ->
+                    selectedUser = user
+                    showPeopleSheet = true
+                    coroutineScope.launch {
+                        cameraPositionState.moveToUserLocation(
+                            user.userLatitude ?: 0.0,
+                            user.userLongitude ?: 0.0
+                        )
+                    }
+                }
+            )
+        },
         bottomBar = {
             BottomNavigationBar(
                 navController = navController,
@@ -189,29 +183,6 @@ fun MapScreen(navController: NavController, viewModel: MapViewModel) {
                             size = 50
                         )
                     }
-
-                    loggedInUser?.let { position ->
-                        if (position.userLatitude != null && position.userLongitude != null) {
-                            val latLng = LatLng(position.userLatitude, position.userLongitude)
-
-                            CustomMarker(
-                                imageUrl = user.userImageURL,
-                                fullName = "${user.userFirstname} ${user.userLastname}",
-                                location = latLng,
-                                onClick = {
-                                    selectedUser = user
-                                    showPeopleSheet = true
-                                    coroutineScope.launch {
-                                        cameraPositionState.moveToUserLocation(
-                                            position.userLatitude,
-                                            position.userLongitude
-                                        )
-                                    }
-                                },
-                                size = 50
-                            )
-                        }
-                    }
                 }
 
                 if (routePoints.isNotEmpty()) {
@@ -234,7 +205,7 @@ fun MapScreen(navController: NavController, viewModel: MapViewModel) {
                 ) {
                     if (showCallUserDialog) {
                         CallUserSheet(
-                            contacts = contacts,
+                            contacts = contacts.map { it.toUser() },
                             viewModel = viewModel,
                         )
                     } else {
@@ -258,15 +229,14 @@ fun MapScreen(navController: NavController, viewModel: MapViewModel) {
 
                             UserDetailsSheet(
                                 viewModel = viewModel,
-                                user = selectedUser!!,
+                                user = selectedUser!!.toUser(),
                                 location = location,
-                                userLat = 0.0,
-                                userLon = 0.0,
+                                userLat = currentDeviceLat,
+                                userLon = currentDeviceLon,
                                 apiKey = BuildConfig.MAP_API_GOOGLE,
                                 onClose = { selectedUser = null },
                                 mapStyle = nightMapStyle,
                                 onRoutePlotted = { route -> routePoints = route },
-
                                 onActivityClicked = {
                                     showPeopleSheet = false
                                     showCallUserDialog = false
@@ -287,7 +257,6 @@ fun MapScreen(navController: NavController, viewModel: MapViewModel) {
                     ActivitySheet(
                         viewModel = viewModel,
                         userId = selectedUser?.userID ?: 0,
-
                         onClose = {
                             showActivitySheet = false
                             showPeopleSheet = true
@@ -297,11 +266,6 @@ fun MapScreen(navController: NavController, viewModel: MapViewModel) {
             }
         }
     }
-}
-
-@Composable
-fun MapStyleOptions(x0: String) {
-    TODO("Not yet implemented")
 }
 
 //@SuppressLint("MissingPermission")

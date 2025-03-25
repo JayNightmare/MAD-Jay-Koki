@@ -23,7 +23,6 @@ import java.time.Duration
 import java.time.Instant
 import java.util.Date
 import java.util.Locale
-import java.util.UUID
 
 @OptIn(UnstableApi::class)
 class MapViewModel
@@ -35,8 +34,8 @@ class MapViewModel
     }
 
     // ! Contacts (Only show users in the Contact Table)
-    private val _contacts = MutableStateFlow<List<User>>(emptyList())
-    val contacts: StateFlow<List<User>> = _contacts
+    private val _contacts = MutableStateFlow<List<UserWithContact>>(emptyList())
+    val contacts: StateFlow<List<UserWithContact>> = _contacts
 
     private val _contact = MutableStateFlow<List<Contact>>(emptyList())
     val contact: StateFlow<List<Contact>> = _contact
@@ -80,11 +79,6 @@ class MapViewModel
     // ! Logged in user
     private val _loggedInUser = MutableStateFlow<User?>(null)
     val loggedInUser: StateFlow<User?> = _loggedInUser
-
-    // ! SearchQuery
-    private val _searchQuery = MutableStateFlow("");
-    val searchQuery: StateFlow<String> = _searchQuery.asStateFlow()
-
 
     @OptIn(UnstableApi::class)
     fun setLoggedInUser(username: String) {
@@ -364,28 +358,53 @@ class MapViewModel
         }
     }
 
+    fun removeContact(contactUserId: Long, onComplete: (Boolean) -> Unit) {
+        viewModelScope.launch {
+            try {
+                val loggedInUserId = _loggedInUser.value?.userID
+                if (loggedInUserId == null) {
+                    Log.e("removeContact", "❌ No logged in user found")
+                    onComplete(false)
+                    return@launch
+                }
+
+                Log.d("removeContact", "Removing contact relationship between $loggedInUserId and $contactUserId")
+                
+                // Get the contact relationship from the API response
+                repository.getContactsForUser(loggedInUserId).collect { users ->
+                    val contactUser = users.find { it.userID == contactUserId }
+                    if (contactUser == null) {
+                        Log.e("removeContact", "❌ Contact user not found")
+                        onComplete(false)
+                        return@collect
+                    }
+
+                    // Delete the contact using repository
+                    repository.deleteContact(contactUser.userContactID).collect { success ->
+                        if (success) {
+                            Log.d("removeContact", "✅ Contact removed successfully")
+                            // Refresh contacts list
+                            fetchUserContacts(loggedInUserId)
+                            onComplete(true)
+                        } else {
+                            Log.e("removeContact", "❌ Failed to remove contact")
+                            onComplete(false)
+                        }
+                    }
+                }
+            } catch (e: Exception) {
+                Log.e("removeContact", "❌ Exception: ${e.message}")
+                e.printStackTrace()
+                onComplete(false)
+            }
+        }
+    }
+
     fun sendCallNotification(userId: Long) {
         // TODO: Implement notification sending
         Log.d("MapViewModel", "Sending call notification to user: $userId")
     }
-
-    fun setSearchQuery(query: String) {
-        _searchQuery.value = query
-    }
-
-    fun searchContacts(): StateFlow<List<User>> {
-        return combine(contacts, searchQuery) { contacts, query ->
-            if (query.isEmpty()) contacts
-            else contacts.filter { contact ->
-                contact.userUsername.contains(query, ignoreCase = true) ||
-                        contact.userFirstname.contains(query, ignoreCase = true) ||
-                        contact.userLastname.contains(query, ignoreCase = true) ||
-                        contact.userPhone.contains(query, ignoreCase = true)
-            }
-        }.stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
-    }
     // //
-
     // //
     // * Status
     @OptIn(UnstableApi::class)
@@ -646,11 +665,11 @@ class MapViewModel
         apiKey: String = BuildConfig.MAP_API_GOOGLE
     ): Flow<List<LatLng>> = flow {
 
-        // Format the destination query string
+        // ! Format the destination query string
         val destination = "$postCode, $address".replace(" ", "+") // URL Encode Spaces
         val startLocation = "$startPostCode, $startAddressLine".replace(" ", "+")
 
-        // Construct Google Maps Directions API URL
+        // ! Construct Google Maps Directions API URL
         val url = "https://maps.googleapis.com/maps/api/directions/json" +
                 "?origin=$startLocation" +
                 "&destination=$destination" +
@@ -677,6 +696,62 @@ class MapViewModel
             emit(emptyList())
         }
     }.flowOn(Dispatchers.IO)
+
+    fun changePassword(currentPassword: String, newPassword: String, onComplete: (Boolean) -> Unit) {
+        viewModelScope.launch {
+            try {
+                val loggedInUser = _loggedInUser.value
+                if (loggedInUser == null) {
+                    Log.e("changePassword", "❌ No logged in user found")
+                    onComplete(false)
+                    return@launch
+                }
+
+                Log.d("changePassword", "Current user: ${loggedInUser.userUsername}")
+                Log.d("changePassword", "Current password provided: $currentPassword")
+                Log.d("changePassword", "Current password in DB: ${loggedInUser.userPassword}")
+
+                // ! Verify current password
+                if (loggedInUser.userPassword != currentPassword) {
+                    Log.e("changePassword", "❌ Current password verification failed")
+                    onComplete(false)
+                    return@launch
+                }
+
+                // ! Create updated user object
+                val updatedUser = loggedInUser.copy(
+                    userPassword = newPassword
+                )
+
+                Log.d("changePassword", "Updating user with new password")
+                Log.d("changePassword", "User ID: ${updatedUser.userID}")
+                Log.d("changePassword", "New password: $newPassword")
+
+                // ! Update user in repository
+                repository.updateUser(updatedUser).collect { result ->
+                    Log.d("changePassword", "Update result: $result")
+                    if (result is List<*>) {
+                        val updatedUserList = result.filterIsInstance<User>()
+                        if (updatedUserList.isNotEmpty()) {
+                            _loggedInUser.update { updatedUserList.first() }
+                            Log.d("changePassword", "✅ Password updated successfully")
+                            onComplete(true)
+                        } else {
+                            Log.e("changePassword", "❌ No user found in response list")
+                            onComplete(false)
+                        }
+                    } else {
+                        Log.e("changePassword", "❌ Failed to update password - invalid result type")
+                        onComplete(false)
+                    }
+                }
+            } catch (e: Exception) {
+                Log.e("changePassword", "❌ Exception: ${e.message}")
+                e.printStackTrace()
+                onComplete(false)
+            }
+        }
+    }
     // //
 
 }

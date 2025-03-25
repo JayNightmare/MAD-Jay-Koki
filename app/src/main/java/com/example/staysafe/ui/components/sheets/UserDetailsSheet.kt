@@ -219,28 +219,64 @@ fun UserDetailsSheet(
         HorizontalDivider(color = Color.White, thickness = 1.dp)
         Spacer(modifier = Modifier.height(16.dp))
 
-//        TODO: Add Delete Contacts button
         var showDialog by remember { mutableStateOf(false) }
-        Button(onClick = {showDialog = true }) {
-            Text("Delete Contact", color = Color.Red)
+        var isDeleting by remember { mutableStateOf(false) }
+        val loggedInUser by viewModel.loggedInUser.collectAsState()
+
+        OutlinedButton(
+            onClick = { showDialog = true },
+            modifier = Modifier.fillMaxWidth(),
+            colors = ButtonDefaults.outlinedButtonColors(
+                contentColor = Color.Red
+            )
+        ) {
+            Text("Remove Friend")
         }
 
         if (showDialog) {
             AlertDialog(
                 onDismissRequest = { showDialog = false },
-                title = { Text("Delete user") },
-                text = { Text("Are you sure you want to delete your friend's contact?") },
+                containerColor = Color.Black,
+                titleContentColor = Color.White,
+                textContentColor = Color.White,
+                title = { 
+                    Text(
+                        "Remove Friend",
+                        fontWeight = FontWeight.Bold
+                    )
+                },
+                text = { 
+                    Text(
+                        "Are you sure you want to remove ${user.userFirstname} ${user.userLastname} from your friends list?"
+                    )
+                },
                 confirmButton = {
-                    Button(onClick = {
-                        viewModel.deleteUserByID(user.userID)
-                        showDialog = false
-                    }) {
-                        Text("Delete")
+                    Button(
+                        onClick = {
+                            isDeleting = true
+                            viewModel.removeContact(user.userID) { success ->
+                                if (success) {
+                                    showDialog = false
+                                    onClose()
+                                }
+                                isDeleting = false
+                            }
+                        },
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Color.Red,
+                            contentColor = Color.White
+                        ),
+                        enabled = !isDeleting
+                    ) {
+                        Text(if (isDeleting) "Removing..." else "Remove")
                     }
                 },
                 dismissButton = {
-                    Button(onClick = { showDialog = false }) {
-                        Text("Cancel")
+                    OutlinedButton(
+                        onClick = { showDialog = false },
+                        enabled = !isDeleting
+                    ) {
+                        Text("Cancel", color = Color.White)
                     }
                 }
             )

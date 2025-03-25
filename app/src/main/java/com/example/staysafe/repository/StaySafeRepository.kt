@@ -251,6 +251,35 @@ class StaySafeRepository(
             emit(userID)
         }
     }.flowOn(Dispatchers.IO)
+
+    suspend fun updateUser(user: User): Flow<Any> = flow {
+        try {
+            Log.d("updateUser", "Attempting to update user: ${user.userUsername}")
+            Log.d("updateUser", "User ID: ${user.userID}")
+            
+            val response = service.updateUser(user.userID, user).awaitResponse()
+            Log.d("updateUser", "Response code: ${response.code()}")
+            Log.d("updateUser", "Response body: ${response.body()}")
+            Log.d("updateUser", "Response error body: ${response.errorBody()?.string()}")
+
+            if (response.isSuccessful) {
+                response.body()?.let { 
+                    Log.d("updateUser", "✅ User updated successfully")
+                    emit(it) 
+                } ?: run {
+                    Log.e("updateUser", "❌ Response body is null")
+                    emit(user)
+                }
+            } else {
+                Log.e("updateUser", "❌ Error updating user: ${response.errorBody()?.string()}")
+                emit(user)
+            }
+        } catch (e: Exception) {
+            Log.e("updateUser", "❌ Exception: ${e.message}")
+            e.printStackTrace()
+            emit(user)
+        }
+    }.flowOn(Dispatchers.IO)
     // //
 
     // //
@@ -282,19 +311,41 @@ class StaySafeRepository(
         }
     }.flowOn(Dispatchers.IO)
 
+    suspend fun deleteContact(contactId: Long): Flow<Boolean> = flow {
+        try {
+            val response = service.deleteContact(contactId).awaitResponse()
+            Log.d("deleteContact", "Response: $response")
 
-    suspend fun getContactsForUser(userId: Long): Flow<List<User>> = flow {
+            if (response.isSuccessful) {
+                Log.d("deleteContact", "✅ Contact deleted successfully")
+                emit(true)
+            } else {
+                Log.e("deleteContact", "❌ Error deleting contact: ${response.errorBody()?.string()}")
+                emit(false)
+            }
+        } catch (e: Exception) {
+            Log.e("deleteContact", "❌ Exception: ${e.message}")
+            e.printStackTrace()
+            emit(false)
+        }
+    }.flowOn(Dispatchers.IO)
+
+    suspend fun getContactsForUser(userId: Long): Flow<List<UserWithContact>> = flow {
         try {
             Log.d("MapViewModel", "Fetching user contacts for userId: $userId")
             val contacts = service.getUserContact(userId).awaitResponse()
             Log.d("MapViewModel", "Received contacts: ${contacts.body()}")
-            val contactIds = contacts.body()?.map { it.userID } ?: emptyList()
+            
+            // Convert UserWithContact to User objects
+//            val users = contacts.body()?.map { it.toUser() } ?: emptyList()
+//            Log.d("MapViewModel", "Converted to users: $users")
+//
+//            emit(users)
 
-            val allUsers = service.getUsers().awaitResponse()
-            val filteredUsers = allUsers.body()?.filter { it.userID in contactIds } ?: emptyList()
-            Log.d("MapViewModel", "Filtered users: $filteredUsers")
+            val userWithContacts = contacts.body() ?: emptyList()
+            Log.d("MapViewModel", "Converted to users: $userWithContacts")
 
-            emit(filteredUsers)
+            emit(userWithContacts)
         } catch (e: Exception) {
             e.printStackTrace()
             emit(emptyList())
