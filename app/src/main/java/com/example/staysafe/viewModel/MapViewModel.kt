@@ -258,6 +258,58 @@ class MapViewModel
         }
     }
 
+    fun updateActivityStatus(activityId: Long, newStatus: String) {
+        viewModelScope.launch {
+            try {
+                // Get the current activity
+                val activity = _activities.value.find { it.activityID == activityId }
+                if (activity == null) {
+                    Log.e("updateActivityStatus", "❌ Activity not found with ID: $activityId")
+                    return@launch
+                }
+
+                Log.d("updateActivityStatus", "Current activity: $activity")
+                Log.d("updateActivityStatus", "Updating status to: $newStatus")
+
+                // Create updated activity with new status
+                val updatedActivity = activity.copy(
+                    activityStatusName = newStatus,
+                    activityStatusID = when (newStatus) {
+                        "Planned" -> 1L
+                        "Started" -> 2L
+                        "Paused" -> 3L
+                        "Cancelled" -> 4L
+                        "Completed" -> 5L
+                        else -> {
+                            Log.e("updateActivityStatus", "❌ Invalid status: $newStatus")
+                            return@launch
+                        }
+                    }
+                )
+                
+                Log.d("updateActivityStatus", "Updated activity: $updatedActivity")
+                
+                // Update the activity in the repository
+                repository.updateActivity(activityId, updatedActivity).collect { result ->
+                    if (result != null) {
+                        // Update local state
+                        _activities.value = _activities.value.map { 
+                            if (it.activityID == activityId) updatedActivity else it 
+                        }
+                        Log.d("updateActivityStatus", "✅ Activity status updated successfully")
+                    } else {
+                        Log.e("updateActivityStatus", "❌ Failed to update activity status - repository returned null")
+                        Log.e("updateActivityStatus", "❌ Updated activity: $updatedActivity")
+                        Log.e("updateActivityStatus", "❌ Current result: $result")
+                    }
+                }
+            } catch (e: Exception) {
+                Log.e("updateActivityStatus", "❌ Exception: ${e.message}")
+                e.printStackTrace()
+            }
+        }
+    }
+
     fun fetchLatestActivityForUser(userId: Long) {
         viewModelScope.launch {
             repository.getLatestActivityForUser(userId).collect { activity ->

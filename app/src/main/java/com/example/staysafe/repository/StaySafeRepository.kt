@@ -1,22 +1,16 @@
 package com.example.staysafe.repository
 
-import android.service.voice.VoiceInteractionSession.ActivityId
 import android.util.Log
 import com.example.staysafe.API.Service
 import com.example.staysafe.model.data.*
-import com.google.android.gms.maps.model.LatLng
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
-import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
-import kotlinx.coroutines.withContext
-import okhttp3.Response
-import org.json.JSONObject
 import retrofit2.await
 import retrofit2.awaitResponse
-import java.net.URL
+import retrofit2.http.Body
 
 class StaySafeRepository(
     private val service: Service
@@ -25,7 +19,7 @@ class StaySafeRepository(
     // * Activity
 
     // Fetch Activities directly from API
-    suspend fun getAllActivities(): Flow<List<Activity>> = flow {
+    fun getAllActivities(): Flow<List<Activity>> = flow {
         try {
             val activities = service.getAllActivities().await()
             emit(activities)
@@ -35,7 +29,7 @@ class StaySafeRepository(
         }
     }
 
-    suspend fun getLatestActivityForUser(userId: Long): Flow<Activity?> = flow {
+    fun getLatestActivityForUser(userId: Long): Flow<Activity?> = flow {
         try {
             Log.d("StaySafeRepository", "Fetching user activities for userId: $userId")
             val activities = service.getUserActivities(userId).awaitResponse()
@@ -50,14 +44,17 @@ class StaySafeRepository(
         }
     }.flowOn(Dispatchers.IO)
 
-    suspend fun getActivitiesForUser(userId: Long): Flow<List<Activity>> = flow {
+    fun getActivitiesForUser(userId: Long): Flow<List<Activity>> = flow {
         try {
             val response = service.getUserActivities(userId).awaitResponse()
 
             if (response.isSuccessful) {
                 response.body()?.let { emit(it) } ?: emit(emptyList())
             } else {
-                Log.e("getActivitiesForUser", "❌ Error fetching activities: ${response.errorBody()?.string()}")
+                Log.e(
+                    "getActivitiesForUser",
+                    "❌ Error fetching activities: ${response.errorBody()?.string()}"
+                )
                 emit(emptyList())
             }
         } catch (e: Exception) {
@@ -67,7 +64,7 @@ class StaySafeRepository(
         }
     }.flowOn(Dispatchers.IO)
 
-    suspend fun addActivity(activity: Activity): Flow<Activity?> = flow {
+    fun addActivity(activity: Activity): Flow<Activity?> = flow {
         try {
             val response = service.addActivities(activity).awaitResponse()
 
@@ -85,31 +82,83 @@ class StaySafeRepository(
         }
     }.flowOn(Dispatchers.IO)
 
-    suspend fun deleteActivity (activityId: Long): Flow<Any> = flow {
+    fun deleteActivity(activityId: Long): Flow<Any> = flow {
         try {
             val response = service.deleteActivity(activityId).awaitResponse()
             Log.d("Delete activity", "Response: $response")
 
-            if (response.isSuccessful){
+            if (response.isSuccessful) {
                 response.body()?.let { emit(it) } ?: emit(activityId)
-            }
-            else{
-                Log.d("Delete activity","Error deleting activity: ${response.errorBody()?.string()}" )
+            } else {
+                Log.d(
+                    "Delete activity",
+                    "Error deleting activity: ${response.errorBody()?.string()}"
+                )
                 emit(activityId)
             }
-        }catch (e:Exception){
+        } catch (e: Exception) {
             Log.e("Delete activity", "Exception: ${e.message}")
             e.printStackTrace()
             emit(activityId)
         }
     }.flowOn(Dispatchers.IO)
+
+    fun updateActivity(activityId: Long, activity: Activity): Flow<List<Activity>?> = flow {
+        try {
+            Log.d("updateActivity", "Attempting to update activity with ID: $activityId")
+            Log.d("updateActivity", "Activity data: $activity")
+            
+            // First, try to get the current activity state
+            val getResponse = service.getActivity(activityId).awaitResponse()
+            Log.d("updateActivity", "Current activity state: ${getResponse.body()?.firstOrNull()}")
+            
+            // Now try to update the activity
+            val response = service.updateActivity(activityId, activity).awaitResponse()
+            Log.d("updateActivity", "Update response code: ${response.code()}")
+            Log.d("updateActivity", "Update response body: ${response.body()}")
+            Log.d("updateActivity", "Update response error body: ${response.errorBody()?.string()}")
+
+            if (response.isSuccessful) {
+                val updatedActivities = response.body()
+                if (updatedActivities != null) {
+                    Log.d("updateActivity", "✅ Activity updated successfully")
+                    emit(updatedActivities)
+                } else {
+                    Log.e("updateActivity", "❌ Response body is null")
+                    // Try to get the updated activity directly
+                    val getUpdatedResponse = service.getActivity(activityId).awaitResponse()
+                    if (getUpdatedResponse.isSuccessful) {
+                        val currentActivity = getUpdatedResponse.body()?.firstOrNull()
+                        if (currentActivity != null) {
+                            Log.d("updateActivity", "✅ Retrieved current activity state")
+                            emit(listOf(currentActivity))
+                        } else {
+                            Log.e("updateActivity", "❌ Could not retrieve updated activity")
+                            emit(null)
+                        }
+                    } else {
+                        Log.e("updateActivity", "❌ Failed to retrieve updated activity: ${getUpdatedResponse.errorBody()?.string()}")
+                        emit(null)
+                    }
+                }
+            } else {
+                Log.e("updateActivity", "❌ Failed to update activity: ${response.errorBody()?.string()}")
+                emit(null)
+            }
+        } catch (e: Exception) {
+            Log.e("updateActivity", "❌ Exception: ${e.message}")
+            e.printStackTrace()
+            emit(null)
+        }
+    }.flowOn(Dispatchers.IO)
+
     // //
 
     // //
     // * Locations
 
     // Fetch Locations directly from API
-    suspend fun getAllLocations(): Flow<List<Location>> = flow {
+    fun getAllLocations(): Flow<List<Location>> = flow {
         try {
             val locations = service.getAllLocations().await()
             emit(locations)
@@ -145,11 +194,11 @@ class StaySafeRepository(
         }.flowOn(Dispatchers.IO) // Ensures the API call runs on background thread
     }
 
-    suspend fun addLocation(location: Location): Flow<List<Location>?> = flow {
+    fun addLocation(location: Location): Flow<List<Location>?> = flow {
         try {
             Log.d("addLocation", "Adding location: $location")
             val response = service.addLocation(location).awaitResponse()
-            
+
             if (response.isSuccessful) {
                 Log.d("addLocation", "Location added successfully")
                 emit(response.body())
@@ -164,7 +213,7 @@ class StaySafeRepository(
         }
     }.flowOn(Dispatchers.IO)
 
-    suspend fun getMaxLocationId(): Flow<Int> = flow {
+    fun getMaxLocationId(): Flow<Int> = flow {
         try {
             val locations = service.getAllLocations().await()
             val maxId = locations.maxOfOrNull { it.locationID } ?: 0
@@ -182,7 +231,7 @@ class StaySafeRepository(
     // * Positions
 
     // Fetch Positions directly from API
-    suspend fun getAllPositions(): Flow<List<Position>> = flow {
+    fun getAllPositions(): Flow<List<Position>> = flow {
         try {
             val positions = service.getAllPositions().await()
             emit(positions)
@@ -192,7 +241,7 @@ class StaySafeRepository(
         }
     }
 
-    suspend fun getPositionById(id: Long): Flow<List<Position>> = flow {
+    fun getPositionById(id: Long): Flow<List<Position>> = flow {
         try {
             val position = service.getPositions(id).await()
             emit(position)
@@ -205,7 +254,7 @@ class StaySafeRepository(
 
     // //
     // * Status
-    suspend fun getStatus(): Flow<List<Status>> = flow {
+    fun getStatus(): Flow<List<Status>> = flow {
         try {
             val statusList = service.getStatus().awaitResponse()
             emit(statusList.body() ?: emptyList())
@@ -221,7 +270,7 @@ class StaySafeRepository(
     // * Users
 
     // Fetch Users directly from API
-    suspend fun getAllUsers(): Flow<List<User>> = flow {
+    fun getAllUsers(): Flow<List<User>> = flow {
         try {
             val users = service.getUsers().awaitResponse()
             println("DEBUG: API call executed, response received: $users")
@@ -237,7 +286,7 @@ class StaySafeRepository(
         }
     }
 
-    suspend fun getUserById(id: Long): Flow<List<User>> = flow {
+    fun getUserById(id: Long): Flow<List<User>> = flow {
         try {
             val user = service.getUser(id).awaitResponse()
             user.body()?.let { emit(it) } ?: emit(emptyList())
@@ -247,7 +296,7 @@ class StaySafeRepository(
         }
     }
 
-    suspend fun addUser(user: User): Flow<Any> = flow {
+    fun addUser(user: User): Flow<Any> = flow {
         try {
             val response = service.addUser(user).awaitResponse()
             Log.d("addUser", "Response: $response")
@@ -265,39 +314,38 @@ class StaySafeRepository(
         }
     }.flowOn(Dispatchers.IO)
 
-    suspend fun deleteUser (userID: Long): Flow<Any> = flow {
+    fun deleteUser(userID: Long): Flow<Any> = flow {
         try {
             val response = service.deleteUser(userID).awaitResponse()
             Log.d("Delete user", "Response: $response")
 
-            if (response.isSuccessful){
+            if (response.isSuccessful) {
                 response.body()?.let { emit(it) } ?: emit(userID)
-            }
-            else{
-                Log.d("Delete user","Error deleting user: ${response.errorBody()?.string()}" )
+            } else {
+                Log.d("Delete user", "Error deleting user: ${response.errorBody()?.string()}")
                 emit(userID)
             }
-        }catch (e:Exception){
+        } catch (e: Exception) {
             Log.e("Delete user", "Exception: ${e.message}")
             e.printStackTrace()
             emit(userID)
         }
     }.flowOn(Dispatchers.IO)
 
-    suspend fun updateUser(user: User): Flow<Any> = flow {
+    fun updateUser(user: User): Flow<Any> = flow {
         try {
             Log.d("updateUser", "Attempting to update user: ${user.userUsername}")
             Log.d("updateUser", "User ID: ${user.userID}")
-            
+
             val response = service.updateUser(user.userID, user).awaitResponse()
             Log.d("updateUser", "Response code: ${response.code()}")
             Log.d("updateUser", "Response body: ${response.body()}")
             Log.d("updateUser", "Response error body: ${response.errorBody()?.string()}")
 
             if (response.isSuccessful) {
-                response.body()?.let { 
+                response.body()?.let {
                     Log.d("updateUser", "✅ User updated successfully")
-                    emit(it) 
+                    emit(it)
                 } ?: run {
                     Log.e("updateUser", "❌ Response body is null")
                     emit(user)
@@ -326,7 +374,7 @@ class StaySafeRepository(
 //        }
 //    }
 
-    suspend fun addContact(contact: Contact): Flow<Contact?> = flow {
+    fun addContact(contact: Contact): Flow<Contact?> = flow {
         try {
             val response = service.addContact(contact).awaitResponse()
 
@@ -343,7 +391,7 @@ class StaySafeRepository(
         }
     }.flowOn(Dispatchers.IO)
 
-    suspend fun deleteContact(contactId: Long): Flow<Boolean> = flow {
+    fun deleteContact(contactId: Long): Flow<Boolean> = flow {
         try {
             val response = service.deleteContact(contactId).awaitResponse()
             Log.d("deleteContact", "Response: $response")
@@ -352,7 +400,10 @@ class StaySafeRepository(
                 Log.d("deleteContact", "✅ Contact deleted successfully")
                 emit(true)
             } else {
-                Log.e("deleteContact", "❌ Error deleting contact: ${response.errorBody()?.string()}")
+                Log.e(
+                    "deleteContact",
+                    "❌ Error deleting contact: ${response.errorBody()?.string()}"
+                )
                 emit(false)
             }
         } catch (e: Exception) {
@@ -362,12 +413,12 @@ class StaySafeRepository(
         }
     }.flowOn(Dispatchers.IO)
 
-    suspend fun getContactsForUser(userId: Long): Flow<List<UserWithContact>> = flow {
+    fun getContactsForUser(userId: Long): Flow<List<UserWithContact>> = flow {
         try {
             Log.d("MapViewModel", "Fetching user contacts for userId: $userId")
             val contacts = service.getUserContact(userId).awaitResponse()
             Log.d("MapViewModel", "Received contacts: ${contacts.body()}")
-            
+
             emit(contacts.body() ?: emptyList())
         } catch (e: Exception) {
             Log.e("MapViewModel", "Error fetching contacts: ${e.message}")
@@ -376,5 +427,4 @@ class StaySafeRepository(
         }
     }.flowOn(Dispatchers.IO)
     // //
-
 }

@@ -91,68 +91,6 @@ fun AddActivityForm(viewModel: MapViewModel, onClose: () -> Unit) {
             colors = customTextFieldColors()
         )
 
-        Text("Origin Location", color = Color.White, style = MaterialTheme.typography.titleMedium)
-        OutlinedTextField(
-            value = fromName,
-            onValueChange = { fromName = it },
-            label = { Text("From Name", color = Color.White) },
-            modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
-            colors = customTextFieldColors()
-        )
-        OutlinedTextField(
-            value = fromPostCode,
-            onValueChange = { fromPostCode = it },
-            label = { Text("From Postcode", color = Color.White) },
-            modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
-            colors = customTextFieldColors()
-        )
-        OutlinedTextField(
-            value = fromAddressLine,
-            onValueChange = { fromAddressLine = it },
-            label = { Text("From Address", color = Color.White) },
-            modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
-            colors = customTextFieldColors()
-        )
-
-        Row {
-            DateTimePicker("From Date", fromDate) { fromDate = it }
-            Spacer(modifier = Modifier.width(8.dp))
-            DateTimePicker("From Time", fromTime, isTimePicker = true) { fromTime = it }
-        }
-
-        Spacer(modifier = Modifier.height(12.dp))
-
-        Text("Destination Location", color = Color.White, style = MaterialTheme.typography.titleMedium)
-        OutlinedTextField(
-            value = toName,
-            onValueChange = { toName = it },
-            label = { Text("To Name", color = Color.White) },
-            modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
-            colors = customTextFieldColors()
-        )
-        OutlinedTextField(
-            value = toPostCode,
-            onValueChange = { toPostCode = it },
-            label = { Text("To Postcode", color = Color.White) },
-            modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
-            colors = customTextFieldColors()
-        )
-        OutlinedTextField(
-            value = toAddressLine,
-            onValueChange = { toAddressLine = it },
-            label = { Text("To Address", color = Color.White) },
-            modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
-            colors = customTextFieldColors()
-        )
-
-        Row {
-            DateTimePicker("To Date", toDate) { toDate = it }
-            Spacer(modifier = Modifier.width(8.dp))
-            DateTimePicker("To Time", toTime, isTimePicker = true) { toTime = it }
-        }
-
-        Spacer(modifier = Modifier.height(12.dp))
-
         OutlinedTextField(
             value = description,
             onValueChange = { description = it },
@@ -160,6 +98,82 @@ fun AddActivityForm(viewModel: MapViewModel, onClose: () -> Unit) {
             modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
             colors = customTextFieldColors()
         )
+
+        HorizontalDivider(
+            modifier = Modifier.padding(vertical = 12.dp),
+            color = Color(0xFF333333)
+        )
+
+        Text("Origin Location", color = Color.White, style = MaterialTheme.typography.titleMedium)
+        OutlinedTextField(
+            value = fromName,
+            onValueChange = { fromName = it },
+            label = { Text("Starting Name", color = Color.White) },
+            modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
+            colors = customTextFieldColors()
+        )
+        OutlinedTextField(
+            value = fromAddressLine,
+            onValueChange = { fromAddressLine = it },
+            label = { Text("Starting Address", color = Color.White) },
+            modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
+            colors = customTextFieldColors()
+        )
+        OutlinedTextField(
+            value = fromPostCode,
+            onValueChange = { fromPostCode = it },
+            label = { Text("Starting Postcode", color = Color.White) },
+            modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
+            colors = customTextFieldColors()
+        )
+
+        Column(
+            modifier = Modifier.fillMaxWidth(),
+            verticalArrangement = Arrangement.Center,
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            DateTimePicker("From Date", fromDate) { fromDate = it }
+            Spacer(modifier = Modifier.width(8.dp))
+            DateTimePicker("From Time", fromTime, isTimePicker = true) { fromTime = it }
+        }
+
+        HorizontalDivider(
+            modifier = Modifier.padding(vertical = 12.dp),
+            color = Color(0xFF333333)
+        )
+
+        Text("Destination Location", color = Color.White, style = MaterialTheme.typography.titleMedium)
+        OutlinedTextField(
+            value = toName,
+            onValueChange = { toName = it },
+            label = { Text("Destination Name", color = Color.White) },
+            modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
+            colors = customTextFieldColors()
+        )
+        OutlinedTextField(
+            value = toAddressLine,
+            onValueChange = { toAddressLine = it },
+            label = { Text("Destination Address", color = Color.White) },
+            modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
+            colors = customTextFieldColors()
+        )
+        OutlinedTextField(
+            value = toPostCode,
+            onValueChange = { toPostCode = it },
+            label = { Text("Destination Postcode", color = Color.White) },
+            modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
+            colors = customTextFieldColors()
+        )
+
+        Column(
+            modifier = Modifier.fillMaxWidth(),
+            verticalArrangement = Arrangement.Center,
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            DateTimePicker("To Date", toDate) { toDate = it }
+            Spacer(modifier = Modifier.width(8.dp))
+            DateTimePicker("To Time", toTime, isTimePicker = true) { toTime = it }
+        }
 
         Spacer(modifier = Modifier.height(16.dp))
 
@@ -255,8 +269,11 @@ fun DateTimePicker(label: String, value: String, isTimePicker: Boolean = false, 
         false
     )
 
-    OutlinedButton(onClick = { if (isTimePicker) timePicker.show() else datePicker.show() }) {
-        Text(if (value.isEmpty()) label else "$label: $value")
+    OutlinedButton(
+        onClick = { if (isTimePicker) timePicker.show() else datePicker.show() },
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Text(value.ifEmpty { label })
     }
 }
 

@@ -27,7 +27,7 @@ interface Service {
     fun addActivities(@Body activity: Activity): Call<List<Activity>>
 
     @PUT("https://softwarehub.uk/unibase/staysafe/v1/api/activities/{activityID}")
-    fun updateActivity(@Path("activityID") id: Long): Call<List<Activity>>
+    fun updateActivity(@Path("activityID") id: Long, @Body activity: Activity): Call<List<Activity>>
 
     @DELETE("https://softwarehub.uk/unibase/staysafe/v1/api/activities/{activityID}")
     fun deleteActivity(@Path("activityID") id: Long): Call<Unit>

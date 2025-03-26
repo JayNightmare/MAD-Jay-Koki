@@ -21,6 +21,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.example.staysafe.model.data.Activity
+import com.example.staysafe.ui.components.StatusIcon
 import com.example.staysafe.ui.components.forms.DateTimePicker
 import com.example.staysafe.viewModel.MapViewModel
 import java.text.SimpleDateFormat
@@ -44,7 +45,6 @@ fun UserActivitiesScreen(
     LaunchedEffect(loggedInUser) {
         loggedInUser?.let { user ->
             viewModel.fetchActivitiesForUser(user.userID)
-            Toast.makeText(context, "Invalid date/time. Please select future values.", Toast.LENGTH_SHORT).show()
         }
     }
 
@@ -90,7 +90,8 @@ fun UserActivitiesScreen(
                         onDelete = {
                             selectedActivity = activity
                             showDeleteDialog = true
-                        }
+                        },
+                        viewModel = viewModel
                     )
                 }
             }
@@ -164,8 +165,12 @@ fun UserActivitiesScreen(
 private fun ActivityCard(
     activity: Activity,
     onEdit: () -> Unit,
-    onDelete: () -> Unit
+    onDelete: () -> Unit,
+    viewModel: MapViewModel
 ) {
+    var showStatusMenu by remember { mutableStateOf(false) }
+    val context = LocalContext.current
+
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -188,9 +193,33 @@ private fun ActivityCard(
                     text = activity.activityName,
                     color = Color.White,
                     fontSize = 18.sp,
-                    fontWeight = FontWeight.Bold
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.weight(1f)
                 )
+
                 Row {
+                    // Status Change Button
+                    Box {
+                        IconButton(onClick = { showStatusMenu = true }) {
+                            StatusIcon(activity.activityStatusName)
+                        }
+                        DropdownMenu(
+                            expanded = showStatusMenu,
+                            onDismissRequest = { showStatusMenu = false },
+                            modifier = Modifier.background(Color.Black)
+                        ) {
+                            listOf("Planned", "Started", "Paused", "Cancelled", "Completed").forEach { status ->
+                                DropdownMenuItem(
+                                    text = { Text(status, color = Color.White) },
+                                    onClick = {
+                                        viewModel.updateActivityStatus(activity.activityID, status)
+                                        showStatusMenu = false
+                                    }
+                                )
+                            }
+                        }
+                    }
+                    
                     IconButton(onClick = onEdit) {
                         Icon(Icons.Default.Edit, contentDescription = "Edit", tint = Color.White)
                     }
@@ -199,34 +228,16 @@ private fun ActivityCard(
                     }
                 }
             }
-            
+
             Spacer(modifier = Modifier.height(8.dp))
-            
-            Text(
-                text = "From: ${activity.activityFromName}",
-                color = Color.Gray,
-                fontSize = 14.sp
-            )
-            Text(
-                text = "To: ${activity.activityToName}",
-                color = Color.Gray,
-                fontSize = 14.sp
-            )
-            Text(
-                text = "Status: ${activity.activityStatusName}",
-                color = Color.Gray,
-                fontSize = 14.sp
-            )
-            Text(
-                text = "Leave: ${formatDate(activity.activityLeave)}",
-                color = Color.Gray,
-                fontSize = 14.sp
-            )
-            Text(
-                text = "Arrive: ${formatDate(activity.activityArrive)}",
-                color = Color.Gray,
-                fontSize = 14.sp
-            )
+
+            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                Text("From: ${activity.activityFromName}", color = Color.Gray, fontSize = 14.sp)
+                Text("To: ${activity.activityToName}", color = Color.Gray, fontSize = 14.sp)
+                Text("Status: ${activity.activityStatusName}", color = Color.Gray, fontSize = 14.sp)
+                Text("Leave: ${formatDate(activity.activityLeave)}", color = Color.Gray, fontSize = 14.sp)
+                Text("Arrive: ${formatDate(activity.activityArrive)}", color = Color.Gray, fontSize = 14.sp)
+            }
         }
     }
 }
@@ -242,8 +253,8 @@ private fun ActivityDialog(
     var name by remember { mutableStateOf(activity?.activityName ?: "") }
     var fromName by remember { mutableStateOf(activity?.activityFromName ?: "") }
     var toName by remember { mutableStateOf(activity?.activityToName ?: "") }
-    var fromAddress by remember { mutableStateOf(activity?.activityFromName ?: "") }
-    var toAddress by remember { mutableStateOf(activity?.activityToName ?: "") }
+    var fromAddress by remember { mutableStateOf("") }
+    var toAddress by remember { mutableStateOf("") }
     var description by remember { mutableStateOf(activity?.activityDescription ?: "") }
     var fromDate by remember { mutableStateOf("") }
     var fromTime by remember { mutableStateOf("") }
@@ -258,12 +269,14 @@ private fun ActivityDialog(
             try {
                 viewModel.fetchLocationById(existingActivity.activityFromID).collect { fromLocation ->
                     fromLocation?.let {
+                        fromAddress = it.locationAddress ?: ""
                         fromPostcode = it.locationPostcode ?: ""
                     }
                 }
                 
                 viewModel.fetchLocationById(existingActivity.activityToID).collect { toLocation ->
                     toLocation?.let {
+                        toAddress = it.locationAddress ?: ""
                         toPostcode = it.locationPostcode ?: ""
                     }
                 }
@@ -276,25 +289,31 @@ private fun ActivityDialog(
 
     // Initialize date and time from activity if editing
     LaunchedEffect(activity) {
-        activity?.let { it ->
+        activity?.let { existingActivity ->
             try {
                 val inputFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSX", Locale.getDefault()).apply {
                     timeZone = TimeZone.getTimeZone("UTC")
                 }
-                val leaveDate = inputFormat.parse(it.activityLeave)
+                
+                // Parse and format leave date
+                val leaveDate = inputFormat.parse(existingActivity.activityLeave)
                 leaveDate?.let {
                     fromDate = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(it)
                     fromTime = SimpleDateFormat("HH:mm", Locale.getDefault()).format(it)
                 }
                 
-                val arriveDate = inputFormat.parse(it.activityArrive)
+                // Parse and format arrive date
+                val arriveDate = inputFormat.parse(existingActivity.activityArrive)
                 arriveDate?.let {
                     toDate = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(it)
                     toTime = SimpleDateFormat("HH:mm", Locale.getDefault()).format(it)
                 }
             } catch (e: Exception) {
                 e.printStackTrace()
-                Toast.makeText(context, "Invalid date/time format", Toast.LENGTH_SHORT).show()
+                // Only show error toast if we're actually editing an activity
+                if (activity != null) {
+                    Toast.makeText(context, "Error loading activity dates", Toast.LENGTH_SHORT).show()
+                }
             }
         }
     }
@@ -417,11 +436,15 @@ private fun ActivityDialog(
                         focusedContainerColor = Color(0xFF1E1E1E),
                     )
                 )
-                
-                Row {
-                    DateTimePicker("From Date\n", fromDate) { fromDate = it }
+
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalArrangement = Arrangement.Center,
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    DateTimePicker("From Date", fromDate) { fromDate = it }
                     Spacer(modifier = Modifier.width(8.dp))
-                    DateTimePicker("From Time\n", fromTime, isTimePicker = true) { fromTime = it }
+                    DateTimePicker("From Time", fromTime, isTimePicker = true) { fromTime = it }
                 }
 
                 HorizontalDivider(
@@ -439,7 +462,7 @@ private fun ActivityDialog(
                 OutlinedTextField(
                     value = toName,
                     onValueChange = { toName = it },
-                    label = { Text("From Name", color = Color.White) },
+                    label = { Text("Destination Name", color = Color.White) },
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(vertical = 8.dp),
@@ -456,7 +479,7 @@ private fun ActivityDialog(
                 OutlinedTextField(
                     value = toAddress,
                     onValueChange = { toAddress = it },
-                    label = { Text("To Address", color = Color.White) },
+                    label = { Text("Destination Address", color = Color.White) },
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(vertical = 8.dp),
@@ -473,7 +496,7 @@ private fun ActivityDialog(
                 OutlinedTextField(
                     value = toPostcode,
                     onValueChange = { toPostcode = it },
-                    label = { Text("To Postcode", color = Color.White) },
+                    label = { Text("Destination Postcode", color = Color.White) },
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(vertical = 8.dp),
@@ -487,7 +510,11 @@ private fun ActivityDialog(
                     )
                 )
 
-                Row {
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalArrangement = Arrangement.Center,
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
                     DateTimePicker("To Date", toDate) { toDate = it }
                     Spacer(modifier = Modifier.width(8.dp))
                     DateTimePicker("To Time", toTime, isTimePicker = true) { toTime = it }
@@ -546,11 +573,14 @@ private fun convertToISO8601(date: String, time: String): String {
 
 private fun formatDate(isoDate: String): String {
     return try {
-        val inputFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX", Locale.getDefault())
+        val inputFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.getDefault()).apply {
+            timeZone = TimeZone.getTimeZone("UTC")
+        }
         val outputFormat = SimpleDateFormat("MMM dd, yyyy HH:mm", Locale.getDefault())
         val date = inputFormat.parse(isoDate)
-        outputFormat.format(date ?: "")
+        return outputFormat.format(date ?: "")
     } catch (e: Exception) {
+        e.printStackTrace()
         isoDate
     }
 } 
