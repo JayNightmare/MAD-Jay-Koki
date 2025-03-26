@@ -225,6 +225,25 @@ class StaySafeRepository(
             emit(0) // Default to 0 if there's an error
         }
     }.flowOn(Dispatchers.IO)
+
+    fun deleteLocation(locationId: Long): Flow<Boolean> = flow {
+        try {
+            val response = service.deleteLocation(locationId).awaitResponse()
+            Log.d("deleteLocation", "Response: $response")
+
+            if (response.isSuccessful) {
+                Log.d("deleteLocation", "✅ Location deleted successfully")
+                emit(true)
+            } else {
+                Log.e("deleteLocation", "❌ Error deleting location: ${response.errorBody()?.string()}")
+                emit(false)
+            }
+        } catch (e: Exception) {
+            Log.e("deleteLocation", "❌ Exception: ${e.message}")
+            e.printStackTrace()
+            emit(false)
+        }
+    }.flowOn(Dispatchers.IO)
     // //
 
     // //

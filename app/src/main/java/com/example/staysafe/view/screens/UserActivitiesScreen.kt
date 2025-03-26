@@ -127,7 +127,20 @@ fun UserActivitiesScreen(
             activity = selectedActivity,
             onDismiss = { showEditDialog = false },
             onConfirm = { name, fromName, toName, fromAddress, toAddress, description, fromTime, toTime, fromPostcode, toPostcode ->
-                // TODO: Implement edit activity
+                selectedActivity?.let { existingActivity ->
+                    // Create updated activity with new values
+                    val updatedActivity = existingActivity.copy(
+                        activityName = name,
+                        activityFromName = fromName,
+                        activityToName = toName,
+                        activityDescription = description,
+                        activityLeave = fromTime,
+                        activityArrive = toTime
+                    )
+                    
+                    // Update the activity in the repository
+                    viewModel.updateActivity(existingActivity.activityID, updatedActivity)
+                }
                 showEditDialog = false
             },
             viewModel = viewModel
@@ -147,16 +160,24 @@ fun UserActivitiesScreen(
                             viewModel.deleteActivity(it.activityID)
                         }
                         showDeleteDialog = false
-                    }
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = Color.Red),
+                    shape = MaterialTheme.shapes.small
                 ) {
                     Text("Delete")
                 }
             },
             dismissButton = {
-                TextButton(onClick = { showDeleteDialog = false }) {
-                    Text("Cancel")
+                TextButton(
+                    onClick = { showDeleteDialog = false },
+                    colors = ButtonDefaults.buttonColors(containerColor = Color.Black),
+                ) {
+                    Text("Cancel", color = Color.Gray)
                 }
-            }
+            },
+            containerColor = Color.Black,
+            textContentColor = Color.White,
+            titleContentColor = Color.White
         )
     }
 }

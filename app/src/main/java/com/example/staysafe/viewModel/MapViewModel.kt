@@ -338,6 +338,7 @@ class MapViewModel
         }
     }
 
+    // ! Add Activity
     fun addActivity(
         name: String,
         fromActivityName: String?,
@@ -487,14 +488,78 @@ class MapViewModel
             }
         }
     }
-    fun deleteActivity (activityId: Long):Activity?{
-        val existingActivities = _activities.value.find { it.activityID == activityId } ?: return null
-        _activities.value -= existingActivities
+
+    // ! Update Activity
+    fun updateActivity(activityId: Long, updatedActivity: Activity) {
+        viewModelScope.launch {
+            try {
+                Log.d("updateActivity", "Updating activity with ID: $activityId")
+                Log.d("updateActivity", "Updated activity data: $updatedActivity")
+
+                repository.updateActivity(activityId, updatedActivity).collect { result ->
+                    if (result != null) {
+                        // Update local state
+                        _activities.value = _activities.value.map {
+                            if (it.activityID == activityId) updatedActivity else it
+                        }
+                        Log.d("updateActivity", "✅ Activity updated successfully")
+                    } else {
+                        Log.e("updateActivity", "❌ Failed to update activity")
+                    }
+                }
+            } catch (e: Exception) {
+                Log.e("updateActivity", "❌ Exception: ${e.message}")
+                e.printStackTrace()
+            }
+        }
+    }
+
+    // ! Delete Activity
+    fun deleteActivity(activityId: Long): Activity? {
+        val existingActivity = _activities.value.find { it.activityID == activityId } ?: return null
+        _activities.value -= existingActivity
 
         viewModelScope.launch {
-            repository.deleteActivity(activityId).collect()
+            try {
+                Log.d("deleteActivity", "Deleting activity with ID: $activityId")
+                Log.d("deleteActivity", "Activity details: $existingActivity")
+
+                // Delete the activity first
+                repository.deleteActivity(activityId).collect { result ->
+                    if (result != null) {
+                        Log.d("deleteActivity", "✅ Activity deleted successfully")
+                        
+                        // Delete the associated locations
+                        val fromLocationId = existingActivity.activityFromID
+                        val toLocationId = existingActivity.activityToID
+                        
+                        Log.d("deleteActivity", "Deleting from location with ID: $fromLocationId")
+                        repository.deleteLocation(fromLocationId).collect { fromLocationDeleted ->
+                            if (fromLocationDeleted) {
+                                Log.d("deleteActivity", "✅ From location deleted successfully")
+                            } else {
+                                Log.e("deleteActivity", "❌ Failed to delete from location")
+                            }
+                        }
+                        
+                        Log.d("deleteActivity", "Deleting to location with ID: $toLocationId")
+                        repository.deleteLocation(toLocationId).collect { toLocationDeleted ->
+                            if (toLocationDeleted) {
+                                Log.d("deleteActivity", "✅ To location deleted successfully")
+                            } else {
+                                Log.e("deleteActivity", "❌ Failed to delete to location")
+                            }
+                        }
+                    } else {
+                        Log.e("deleteActivity", "❌ Failed to delete activity")
+                    }
+                }
+            } catch (e: Exception) {
+                Log.e("deleteActivity", "❌ Exception: ${e.message}")
+                e.printStackTrace()
+            }
         }
-        return existingActivities
+        return existingActivity
     }
     
     private suspend fun geocodeAddress(address: String): Pair<Double, Double>? {
@@ -915,7 +980,7 @@ class MapViewModel
     }
 
     // * Other Functions
-    private suspend fun getRoute(
+    private fun getRoute(
         startPostCode: String,
         startAddressLine: String,
         postCode: String,
@@ -1010,6 +1075,4 @@ class MapViewModel
             }
         }
     }
-    // //
-
 }
