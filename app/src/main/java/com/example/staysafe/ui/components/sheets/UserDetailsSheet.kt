@@ -9,11 +9,15 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.List
+import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material.icons.filled.Call
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Create
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
@@ -131,9 +135,25 @@ fun UserDetailsSheet(
             }
         }
 
-        Text("User Information:", fontSize = 16.sp, fontWeight = FontWeight.Bold, color = Color.White)
+        val phone = user.userPhone
+        val phoneGroups = if (phone.startsWith("+44") && phone.length == 13) {
+            val countryCode = phone.substring(0, 3)
+            val areaCode = phone.substring(3, 7)
+            val rest = phone.substring(7)
+            "$countryCode $areaCode $rest"
+        } else {
+            phone
+        }
+
+        Text(
+            "User Information:",
+            fontSize = 16.sp,
+            fontWeight = FontWeight.Bold,
+            color = Color.White
+        )
+        Spacer(modifier = Modifier.height(5.dp))
         Text("Username: ${user.userUsername}", color = Color.White)
-        Text("Phone: ${user.userPhone}", color = Color.White)
+        Text("Phone: ${phoneGroups}", color = Color.White)
 
         Spacer(modifier = Modifier.height(12.dp))
         HorizontalDivider(color = Color.White, thickness = 1.dp)
@@ -141,7 +161,12 @@ fun UserDetailsSheet(
 
         // **Only show the route preview if the user has an ongoing activity**
         if (latestActivity != null) {
-            Text("Active Activity:", fontSize = 16.sp, fontWeight = FontWeight.Bold, color = Color.White)
+            Text(
+                "Active Activity:",
+                fontSize = 16.sp,
+                fontWeight = FontWeight.Bold,
+                color = Color.White
+            )
             Text("Activity Name: ${latestActivity?.activityName}", color = Color.White)
             Text("From: ${latestActivity?.activityFromName}", color = Color.White)
             Text("To: ${latestActivity?.activityToName}", color = Color.White)
@@ -183,114 +208,138 @@ fun UserDetailsSheet(
         }
 
         Spacer(modifier = Modifier.height(8.dp))
-
         Button(
             onClick = { onActivityClicked() }, // Switches sheet
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Text("View All Activity")
-        }
-
-        Spacer(modifier = Modifier.height(8.dp))
-        HorizontalDivider(color = Color.White, thickness = 1.dp)
-        Spacer(modifier = Modifier.height(16.dp))
-
-        // * Contact and Directions Buttons
-        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
-            ContactButton(
-                onCallClick = {
-                    val intent = Intent(Intent.ACTION_DIAL).apply {
-                        data = "tel:${user.userPhone}".toUri()
-                    }
-                    context.startActivity(intent)
-                }
-            )
-            DirectionsButton(
-                viewModel = viewModel,
-                userLat = userLat,
-                userLon = userLon,
-                friendLat = user.userLatitude,
-                friendLon = user.userLongitude,
-                apiKey = apiKey,
-                onRoutePlotted = onRoutePlotted
-            )
-        }
-
-        Spacer(modifier = Modifier.height(16.dp))
-        HorizontalDivider(color = Color.White, thickness = 1.dp)
-        Spacer(modifier = Modifier.height(16.dp))
-
-        var showDialog by remember { mutableStateOf(false) }
-        var isDeleting by remember { mutableStateOf(false) }
-        val loggedInUser by viewModel.loggedInUser.collectAsState()
-
-        OutlinedButton(
-            onClick = { showDialog = true },
             modifier = Modifier.fillMaxWidth(),
-            colors = ButtonDefaults.outlinedButtonColors(
-                contentColor = Color.Red
+            colors = ButtonDefaults.buttonColors(
+                containerColor = Color.White,
+                contentColor = Color.Black
             )
         ) {
-            Text("Remove Friend")
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Icon(Icons.AutoMirrored.Filled.List, contentDescription = null)
+                Text("View All Activity")
+            }
         }
-
-        if (showDialog) {
-            AlertDialog(
-                onDismissRequest = { showDialog = false },
-                containerColor = Color.Black,
-                titleContentColor = Color.White,
-                textContentColor = Color.White,
-                title = { 
-                    Text(
-                        "Remove Friend",
-                        fontWeight = FontWeight.Bold
-                    )
-                },
-                text = { 
-                    Text(
-                        "Are you sure you want to remove ${user.userFirstname} ${user.userLastname} from your friends list?"
-                    )
-                },
-                confirmButton = {
-                    Button(
-                        onClick = {
-                            isDeleting = true
-                            viewModel.removeContact(user.userID) { success ->
-                                if (success) {
-                                    showDialog = false
-                                    onClose()
-                                }
-                                isDeleting = false
-                            }
-                        },
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = Color.Red,
-                            contentColor = Color.White
-                        ),
-                        enabled = !isDeleting
-                    ) {
-                        Text(if (isDeleting) "Removing..." else "Remove")
-                    }
-                },
-                dismissButton = {
-                    OutlinedButton(
-                        onClick = { showDialog = false },
-                        enabled = !isDeleting
-                    ) {
-                        Text("Cancel", color = Color.White)
-                    }
-                }
-            )
-        }
-
-        Spacer(modifier = Modifier.height(16.dp))
     }
+
+    Spacer(modifier = Modifier.height(8.dp))
+    HorizontalDivider(color = Color.White, thickness = 1.dp)
+    Spacer(modifier = Modifier.height(16.dp))
+
+    // * Contact and Directions Buttons
+    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
+        ContactButton(
+            onCallClick = {
+                val intent = Intent(Intent.ACTION_DIAL).apply {
+                    data = "tel:${user.userPhone}".toUri()
+                }
+                context.startActivity(intent)
+            }
+        )
+        DirectionsButton(
+            viewModel = viewModel,
+            userLat = userLat,
+            userLon = userLon,
+            friendLat = user.userLatitude,
+            friendLon = user.userLongitude,
+            apiKey = apiKey,
+            onRoutePlotted = onRoutePlotted
+        )
+    }
+
+    Spacer(modifier = Modifier.height(16.dp))
+    HorizontalDivider(color = Color.White, thickness = 1.dp)
+    Spacer(modifier = Modifier.height(16.dp))
+
+    var showDialog by remember { mutableStateOf(false) }
+    var isDeleting by remember { mutableStateOf(false) }
+    val loggedInUser by viewModel.loggedInUser.collectAsState()
+
+    Button(
+        onClick = { showDialog = true },
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 8.dp),
+        colors = ButtonDefaults.buttonColors(
+            containerColor = Color.Red,
+            contentColor = Color.White
+        )
+    ) {
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Icon(Icons.Default.Delete, contentDescription = null)
+            Text("Remove Contact")
+        }
+    }
+
+    if (showDialog) {
+        AlertDialog(
+            onDismissRequest = { showDialog = false },
+            containerColor = Color.Black,
+            titleContentColor = Color.White,
+            textContentColor = Color.White,
+            title = {
+                Text(
+                    "Remove Friend",
+                    fontWeight = FontWeight.Bold
+                )
+            },
+            text = {
+                Text(
+                    "Are you sure you want to remove ${user.userFirstname} ${user.userLastname} from your friends list?"
+                )
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        isDeleting = true
+                        viewModel.removeContact(user.userID) { success ->
+                            if (success) {
+                                showDialog = false
+                                onClose()
+                            }
+                            isDeleting = false
+                        }
+                    },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color.Red,
+                        contentColor = Color.White
+                    ),
+                    enabled = !isDeleting
+                ) {
+                    Text(if (isDeleting) "Removing..." else "Remove")
+                }
+            },
+            dismissButton = {
+                OutlinedButton(
+                    onClick = { showDialog = false },
+                    enabled = !isDeleting
+                ) {
+                    Text("Cancel", color = Color.White)
+                }
+            }
+        )
+    }
+
+    Spacer(modifier = Modifier.height(16.dp))
 }
 
 
 @Composable
 fun ContactButton(onCallClick: () -> Unit) {
-    Button(onClick = { onCallClick() }) {
+    Button(
+        onClick = { onCallClick() },
+        colors = ButtonDefaults.buttonColors(
+            containerColor = Color.White,
+            contentColor = Color.Black
+        )
+    ) {
         Icon(Icons.Default.Call, contentDescription = "Contact")
         Spacer(modifier = Modifier.width(8.dp))
         Text("Contact")
@@ -311,30 +360,36 @@ fun DirectionsButton(
     val coroutineScope = rememberCoroutineScope()
     val context = LocalContext.current
 
-    Button(onClick = {
-        Log.d("DirectionsButton", "Fetching Route to Friend...")
-        coroutineScope.launch {
-            viewModel.fetchRoute(
-                start = LatLng(userLat, userLon),
-                end = LatLng(friendLat, friendLon),
-                apiKey = apiKey
-            ) { routePoints ->
-                Log.d("DirectionsButton", "Route fetched: ${routePoints.size} points")
+    Button(
+        onClick = {
+            Log.d("DirectionsButton", "Fetching Route to Friend...")
+            coroutineScope.launch {
+                viewModel.fetchRoute(
+                    start = LatLng(userLat, userLon),
+                    end = LatLng(friendLat, friendLon),
+                    apiKey = apiKey
+                ) { routePoints ->
+                    Log.d("DirectionsButton", "Route fetched: ${routePoints.size} points")
 
-                // * ✅ Update map route
-                onRoutePlotted(routePoints)
+                    // * ✅ Update map route
+                    onRoutePlotted(routePoints)
 
-                // * ✅ Open Google Maps Navigation
-                val gmmIntentUri = Uri.parse("google.navigation:q=$friendLat,$friendLon")
-                val mapIntent = Intent(Intent.ACTION_VIEW, gmmIntentUri).apply {
-                    setPackage("com.google.android.apps.maps")
-                }
-                if (mapIntent.resolveActivity(context.packageManager) != null) {
-                    context.startActivity(mapIntent)
+                    // * ✅ Open Google Maps Navigation
+                    val gmmIntentUri = Uri.parse("google.navigation:q=$friendLat,$friendLon")
+                    val mapIntent = Intent(Intent.ACTION_VIEW, gmmIntentUri).apply {
+                        setPackage("com.google.android.apps.maps")
+                    }
+                    if (mapIntent.resolveActivity(context.packageManager) != null) {
+                        context.startActivity(mapIntent)
+                    }
                 }
             }
-        }
-    }) {
+        },
+        colors = ButtonDefaults.buttonColors(
+            containerColor = Color.White,
+            contentColor = Color.Black
+        )
+    ) {
         Icon(Icons.Default.Create, contentDescription = "Directions")
         Spacer(modifier = Modifier.width(8.dp))
         Text("Get Directions")

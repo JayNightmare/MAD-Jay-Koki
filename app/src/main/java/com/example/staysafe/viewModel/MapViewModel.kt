@@ -175,6 +175,10 @@ class MapViewModel
         }
         return existingUser
     }
+
+    fun logout() {
+        _loggedInUser.value = null
+    }
     // //
 
     private val _updateResult = MutableStateFlow<Boolean?>(null)

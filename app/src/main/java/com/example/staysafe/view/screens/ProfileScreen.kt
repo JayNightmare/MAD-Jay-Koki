@@ -8,6 +8,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
@@ -180,7 +181,11 @@ fun ProfileScreen(
 
                         OutlinedTextField(
                             value = phone,
-                            onValueChange = { phone = it },
+                            onValueChange = {
+                                if (it.length <= 10) {
+                                    phone = it
+                                }
+                            },
                             label = { Text("Phone", color = Color.White) },
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -195,9 +200,18 @@ fun ProfileScreen(
                             )
                         )
                     } else {
+                        val phoneGroups = if (phone.startsWith("+44") && phone.length == 13) {
+                            val countryCode = phone.substring(0, 3)
+                            val areaCode = phone.substring(3, 7)
+                            val rest = phone.substring(7)
+                            "$countryCode $areaCode $rest"
+                        } else {
+                            phone
+                        }
+
                         InfoRow("First Name", firstName)
                         InfoRow("Last Name", lastName)
-                        InfoRow("Phone", phone)
+                        InfoRow("Phone", phoneGroups ?: phone)
                         InfoRow("Username", loggedInUser?.userUsername ?: "")
                     }
                 }
@@ -240,7 +254,7 @@ fun ProfileScreen(
                             horizontalArrangement = Arrangement.spacedBy(8.dp),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Icon(Icons.Default.List, contentDescription = null)
+                            Icon(Icons.AutoMirrored.Filled.List, contentDescription = null)
                             Text("My Activities")
                         }
                     }
@@ -272,6 +286,7 @@ fun ProfileScreen(
                             navController.navigate(Screen.LoginScreen.route) {
                                 popUpTo(Screen.MapScreen.route) { inclusive = true }
                             }
+                            viewModel.logout()
                         },
                         modifier = Modifier
                             .fillMaxWidth()
