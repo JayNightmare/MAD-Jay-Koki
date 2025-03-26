@@ -922,7 +922,7 @@ class MapViewModel
 
     // * Decode Polyline
     private fun decodePolyline(encoded: String): List<LatLng> {
-        val polyline = mutableListOf<LatLng>()
+        val poly = ArrayList<LatLng>()
         var index = 0
         val len = encoded.length
         var lat = 0
@@ -932,32 +932,31 @@ class MapViewModel
             var b: Int
             var shift = 0
             var result = 0
-
             do {
                 b = encoded[index++].code - 63
-                result = result or ((b and 0x1F) shl shift)
+                result = result or (b and 0x1F shl shift)
                 shift += 5
             } while (b >= 0x20)
 
-            val deltaLat = if ((result and 1) != 0) (result.inv() shr 1) else (result shr 1)
-            lat += deltaLat
+            val dlat = if ((result and 1) != 0) (result shr 1).inv() else result shr 1
+            lat += dlat
 
             shift = 0
             result = 0
-
             do {
                 b = encoded[index++].code - 63
-                result = result or ((b and 0x1F) shl shift)
+                result = result or (b and 0x1F shl shift)
                 shift += 5
             } while (b >= 0x20)
 
-            val deltaLng = if ((result and 1) != 0) (result.inv() shr 1) else (result shr 1)
-            lng += deltaLng
+            val dlng = if ((result and 1) != 0) (result shr 1).inv() else result shr 1
+            lng += dlng
 
-            polyline.add(LatLng(lat / 1E5, lng / 1E5))
+            val latLng = LatLng(lat * 1e-5, lng * 1e-5)
+            poly.add(latLng)
         }
 
-        return polyline
+        return poly
     }
 
     fun getRouteForLocation(
@@ -1072,6 +1071,64 @@ class MapViewModel
                 Log.e("changePassword", "❌ Exception: ${e.message}")
                 e.printStackTrace()
                 onComplete(false)
+            }
+        }
+    }
+
+    fun getRouteForActivity(activity: Activity, onRouteReceived: (List<LatLng>) -> Unit) {
+        viewModelScope.launch {
+            try {
+                // Get locations for the activity
+                val fromLocation = _locations.value.find { it.locationID == activity.activityFromID.toInt() }
+                val toLocation = _locations.value.find { it.locationID == activity.activityToID.toInt() }
+
+                if (fromLocation == null || toLocation == null) {
+                    Log.e("getRouteForActivity", "❌ Could not find locations for activity")
+                    return@launch
+                }
+
+                // Create origin and destination strings
+                val origin = if (fromLocation.locationLatitude != 0.0 && fromLocation.locationLongitude != 0.0) {
+                    "${fromLocation.locationLatitude},${fromLocation.locationLongitude}"
+                } else {
+                    "${fromLocation.locationPostcode},${fromLocation.locationAddress}"
+                }
+
+                val destination = if (toLocation.locationLatitude != 0.0 && toLocation.locationLongitude != 0.0) {
+                    "${toLocation.locationLatitude},${toLocation.locationLongitude}"
+                } else {
+                    "${toLocation.locationPostcode},${toLocation.locationAddress}"
+                }
+
+                // Create URL for Google Directions API
+                val apiKey = BuildConfig.MAP_API_GOOGLE
+                val url = "https://maps.googleapis.com/maps/api/directions/json?" +
+                        "origin=$origin&" +
+                        "destination=$destination&" +
+                        "mode=driving&" +
+                        "key=$apiKey"
+
+                // Make the API request
+                val response = withContext(Dispatchers.IO) { URL(url).readText() }
+                val jsonObject = JSONObject(response)
+
+                if (jsonObject.getString("status") == "OK") {
+                    val routes = jsonObject.getJSONArray("routes")
+                    if (routes.length() > 0) {
+                        val route = routes.getJSONObject(0)
+                        val polyline = route.getJSONObject("overview_polyline")
+                        val points = polyline.getString("points")
+
+                        // Decode polyline to get list of LatLng points
+                        val routePoints = decodePolyline(points)
+                        onRouteReceived(routePoints)
+                    }
+                } else {
+                    Log.e("getRouteForActivity", "❌ Failed to get route: ${jsonObject.getString("status")}")
+                }
+            } catch (e: Exception) {
+                Log.e("getRouteForActivity", "❌ Exception: ${e.message}")
+                e.printStackTrace()
             }
         }
     }

@@ -1,5 +1,6 @@
 package com.example.staysafe.ui.components.sheets
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -19,7 +20,8 @@ import com.example.staysafe.viewModel.MapViewModel
 fun ActivitySheet(
     viewModel: MapViewModel,
     userId: Long,
-    onClose: () -> Unit
+    onClose: () -> Unit,
+    onActivitySelected: (Activity) -> Unit
 ) {
     val userActivities by viewModel.activities.collectAsState()
 
@@ -50,7 +52,10 @@ fun ActivitySheet(
 
         if (userActivities.isNotEmpty()) {
             userActivities.forEach { activity ->
-                ActivityItem(activity)
+                ActivityItem(
+                    activity = activity,
+                    onClick = { onActivitySelected(activity) }
+                )
             }
         } else {
             Text("No activities found for this user.", color = Color.Gray)
@@ -59,11 +64,15 @@ fun ActivitySheet(
 }
 
 @Composable
-fun ActivityItem(activity: Activity) {
+fun ActivityItem(
+    activity: Activity,
+    onClick: () -> Unit
+) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 8.dp),
+            .padding(vertical = 8.dp)
+            .clickable(onClick = onClick),
         colors = CardDefaults.cardColors(containerColor = Color.DarkGray)
     ) {
         Column(modifier = Modifier.padding(16.dp)) {

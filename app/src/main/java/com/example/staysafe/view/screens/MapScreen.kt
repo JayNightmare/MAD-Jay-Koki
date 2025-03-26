@@ -2,14 +2,23 @@ package com.example.staysafe.view.screens
 
 import android.os.Build
 import androidx.annotation.RequiresApi
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.LocationOn
+import androidx.compose.material.icons.filled.Pause
+import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Scaffold
@@ -26,6 +35,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
@@ -40,12 +50,14 @@ import com.example.staysafe.ui.components.sheets.ActivitySheet
 import com.example.staysafe.ui.components.BottomNavigationBar
 import com.example.staysafe.ui.components.sheets.CallUserSheet
 import com.example.staysafe.ui.components.TopNavigationBar
+import com.example.staysafe.ui.components.sheets.UserActivitiesSheet
 import com.example.staysafe.ui.components.sheets.UserDetailsSheet
 import com.example.staysafe.ui.components.sheets.UserListSheet
 import com.example.staysafe.viewModel.MapViewModel
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
+import com.google.android.gms.maps.model.LatLngBounds
 import com.google.android.gms.maps.model.MapStyleOptions
 import com.google.maps.android.compose.CameraPositionState
 import com.google.maps.android.compose.GoogleMap
@@ -63,10 +75,24 @@ fun MapScreen(navController: NavController, viewModel: MapViewModel) {
     var selectedUser by remember { mutableStateOf<UserWithContact?>(null) }
     val contacts by viewModel.contacts.collectAsState(emptyList())
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    var selectedActivity by remember { mutableStateOf<Activity?>(null) }
+    var showStatusMenu by remember { mutableStateOf(false) }
+    val activities by viewModel.activities.collectAsState()
+
+    // Update selectedActivity when activities change
+    LaunchedEffect(activities, selectedActivity) {
+        selectedActivity?.let { currentActivity ->
+            val updatedActivity = activities.find { it.activityID == currentActivity.activityID }
+            if (updatedActivity != null) {
+                selectedActivity = updatedActivity
+            }
+        }
+    }
 
     var showPeopleSheet by remember { mutableStateOf(false) }
     var showCallUserDialog by remember { mutableStateOf(false) }
     var showActivitySheet by remember { mutableStateOf(false) }
+    var showUserActivitiesSheet by remember { mutableStateOf(false) }
 
     val context = LocalContext.current
     var currentDeviceLat by remember { mutableDoubleStateOf(0.0) }
@@ -111,6 +137,34 @@ fun MapScreen(navController: NavController, viewModel: MapViewModel) {
         }
     }
 
+    // Update route when selected activity changes
+    LaunchedEffect(selectedActivity) {
+        selectedActivity?.let { activity ->
+            viewModel.getRouteForActivity(activity) { route ->
+                routePoints = route
+                // Move camera to show the entire route
+                if (route.isNotEmpty()) {
+                    val bounds = route.fold(LatLngBounds.builder()) { builder, point ->
+                        builder.include(point)
+                    }.build()
+                    coroutineScope.launch {
+                        cameraPositionState.animate(
+                            CameraUpdateFactory.newLatLngBounds(bounds, 100)
+                        )
+                    }
+                }
+            }
+        } ?: run {
+            routePoints = emptyList()
+        }
+    }
+
+    // Add state for tracking if activity is started
+    var isActivityStarted by remember { mutableStateOf(false) }
+
+    // Add state for tracking if activity is paused
+    var isActivityPaused by remember { mutableStateOf(false) }
+
     Scaffold(
         topBar = { 
             TopNavigationBar(
@@ -133,24 +187,104 @@ fun MapScreen(navController: NavController, viewModel: MapViewModel) {
                 navController = navController,
                 onPeopleClicked = {
                     selectedUser = null
+                    selectedActivity = null
                     showPeopleSheet = true
                     showCallUserDialog = false
                     showActivitySheet = false
+                    showUserActivitiesSheet = false
                 },
                 onCallClicked = {
                     showPeopleSheet = true
                     showCallUserDialog = true
                     showActivitySheet = false
+                    showUserActivitiesSheet = false
+                },
+                onMyActivitiesClicked = {
+                    showPeopleSheet = false
+                    showCallUserDialog = false
+                    showActivitySheet = false
+                    showUserActivitiesSheet = true
                 },
                 userId = loggedInUser?.userID ?: 0
             )
         },
         floatingActionButton = {
-            if (routePoints.isNotEmpty()) {
-                StopNavigationButton(onStopNavigation = { showStopNavigationDialog = true })
+            if (selectedActivity != null && selectedActivity?.activityUserID == loggedInUser?.userID) {
+                Box {
+                    FloatingActionButton(
+                        onClick = { showStatusMenu = true },
+                        containerColor = when (selectedActivity?.activityStatusName) {
+                            "Planned" -> Color.White
+                            "Started" -> Color.Yellow
+                            "Paused" -> Color.Gray
+                            "Cancelled" -> Color.Red
+                            "Completed" -> Color.Green
+                            else -> Color.White
+                        }
+                    ) {
+                        Icon(
+                            Icons.Default.LocationOn,
+                            contentDescription = "Change Activity Status",
+                            tint = Color.Black
+                        )
+                    }
+                    
+                    DropdownMenu(
+                        expanded = showStatusMenu,
+                        onDismissRequest = { showStatusMenu = false }
+                    ) {
+                        selectedActivity?.let { activity ->
+                            if (activity.activityStatusName != "Planned") {
+                                DropdownMenuItem(
+                                    text = { Text("Planned") },
+                                    onClick = {
+                                        viewModel.updateActivityStatus(activity.activityID, "Planned")
+                                        showStatusMenu = false
+                                    }
+                                )
+                            }
+                            if (activity.activityStatusName != "Started") {
+                                DropdownMenuItem(
+                                    text = { Text("Started") },
+                                    onClick = {
+                                        viewModel.updateActivityStatus(activity.activityID, "Started")
+                                        showStatusMenu = false
+                                    }
+                                )
+                            }
+                            if (activity.activityStatusName != "Paused") {
+                                DropdownMenuItem(
+                                    text = { Text("Paused") },
+                                    onClick = {
+                                        viewModel.updateActivityStatus(activity.activityID, "Paused")
+                                        showStatusMenu = false
+                                    }
+                                )
+                            }
+                            if (activity.activityStatusName != "Cancelled") {
+                                DropdownMenuItem(
+                                    text = { Text("Cancelled") },
+                                    onClick = {
+                                        viewModel.updateActivityStatus(activity.activityID, "Cancelled")
+                                        showStatusMenu = false
+                                    }
+                                )
+                            }
+                            if (activity.activityStatusName != "Completed") {
+                                DropdownMenuItem(
+                                    text = { Text("Completed") },
+                                    onClick = {
+                                        viewModel.updateActivityStatus(activity.activityID, "Completed")
+                                        showStatusMenu = false
+                                    }
+                                )
+                            }
+                        }
+                    }
+                }
             }
         },
-        floatingActionButtonPosition = androidx.compose.material3.FabPosition.Center
+        floatingActionButtonPosition = androidx.compose.material3.FabPosition.Start
     ) { paddingValues ->
         Box(modifier = Modifier.fillMaxSize()) {
             GoogleMap(
@@ -163,6 +297,42 @@ fun MapScreen(navController: NavController, viewModel: MapViewModel) {
                     mapType = MapType.NORMAL
                 ),
             ) {
+                // Draw route if available
+                if (routePoints.isNotEmpty()) {
+                    Polyline(
+                        points = routePoints,
+                        color = Color(0xff049bec),
+                        width = 10f
+                    )
+                }
+
+                // Show markers for selected activity
+                selectedActivity?.let { activity ->
+                    val fromLocation = viewModel.locations.value.find { it.locationID == activity.activityFromID.toInt() }
+                    val toLocation = viewModel.locations.value.find { it.locationID == activity.activityToID.toInt() }
+
+                    fromLocation?.let { location ->
+                        CustomMarker(
+                            imageUrl = null,
+                            fullName = "Start: ${activity.activityFromName}",
+                            location = LatLng(location.locationLatitude, location.locationLongitude),
+                            onClick = { },
+                            size = 50
+                        )
+                    }
+
+                    toLocation?.let { location ->
+                        CustomMarker(
+                            imageUrl = null,
+                            fullName = "End: ${activity.activityToName}",
+                            location = LatLng(location.locationLatitude, location.locationLongitude),
+                            onClick = { },
+                            size = 50
+                        )
+                    }
+                }
+
+                // Show contact markers
                 contacts.forEach { user ->
                     if (user.userLatitude != null && user.userLongitude != null) {
                         val latLng = LatLng(user.userLatitude, user.userLongitude)
@@ -183,13 +353,93 @@ fun MapScreen(navController: NavController, viewModel: MapViewModel) {
                         )
                     }
                 }
+            }
 
-                if (routePoints.isNotEmpty()) {
-                    Polyline(
-                        points = routePoints,
-                        color = Color(0xff049bec),
-                        width = 10f
-                    )
+            // Navigation Controls
+            if (selectedActivity != null) {
+                Box(
+                    modifier = Modifier
+                        .align(Alignment.BottomCenter)
+                        .padding(bottom = 80.dp)
+                ) {
+                    if (!isActivityStarted) {
+                        // Start Button
+                        FloatingActionButton(
+                            onClick = {
+                                viewModel.updateActivityStatus(selectedActivity!!.activityID, "Started")
+                                isActivityStarted = true
+                                isActivityPaused = false
+                            },
+                            containerColor = Color(0xFF4CAF50), // Green color for start
+                            modifier = Modifier
+                                .size(56.dp)
+                                .shadow(4.dp)
+                                .padding(bottom = 16.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.PlayArrow,
+                                contentDescription = "Start Activity",
+                                tint = Color.White
+                            )
+                        }
+                    } else {
+                        // Row with Pause/Resume and Cancel buttons
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(16.dp),
+                            modifier = Modifier
+                                .padding(horizontal = 16.dp)
+                                .shadow(4.dp)
+                        ) {
+                            // Pause/Resume Button
+                            FloatingActionButton(
+                                onClick = {
+                                    if (isActivityPaused) {
+                                        viewModel.updateActivityStatus(selectedActivity!!.activityID, "Started")
+                                        isActivityPaused = false
+                                    } else {
+                                        viewModel.updateActivityStatus(selectedActivity!!.activityID, "Paused")
+                                        isActivityPaused = true
+                                    }
+                                },
+                                containerColor = if (isActivityPaused) 
+                                    Color(0xFF4CAF50) // Green color for resume
+                                else 
+                                    Color(0xFFFFA000), // Orange color for pause
+                                modifier = Modifier.size(56.dp).padding(bottom = 16.dp)
+                            ) {
+                                Icon(
+                                    imageVector = if (isActivityPaused) 
+                                        Icons.Default.PlayArrow
+                                    else 
+                                        Icons.Default.Pause,
+                                    contentDescription = if (isActivityPaused) 
+                                        "Resume Activity"
+                                    else 
+                                        "Pause Activity",
+                                    tint = Color.White
+                                )
+                            }
+
+                            // Cancel Button
+                            FloatingActionButton(
+                                onClick = {
+                                    viewModel.updateActivityStatus(selectedActivity!!.activityID, "Cancelled")
+                                    isActivityStarted = false
+                                    isActivityPaused = false
+                                    selectedActivity = null
+                                    routePoints = emptyList()
+                                },
+                                containerColor = Color(0xFFE53935), // Red color for cancel
+                                modifier = Modifier.size(56.dp).padding(bottom = 16.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Close,
+                                    contentDescription = "Cancel Activity",
+                                    tint = Color.White
+                                )
+                            }
+                        }
+                    }
                 }
             }
 
@@ -259,6 +509,28 @@ fun MapScreen(navController: NavController, viewModel: MapViewModel) {
                         onClose = {
                             showActivitySheet = false
                             showPeopleSheet = true
+                        },
+                        onActivitySelected = { activity ->
+                            selectedActivity = activity
+                            showActivitySheet = false
+                            showPeopleSheet = false
+                        }
+                    )
+                }
+            }
+
+            if (showUserActivitiesSheet) {
+                ModalBottomSheet(
+                    onDismissRequest = { showUserActivitiesSheet = false },
+                    sheetState = sheetState,
+                    containerColor = Color.Black
+                ) {
+                    UserActivitiesSheet(
+                        viewModel = viewModel,
+                        onClose = { showUserActivitiesSheet = false },
+                        onActivitySelected = { activity ->
+                            selectedActivity = activity
+                            showUserActivitiesSheet = false
                         }
                     )
                 }
@@ -281,28 +553,4 @@ suspend fun CameraPositionState.moveToUserLocation(latitude: Double, longitude: 
     animate(
         CameraUpdateFactory.newLatLngZoom(LatLng(latitude, longitude), 12f)
     )
-}
-
-@androidx.annotation.OptIn(UnstableApi::class)
-@Composable
-fun StopNavigationButton(onStopNavigation: () -> Unit) {
-    Box(
-        modifier = Modifier
-            .fillMaxSize(),
-//            .padding(bottom = 100.dp), // Adjusts placement
-        contentAlignment = Alignment.BottomCenter
-    ) {
-        Button(
-            onClick = onStopNavigation,
-            colors = ButtonDefaults.buttonColors(containerColor = Color.Red),
-            modifier = Modifier.padding(16.dp)
-        ) {
-            Icon(
-                Icons.Default.LocationOn,
-                contentDescription = "Stop Navigation",
-                tint = Color.White
-            )
-            Text(" Stop Navigation", color = Color.White) // Added space for better layout
-        }
-    }
 }
