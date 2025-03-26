@@ -12,6 +12,7 @@ import com.example.staysafe.model.data.*
 import com.example.staysafe.repository.StaySafeRepository
 import com.google.android.gms.maps.model.LatLng
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -23,6 +24,8 @@ import java.time.Duration
 import java.time.Instant
 import java.util.Date
 import java.util.Locale
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.isActive
 
 @OptIn(UnstableApi::class)
 class MapViewModel
@@ -31,6 +34,7 @@ class MapViewModel
 ) : ViewModel() {
     init {
         Log.d("Flow", "✅ MapViewModel Initialized")
+        fetchAllLocations() // Fetch all locations when ViewModel is created
     }
 
     // ! Contacts (Only show users in the Contact Table)
@@ -176,6 +180,58 @@ class MapViewModel
     private val _updateResult = MutableStateFlow<Boolean?>(null)
     val updateResult: StateFlow<Boolean?> = _updateResult
 
+    private var locationUpdateJob: Job? = null
+    private val locationUpdateInterval = 5 * 60 * 1000L // 5 minutes in milliseconds
+
+    fun startLocationUpdates() {
+        locationUpdateJob?.cancel()
+        locationUpdateJob = viewModelScope.launch {
+            while (isActive) {
+                updateUserLocation()
+                delay(locationUpdateInterval)
+            }
+        }
+    }
+
+    fun stopLocationUpdates() {
+        locationUpdateJob?.cancel()
+        locationUpdateJob = null
+    }
+
+    private suspend fun updateUserLocation() {
+        try {
+            val loggedInUser = _loggedInUser.value
+            if (loggedInUser == null) {
+                Log.e("updateUserLocation", "❌ No logged in user found")
+                return
+            }
+
+            // Get current location from the latest position
+            val latestPosition = _latestPosition.value
+            if (latestPosition == null) {
+                Log.e("updateUserLocation", "❌ No location data available")
+                return
+            }
+
+            // Update user with new location
+            val updatedUser = loggedInUser.copy(
+                userLatitude = latestPosition.positionLatitude,
+                userLongitude = latestPosition.positionLongitude
+            )
+
+            repository.updateUser(updatedUser).collect { result ->
+                if (result is List<*> && result.isNotEmpty()) {
+                    Log.d("updateUserLocation", "✅ Location updated successfully")
+                } else {
+                    Log.e("updateUserLocation", "❌ Failed to update location")
+                }
+            }
+        } catch (e: Exception) {
+            Log.e("updateUserLocation", "❌ Exception: ${e.message}")
+            e.printStackTrace()
+        }
+    }
+
     fun clearUpdateResult() {
         _updateResult.value = null
     }
@@ -225,60 +281,189 @@ class MapViewModel
     }
 
     fun addActivity(
-        activityName: String,
+        name: String,
+        fromActivityName: String?,
+        toActivityName: String?,
         startAddressLine: String,
         destAddressLine: String,
         description: String,
         fromISOTime: String,
         toisoTime: String,
+        fromPostcode: String = "",
+        toPostcode: String = ""
     ) {
         viewModelScope.launch {
-            val loggedInUser = _loggedInUser.value
-            if (loggedInUser == null) {
-                Log.e("addActivity", "❌ No logged-in user!")
-                return@launch
+            try {
+                val loggedInUser = _loggedInUser.value
+                if (loggedInUser == null) {
+                    Log.e("addActivity", "❌ No logged-in user!")
+                    return@launch
+                }
+
+                Log.d("addActivity", "✅ Adding new activity for user ${loggedInUser.userUsername}...")
+
+                // Get the max activity ID from the local state
+                val newActivityID = (_activities.value.maxOfOrNull { it.activityID } ?: 0) + 1L
+                
+                // Fetch all locations first to ensure we have the latest data
+                fetchAllLocations()
+                
+                // Get the max location ID from the API (wait for completion)
+                var maxLocationId = 0
+                repository.getMaxLocationId().collect { maxId ->
+                    maxLocationId = maxId
+                    Log.d("addActivity", "Max location ID from API: $maxLocationId")
+                }
+                
+                // Generate unique Location IDs
+                val fromLocationID = maxLocationId + 1
+                val toLocationID = maxLocationId + 2
+                
+                Log.d("addActivity", "Generated Activity ID: $newActivityID")
+                Log.d("addActivity", "Generated From Location ID: $fromLocationID")
+                Log.d("addActivity", "Generated To Location ID: $toLocationID")
+
+                // Get coordinates for addresses using geocoding
+                val fromAddressWithPostcode = if (fromPostcode.isNotBlank()) "$startAddressLine, $fromPostcode" else startAddressLine
+                val toAddressWithPostcode = if (toPostcode.isNotBlank()) "$destAddressLine, $toPostcode" else destAddressLine
+                
+                val fromCoordinates = geocodeAddress(fromAddressWithPostcode)
+                val toCoordinates = geocodeAddress(toAddressWithPostcode)
+                
+                if (fromCoordinates == null || toCoordinates == null) {
+                    Log.e("addActivity", "❌ Could not geocode addresses - aborting activity creation")
+                    return@launch
+                }
+                
+                Log.d("addActivity", "From coordinates: $fromCoordinates")
+                Log.d("addActivity", "To coordinates: $toCoordinates")
+                
+                // Create location objects
+                val fromLocation = Location(
+                    locationID = fromLocationID,
+                    locationName = fromActivityName,
+                    locationDescription = description,
+                    locationAddress = startAddressLine,
+                    locationPostcode = fromPostcode,
+                    locationLatitude = fromCoordinates.first,
+                    locationLongitude = fromCoordinates.second
+                )
+                
+                val toLocation = Location(
+                    locationID = toLocationID,
+                    locationName = toActivityName,
+                    locationDescription = description,
+                    locationAddress = destAddressLine, 
+                    locationPostcode = toPostcode,
+                    locationLatitude = toCoordinates.first,
+                    locationLongitude = toCoordinates.second
+                )
+                
+                Log.d("addActivity", "Created From Location: $fromLocation")
+                Log.d("addActivity", "Created To Location: $toLocation")
+                
+                // Add the From location first, wait for completion
+                var fromLocationSuccess = false
+                repository.addLocation(fromLocation).collect { response ->
+                    if (response != null) {
+                        Log.d("addActivity", "✅ From location added successfully!")
+                        _locations.value += fromLocation
+                        fromLocationSuccess = true
+                    } else {
+                        Log.e("addActivity", "❌ Failed to add from location!")
+                    }
+                }
+                
+                if (!fromLocationSuccess) {
+                    Log.e("addActivity", "❌ From location creation failed, aborting activity creation")
+                    return@launch
+                }
+                
+                // Add the To location next, wait for completion
+                var toLocationSuccess = false
+                repository.addLocation(toLocation).collect { response ->
+                    if (response != null) {
+                        Log.d("addActivity", "✅ To location added successfully!")
+                        _locations.value += toLocation
+                        toLocationSuccess = true
+                    } else {
+                        Log.e("addActivity", "❌ Failed to add to location!")
+                    }
+                }
+                
+                if (!toLocationSuccess) {
+                    Log.e("addActivity", "❌ To location creation failed, aborting activity creation")
+                    return@launch
+                }
+                
+                // Both locations were added successfully, now create the activity
+                val newActivity = Activity(
+                    activityID = newActivityID,
+                    activityName = name,
+                    activityUserID = loggedInUser.userID,
+                    activityDescription = description,
+                    activityFromID = fromLocationID.toLong(),
+                    activityLeave = fromISOTime,
+                    activityToID = toLocationID.toLong(),
+                    activityArrive = toisoTime,
+                    activityStatusID = 1L,
+                    activityUsername = loggedInUser.userUsername,
+                    activityFromName = startAddressLine,
+                    activityToName = destAddressLine,
+                    activityStatusName = "Planned"
+                )
+                
+                // Finally, add the activity
+                repository.addActivity(newActivity).collect { response ->
+                    if (response != null) {
+                        Log.d("addActivity", "✅ Activity added successfully!")
+                        Log.d("addActivity", "✅ Response: $response")
+                        _activities.value += response
+                    } else {
+                        Log.e("addActivity", "❌ Failed to add activity!")
+                    }
+                }
+            } catch (e: Exception) {
+                Log.e("addActivity", "❌ Exception occurred: ${e.message}")
+                e.printStackTrace()
             }
-
-            Log.d("addActivity", "✅ Adding new activity for user ${loggedInUser.userUsername}...")
-
-            // Generate unique Activity ID
-            val newActivityID = (_activities.value.maxOfOrNull { it.activityID } ?: 0) + 1L
-            val activityFromID = (_locations.value.maxOfOrNull { it.locationID } ?: 0) + 1L
-            val activityToID = (_locations.value.maxOfOrNull { it.locationID } ?: 0) + 1L
-
-            // * Create new activity object
-            val newActivity = Activity(
-                activityID = newActivityID,
-                activityName = activityName,
-                activityUserID = loggedInUser.userID,
-                activityDescription = description,
-                activityFromID = activityFromID,
-                activityLeave = fromISOTime,
-                activityToID = activityToID,
-                activityArrive = toisoTime,
-                activityStatusID = 1L,
-                activityUsername = loggedInUser.userUsername,
-                activityFromName = startAddressLine,
-                activityToName = destAddressLine,
-                activityStatusName = "Planned"
-            )
-
-            repository.addActivity(newActivity).collect { response ->
-                if (response != null) {
-                    Log.d("addActivity", "✅ Activity added successfully!")
-                    Log.d("addActivity", "✅ Response: $response")
-                    _activities.value += response // Update activities list
-                } else {
-                    Log.e("addActivity", "❌ Failed to add activity!")
+        }
+    }
+    
+    private suspend fun geocodeAddress(address: String): Pair<Double, Double>? {
+        val apiKey = BuildConfig.MAP_API_GOOGLE
+        val encodedAddress = address.replace(" ", "+")
+        val url = "https://maps.googleapis.com/maps/api/geocode/json?address=$encodedAddress&key=$apiKey"
+        
+        try {
+            val response = withContext(Dispatchers.IO) { URL(url).readText() }
+            val jsonObject = JSONObject(response)
+            
+            if (jsonObject.getString("status") == "OK") {
+                val results = jsonObject.getJSONArray("results")
+                if (results.length() > 0) {
+                    val location = results.getJSONObject(0)
+                        .getJSONObject("geometry")
+                        .getJSONObject("location")
+                    
+                    val lat = location.getDouble("lat")
+                    val lng = location.getDouble("lng")
+                    
+                    return Pair(lat, lng)
                 }
             }
+            Log.e("geocodeAddress", "❌ Failed to geocode address: $address, Status: ${jsonObject.getString("status")}")
+            return null
+        } catch (e: Exception) {
+            Log.e("geocodeAddress", "❌ Exception geocoding address: ${e.message}")
+            return null
         }
     }
     // //
 
     // //
     // * Locations
-    private fun fetchAllLocations() {
+    fun fetchAllLocations() {
         viewModelScope.launch {
             repository.getAllLocations().collect { _locations.value = it }
         }

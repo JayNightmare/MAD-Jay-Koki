@@ -97,5 +97,12 @@ fun Navigation() {
                 viewModel = sharedViewModel
             )
         }
+        // //
+        composable(Screen.UserActivitiesScreen.route) {
+            UserActivitiesScreen(
+                navController = nav,
+                viewModel = sharedViewModel
+            )
+        }
     }
 }

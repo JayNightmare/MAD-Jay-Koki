@@ -43,13 +43,13 @@ fun ProfileScreen(
 
     val updateResult by viewModel.updateResult.collectAsState()
 
-    // Handle update result
+    // * Handle update result
     LaunchedEffect(updateResult) {
         updateResult?.let { success ->
             if (success) {
                 Toast.makeText(context, "✅ Profile updated", Toast.LENGTH_SHORT).show()
                 isEditing = false
-                // Clear the update result to prevent showing the toast again
+                // * Clear the update result to prevent showing the toast again
                 viewModel.clearUpdateResult()
             } else {
                 Toast.makeText(context, "❌ Failed to update profile", Toast.LENGTH_SHORT).show()
@@ -70,7 +70,7 @@ fun ProfileScreen(
                     IconButton(
                         onClick = { 
                             if (isEditing) {
-                                // Save changes
+                                // * Save changes
                                 loggedInUser?.let { user ->
                                     val updatedUser = user.copy(
                                         userFirstname = firstName,
@@ -224,6 +224,26 @@ fun ProfileScreen(
                         color = Color.White,
                         modifier = Modifier.padding(bottom = 16.dp)
                     )
+
+                    // * Activities Button
+                    Button(
+                        onClick = { navController.navigate(Screen.UserActivitiesScreen.route) },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 8.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Color.White,
+                            contentColor = Color.Black
+                        )
+                    ) {
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(Icons.Default.List, contentDescription = null)
+                            Text("My Activities")
+                        }
+                    }
 
                     // * Settings Button
                     Button(

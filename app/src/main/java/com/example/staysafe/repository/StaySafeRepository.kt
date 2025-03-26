@@ -144,6 +144,38 @@ class StaySafeRepository(
             emit(emptyList()) // Emit empty list safely inside `catch`
         }.flowOn(Dispatchers.IO) // Ensures the API call runs on background thread
     }
+
+    suspend fun addLocation(location: Location): Flow<List<Location>?> = flow {
+        try {
+            Log.d("addLocation", "Adding location: $location")
+            val response = service.addLocation(location).awaitResponse()
+            
+            if (response.isSuccessful) {
+                Log.d("addLocation", "Location added successfully")
+                emit(response.body())
+            } else {
+                Log.e("addLocation", "Failed to add location: ${response.errorBody()?.string()}")
+                emit(null)
+            }
+        } catch (e: Exception) {
+            Log.e("addLocation", "Exception adding location: ${e.message}")
+            e.printStackTrace()
+            emit(null)
+        }
+    }.flowOn(Dispatchers.IO)
+
+    suspend fun getMaxLocationId(): Flow<Int> = flow {
+        try {
+            val locations = service.getAllLocations().await()
+            val maxId = locations.maxOfOrNull { it.locationID } ?: 0
+            Log.d("getMaxLocationId", "Maximum location ID from API: $maxId")
+            emit(maxId)
+        } catch (e: Exception) {
+            Log.e("getMaxLocationId", "Error getting max location ID: ${e.message}")
+            e.printStackTrace()
+            emit(0) // Default to 0 if there's an error
+        }
+    }.flowOn(Dispatchers.IO)
     // //
 
     // //

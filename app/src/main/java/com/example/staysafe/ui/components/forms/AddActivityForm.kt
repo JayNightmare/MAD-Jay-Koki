@@ -243,7 +243,8 @@ fun AddActivityForm(viewModel: MapViewModel, onClose: () -> Unit) {
                         description,
                         convertToISO8601(fromDate, fromTime),
                         convertToISO8601(toDate, toTime),
-
+                        startPostCode,
+                        destPostCode
                     )
 
                     Log.d("AddActivityLog", "Activity from: $startAddressLine")
