@@ -1,5 +1,6 @@
 package com.example.staysafe.repository
 
+import android.service.voice.VoiceInteractionSession.ActivityId
 import android.util.Log
 import com.example.staysafe.API.Service
 import com.example.staysafe.model.data.*
@@ -101,6 +102,25 @@ class StaySafeRepository(
             Log.e("addActivity", "❌ Exception: ${e.message}")
             e.printStackTrace()
             emit(null)
+        }
+    }.flowOn(Dispatchers.IO)
+
+    suspend fun deleteActivity (activityId: Long): Flow<Any> = flow {
+        try {
+            val response = service.deleteActivity(activityId).awaitResponse()
+            Log.d("Delete activity", "Response: $response")
+
+            if (response.isSuccessful){
+                response.body()?.let { emit(it) } ?: emit(activityId)
+            }
+            else{
+                Log.d("Delete activity","Error deleting activity: ${response.errorBody()?.string()}" )
+                emit(activityId)
+            }
+        }catch (e:Exception){
+            Log.e("Delete activity", "Exception: ${e.message}")
+            e.printStackTrace()
+            emit(activityId)
         }
     }.flowOn(Dispatchers.IO)
     // //
@@ -376,4 +396,5 @@ class StaySafeRepository(
         }
     }.flowOn(Dispatchers.IO)
     // //
+
 }

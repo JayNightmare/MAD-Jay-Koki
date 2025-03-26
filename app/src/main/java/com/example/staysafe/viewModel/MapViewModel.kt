@@ -1,6 +1,7 @@
 package com.example.staysafe.viewModel
 
 import android.os.Build
+import android.service.voice.VoiceInteractionSession.ActivityId
 import androidx.annotation.OptIn
 import androidx.annotation.RequiresApi
 import androidx.lifecycle.ViewModel
@@ -171,7 +172,9 @@ class MapViewModel
         _user.value -= existingUser
 
         viewModelScope.launch {
-            repository.deleteUser(userId).collect()
+            repository.deleteUser(userId).collect(){
+                logout()
+            }
         }
         return existingUser
     }
@@ -432,6 +435,15 @@ class MapViewModel
                 e.printStackTrace()
             }
         }
+    }
+    fun deleteActivity (activityId: Long):Activity?{
+        val existingActivities = _activities.value.find { it.activityID == activityId } ?: return null
+        _activities.value -= existingActivities
+
+        viewModelScope.launch {
+            repository.deleteActivity(activityId).collect()
+        }
+        return existingActivities
     }
     
     private suspend fun geocodeAddress(address: String): Pair<Double, Double>? {

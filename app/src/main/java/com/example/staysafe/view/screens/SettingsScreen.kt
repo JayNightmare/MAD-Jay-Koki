@@ -39,6 +39,7 @@ fun SettingsScreen(
     var isCurrentPasswordVisible by remember { mutableStateOf(false) }
     var isNewPasswordVisible by remember { mutableStateOf(false) }
     var isConfirmPasswordVisible by remember { mutableStateOf(false) }
+    var showDeleteDialog by remember { mutableStateOf(false) }
 
     Scaffold(
         topBar = {
@@ -221,6 +222,7 @@ fun SettingsScreen(
                     Button(
                         onClick = {
                             // TODO: Implement account deletion
+                            showDeleteDialog = true
                             Toast.makeText(context, "Account deletion requested", Toast.LENGTH_SHORT).show()
                         },
                         modifier = Modifier
@@ -243,6 +245,40 @@ fun SettingsScreen(
             }
         }
     }
+
+    if (showDeleteDialog) {
+        AlertDialog(
+            onDismissRequest = { showDeleteDialog = false },
+            title = { Text("Delete Account") },
+            text = { Text("Are you sure you want to delete your account? This action cannot be undone.") },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        showDeleteDialog = false
+
+                        viewModel.loggedInUser.value?.let { user ->
+                            viewModel.deleteUserByID(user.userID)
+
+                            Toast.makeText(context, "Deleted account", Toast.LENGTH_SHORT).show()
+                            navController.navigate(Screen.LoginScreen.route) {
+                                popUpTo(Screen.MapScreen.route) { inclusive = true }
+                            }
+                        }
+                    }
+                ) {
+                    Text("Delete Account", color = Color.Red)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDeleteDialog = false }) {
+                    Text("Cancel")
+                }
+            }
+        )
+    }
+
+
+
 
     if (showPasswordDialog) {
         Dialog(onDismissRequest = { showPasswordDialog = false }) {

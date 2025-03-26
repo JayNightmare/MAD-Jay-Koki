@@ -4,6 +4,7 @@ import android.app.DatePickerDialog
 import android.app.TimePickerDialog
 import android.util.Log
 import android.widget.Toast
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
@@ -24,19 +25,19 @@ import com.google.android.gms.maps.model.MapStyleOptions
 import com.google.maps.android.compose.*
 import java.text.SimpleDateFormat
 import java.util.*
-import kotlin.math.log
 
 @Composable
 fun AddActivityForm(viewModel: MapViewModel, onClose: () -> Unit) {
     var activityName by remember { mutableStateOf("") }
-    var startPostCode by remember { mutableStateOf("") }
-    var startAddressLine by remember { mutableStateOf("") }
-    var destPostCode by remember { mutableStateOf("") }
-    var destAddressLine by remember { mutableStateOf("") }
+    var fromName by remember { mutableStateOf("") }
+    var fromPostCode by remember { mutableStateOf("") }
+    var fromAddressLine by remember { mutableStateOf("") }
+    var toName by remember { mutableStateOf("") }
+    var toPostCode by remember { mutableStateOf("") }
+    var toAddressLine by remember { mutableStateOf("") }
     var description by remember { mutableStateOf("") }
     val travelMode by remember { mutableStateOf("DRIVE") }
 
-    // **Date and Time Inputs**
     var fromDate by remember { mutableStateOf("") }
     var fromTime by remember { mutableStateOf("") }
     var toDate by remember { mutableStateOf("") }
@@ -50,14 +51,13 @@ fun AddActivityForm(viewModel: MapViewModel, onClose: () -> Unit) {
         context.resources.openRawResource(R.raw.map_style).bufferedReader().use { it.readText() }
     }
 
-    // **Trigger route calculation when locations change**
-    LaunchedEffect(startPostCode, startAddressLine, destPostCode, destAddressLine) {
-        if (startPostCode.isNotBlank() && startAddressLine.isNotBlank() && destPostCode.isNotBlank() && destAddressLine.isNotBlank()) {
+    LaunchedEffect(fromPostCode, fromAddressLine, toPostCode, toAddressLine) {
+        if (fromPostCode.isNotBlank() && fromAddressLine.isNotBlank() && toPostCode.isNotBlank() && toAddressLine.isNotBlank()) {
             viewModel.getRouteForLocation(
-                startPostCode,
-                startAddressLine,
-                destPostCode,
-                destAddressLine,
+                fromPostCode,
+                fromAddressLine,
+                toPostCode,
+                toAddressLine,
                 travelMode
             ) { route ->
                 routePoints = route
@@ -86,102 +86,33 @@ fun AddActivityForm(viewModel: MapViewModel, onClose: () -> Unit) {
         OutlinedTextField(
             value = activityName,
             onValueChange = { activityName = it },
-            label = { Text("Activity Name") },
-            modifier = Modifier.fillMaxWidth(),
-            colors = TextFieldDefaults.colors(
-                focusedTextColor = Color.White,
-                unfocusedTextColor = Color.White,
-                focusedLabelColor = Color.White,
-                unfocusedLabelColor = Color.Gray,
-                unfocusedContainerColor = Color.Transparent,
-                focusedContainerColor = Color.Transparent,
-            )
+            label = { Text("Activity Name", color = Color.White) },
+            modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
+            colors = customTextFieldColors()
         )
 
-        Spacer(modifier = Modifier.height(20.dp))
-
-        Text("Starting Location", color = Color.White, style = MaterialTheme.typography.titleSmall)
+        Text("Origin Location", color = Color.White, style = MaterialTheme.typography.titleMedium)
         OutlinedTextField(
-            value = startPostCode,
-            onValueChange = { startPostCode = it },
-            label = { Text("Post Code") },
-            modifier = Modifier.fillMaxWidth(),
-            colors = TextFieldDefaults.colors(
-                focusedTextColor = Color.White,
-                unfocusedTextColor = Color.White,
-                focusedLabelColor = Color.White,
-                unfocusedLabelColor = Color.Gray,
-                unfocusedContainerColor = Color.Transparent,
-                focusedContainerColor = Color.Transparent,
-            )
+            value = fromName,
+            onValueChange = { fromName = it },
+            label = { Text("From Name", color = Color.White) },
+            modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
+            colors = customTextFieldColors()
         )
-
         OutlinedTextField(
-            value = startAddressLine,
-            onValueChange = { startAddressLine = it },
-            label = { Text("Address Line") },
-            modifier = Modifier.fillMaxWidth(),
-            colors = TextFieldDefaults.colors(
-                focusedTextColor = Color.White,
-                unfocusedTextColor = Color.White,
-                focusedLabelColor = Color.White,
-                unfocusedLabelColor = Color.Gray,
-                unfocusedContainerColor = Color.Transparent,
-                focusedContainerColor = Color.Transparent,
-            )
+            value = fromPostCode,
+            onValueChange = { fromPostCode = it },
+            label = { Text("From Postcode", color = Color.White) },
+            modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
+            colors = customTextFieldColors()
         )
-
-        Spacer(modifier = Modifier.height(20.dp))
-
-        Text("Destination Location", color = Color.White, style = MaterialTheme.typography.titleSmall)
         OutlinedTextField(
-            value = destPostCode,
-            onValueChange = { destPostCode = it },
-            label = { Text("Post Code") },
-            modifier = Modifier.fillMaxWidth(),
-            colors = TextFieldDefaults.colors(
-                focusedTextColor = Color.White,
-                unfocusedTextColor = Color.White,
-                focusedLabelColor = Color.White,
-                unfocusedLabelColor = Color.Gray,
-                unfocusedContainerColor = Color.Transparent,
-                focusedContainerColor = Color.Transparent,
-            )
+            value = fromAddressLine,
+            onValueChange = { fromAddressLine = it },
+            label = { Text("From Address", color = Color.White) },
+            modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
+            colors = customTextFieldColors()
         )
-
-        OutlinedTextField(
-            value = destAddressLine,
-            onValueChange = { destAddressLine = it },
-            label = { Text("Address Line") },
-            modifier = Modifier.fillMaxWidth(),
-            colors = TextFieldDefaults.colors(
-                focusedTextColor = Color.White,
-                unfocusedTextColor = Color.White,
-                focusedLabelColor = Color.White,
-                unfocusedLabelColor = Color.Gray,
-                unfocusedContainerColor = Color.Transparent,
-                focusedContainerColor = Color.Transparent,
-            )
-        )
-
-        Spacer(modifier = Modifier.height(20.dp))
-
-        OutlinedTextField(
-            value = description,
-            onValueChange = { description = it },
-            label = { Text("Description") },
-            modifier = Modifier.fillMaxWidth(),
-            colors = TextFieldDefaults.colors(
-                focusedTextColor = Color.White,
-                unfocusedTextColor = Color.White,
-                focusedLabelColor = Color.White,
-                unfocusedLabelColor = Color.Gray,
-                unfocusedContainerColor = Color.Transparent,
-                focusedContainerColor = Color.Transparent,
-            )
-        )
-
-        Spacer(modifier = Modifier.height(16.dp))
 
         Row {
             DateTimePicker("From Date", fromDate) { fromDate = it }
@@ -189,13 +120,46 @@ fun AddActivityForm(viewModel: MapViewModel, onClose: () -> Unit) {
             DateTimePicker("From Time", fromTime, isTimePicker = true) { fromTime = it }
         }
 
-        Spacer(modifier = Modifier.height(8.dp))
+        Spacer(modifier = Modifier.height(12.dp))
+
+        Text("Destination Location", color = Color.White, style = MaterialTheme.typography.titleMedium)
+        OutlinedTextField(
+            value = toName,
+            onValueChange = { toName = it },
+            label = { Text("To Name", color = Color.White) },
+            modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
+            colors = customTextFieldColors()
+        )
+        OutlinedTextField(
+            value = toPostCode,
+            onValueChange = { toPostCode = it },
+            label = { Text("To Postcode", color = Color.White) },
+            modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
+            colors = customTextFieldColors()
+        )
+        OutlinedTextField(
+            value = toAddressLine,
+            onValueChange = { toAddressLine = it },
+            label = { Text("To Address", color = Color.White) },
+            modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
+            colors = customTextFieldColors()
+        )
 
         Row {
             DateTimePicker("To Date", toDate) { toDate = it }
             Spacer(modifier = Modifier.width(8.dp))
             DateTimePicker("To Time", toTime, isTimePicker = true) { toTime = it }
         }
+
+        Spacer(modifier = Modifier.height(12.dp))
+
+        OutlinedTextField(
+            value = description,
+            onValueChange = { description = it },
+            label = { Text("Description", color = Color.White) },
+            modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
+            colors = customTextFieldColors()
+        )
 
         Spacer(modifier = Modifier.height(16.dp))
 
@@ -226,29 +190,26 @@ fun AddActivityForm(viewModel: MapViewModel, onClose: () -> Unit) {
                     Toast.makeText(context, "Invalid date/time. Please select future values.", Toast.LENGTH_SHORT).show()
                     return@Button
                 }
-
                 if (activityName.length < 8) {
                     Toast.makeText(context, "Activity name must be at least 8 characters long", Toast.LENGTH_SHORT).show()
                     return@Button
                 }
-
-                if (activityName.isNotBlank() && startPostCode.isNotBlank() && startAddressLine.isNotBlank() &&
-                    destPostCode.isNotBlank() && destAddressLine.isNotBlank()
+                if (activityName.isNotBlank() && fromPostCode.isNotBlank() && fromAddressLine.isNotBlank() &&
+                    toPostCode.isNotBlank() && toAddressLine.isNotBlank()
                 ) {
                     isAdding = true
                     viewModel.addActivity(
-                        activityName,
-                        startAddressLine,
-                        destAddressLine,
-                        description,
-                        convertToISO8601(fromDate, fromTime),
-                        convertToISO8601(toDate, toTime),
-                        startPostCode,
-                        destPostCode
+                        name = activityName,
+                        fromActivityName = fromName,
+                        toActivityName = toName,
+                        startAddressLine = fromAddressLine,
+                        destAddressLine = toAddressLine,
+                        description = description,
+                        fromISOTime = convertToISO8601(fromDate, fromTime),
+                        toisoTime = convertToISO8601(toDate, toTime),
+                        fromPostcode = fromPostCode,
+                        toPostcode = toPostCode
                     )
-
-                    Log.d("AddActivityLog", "Activity from: $startAddressLine")
-                    Log.d("AddActivityLog", "Activity Dest: $destAddressLine")
 
                     Toast.makeText(context, "Adding Activity...", Toast.LENGTH_SHORT).show()
                 } else {
@@ -264,12 +225,17 @@ fun AddActivityForm(viewModel: MapViewModel, onClose: () -> Unit) {
 }
 
 @Composable
-fun DateTimePicker(
-    label: String,
-    value: String,
-    isTimePicker: Boolean = false,
-    onValueChange: (String) -> Unit
-) {
+fun customTextFieldColors() = TextFieldDefaults.colors(
+    focusedTextColor = Color.White,
+    unfocusedTextColor = Color.White,
+    focusedLabelColor = Color.White,
+    unfocusedLabelColor = Color.Gray,
+    unfocusedContainerColor = Color(0xFF1E1E1E),
+    focusedContainerColor = Color(0xFF1E1E1E),
+)
+
+@Composable
+fun DateTimePicker(label: String, value: String, isTimePicker: Boolean = false, onValueChange: (String) -> Unit) {
     val context = LocalContext.current
     val calendar = Calendar.getInstance()
 
@@ -301,7 +267,7 @@ fun isValidDateTime(fromDate: String, fromTime: String, toDate: String, toTime: 
     val from = format.parse("$fromDate $fromTime") ?: return false
     val to = format.parse("$toDate $toTime") ?: return false
 
-    return from.before(to) && from.after(Date()) // Ensure future time
+    return from.before(to) && from.after(Date())
 }
 
 fun convertToISO8601(date: String, time: String): String {

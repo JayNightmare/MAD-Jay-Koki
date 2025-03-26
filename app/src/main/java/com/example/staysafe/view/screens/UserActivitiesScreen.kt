@@ -140,7 +140,9 @@ fun UserActivitiesScreen(
             confirmButton = {
                 TextButton(
                     onClick = {
-                        // TODO: Implement delete activity
+                        selectedActivity?.let {
+                            viewModel.deleteActivity(it.activityID)
+                        }
                         showDeleteDialog = false
                     }
                 ) {
@@ -253,7 +255,9 @@ private fun ActivityDialog(
     LaunchedEffect(activity) {
         activity?.let { it ->
             try {
-                val inputFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX", Locale.getDefault())
+                val inputFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSX", Locale.getDefault()).apply {
+                    timeZone = TimeZone.getTimeZone("UTC")
+                }
                 val leaveDate = inputFormat.parse(it.activityLeave)
                 leaveDate?.let {
                     fromDate = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(it)
@@ -271,6 +275,7 @@ private fun ActivityDialog(
             }
         }
     }
+
 
     AlertDialog(
         onDismissRequest = onDismiss,

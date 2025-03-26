@@ -15,5 +15,7 @@ data class Activity(
     @SerializedName("ActivityToName") val activityToName: String,
     @SerializedName("ActivityArrive") val activityArrive: String,
     @SerializedName("ActivityStatusID") val activityStatusID: Long,
-    @SerializedName("ActivityStatusName") val activityStatusName: String
+    @SerializedName("ActivityStatusName") val activityStatusName: String,
+    //For autofill the postcode
+
 )
