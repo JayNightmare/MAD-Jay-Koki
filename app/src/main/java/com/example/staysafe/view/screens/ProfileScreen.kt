@@ -7,6 +7,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
@@ -34,9 +35,27 @@ fun ProfileScreen(
     val context = LocalContext.current
     val loggedInUser by viewModel.loggedInUser.collectAsState()
     var isEditing by remember { mutableStateOf(false) }
-    var firstName by remember { mutableStateOf(loggedInUser?.userFirstname ?: "") }
-    var lastName by remember { mutableStateOf(loggedInUser?.userLastname ?: "") }
-    var phone by remember { mutableStateOf(loggedInUser?.userPhone ?: "") }
+    
+    // Update state variables when loggedInUser changes
+    var firstName by remember(loggedInUser) { mutableStateOf(loggedInUser?.userFirstname ?: "") }
+    var lastName by remember(loggedInUser) { mutableStateOf(loggedInUser?.userLastname ?: "") }
+    var phone by remember(loggedInUser) { mutableStateOf(loggedInUser?.userPhone ?: "") }
+
+    val updateResult by viewModel.updateResult.collectAsState()
+
+    // Handle update result
+    LaunchedEffect(updateResult) {
+        updateResult?.let { success ->
+            if (success) {
+                Toast.makeText(context, "✅ Profile updated", Toast.LENGTH_SHORT).show()
+                isEditing = false
+                // Clear the update result to prevent showing the toast again
+                viewModel.clearUpdateResult()
+            } else {
+                Toast.makeText(context, "❌ Failed to update profile", Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
 
     Scaffold(
         topBar = {
@@ -44,11 +63,27 @@ fun ProfileScreen(
                 title = { Text("Profile", color = Color.White) },
                 navigationIcon = {
                     IconButton(onClick = { navController.navigateUp() }) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Back", tint = Color.White)
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back", tint = Color.White)
                     }
                 },
                 actions = {
-                    IconButton(onClick = { isEditing = !isEditing }) {
+                    IconButton(
+                        onClick = { 
+                            if (isEditing) {
+                                // Save changes
+                                loggedInUser?.let { user ->
+                                    val updatedUser = user.copy(
+                                        userFirstname = firstName,
+                                        userLastname = lastName,
+                                        userPhone = phone
+                                    )
+                                    viewModel.updateUserProfile(updatedUser)
+                                }
+                            } else {
+                                isEditing = true
+                            }
+                        }
+                    ) {
                         Icon(
                             if (isEditing) Icons.Default.Save else Icons.Default.Edit,
                             contentDescription = if (isEditing) "Save" else "Edit",
@@ -159,45 +194,10 @@ fun ProfileScreen(
                                 focusedContainerColor = Color.Transparent,
                             )
                         )
-                        val updateResult by viewModel.updateResult.collectAsState()
-
-                        LaunchedEffect(updateResult) {
-                            updateResult?.let {
-                                Toast.makeText(context, "✅ Profile updated", Toast.LENGTH_SHORT).show()
-                                //viewModel.clearUpdateResult()
-                            }
-                        }
-
-                        Button(
-                            onClick = {
-                                // TODO: Implement update user functionality
-                                isEditing = false
-                                loggedInUser?.let { user ->
-                                    val updateUser = user.copy(
-                                        userFirstname = firstName,
-                                        userLastname = lastName,
-                                        userPhone = phone
-                                    )
-                                    viewModel.updateUserProfile(updateUser)
-                                    isEditing = false
-                                } ?: run {
-                                    Toast.makeText(context, "❌ User is null", Toast.LENGTH_SHORT).show()
-                                }
-                            },
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(top = 16.dp),
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = Color.White,
-                                contentColor = Color.Black
-                            )
-                        ) {
-                            Text("Save Changes")
-                        }
                     } else {
-                        InfoRow("First Name", loggedInUser?.userFirstname ?: "")
-                        InfoRow("Last Name", loggedInUser?.userLastname ?: "")
-                        InfoRow("Phone", loggedInUser?.userPhone ?: "")
+                        InfoRow("First Name", firstName)
+                        InfoRow("Last Name", lastName)
+                        InfoRow("Phone", phone)
                         InfoRow("Username", loggedInUser?.userUsername ?: "")
                     }
                 }

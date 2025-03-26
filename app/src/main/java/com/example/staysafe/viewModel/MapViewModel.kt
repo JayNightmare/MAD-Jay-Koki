@@ -173,20 +173,17 @@ class MapViewModel
     }
     // //
 
-    private val _updateResult = MutableStateFlow<Any?>(null)
-    val updateResult: StateFlow<Any?> = _updateResult
+    private val _updateResult = MutableStateFlow<Boolean?>(null)
+    val updateResult: StateFlow<Boolean?> = _updateResult
 
-    /*fun clearUpdateResult() {
+    fun clearUpdateResult() {
         _updateResult.value = null
     }
 
-     */
-
-
     fun updateUserProfile(user: User) {
         viewModelScope.launch {
-            repository.updateUser(user).collect {
-                _updateResult.value = it
+            repository.updateUser(user).collect { result ->
+                _updateResult.value = result is List<*> && result.isNotEmpty()
             }
         }
     }
