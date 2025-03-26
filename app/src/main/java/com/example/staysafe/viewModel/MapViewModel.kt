@@ -1,7 +1,6 @@
 package com.example.staysafe.viewModel
 
 import android.os.Build
-import android.service.voice.VoiceInteractionSession.ActivityId
 import androidx.annotation.OptIn
 import androidx.annotation.RequiresApi
 import androidx.lifecycle.ViewModel
@@ -479,15 +478,15 @@ class MapViewModel
 
     // //
     // * Locations
-    fun fetchAllLocations() {
+    private fun fetchAllLocations() {
         viewModelScope.launch {
             repository.getAllLocations().collect { _locations.value = it }
         }
     }
 
     @OptIn(UnstableApi::class)
-    fun fetchLocationById(userId: Long): Flow<Location?> {
-        return repository.getLocationById(userId)
+    fun fetchLocationById(locationID: Long): Flow<Location?> {
+        return repository.getLocationById(locationID)
             .map { locations -> locations.firstOrNull() }
             .catch { e ->
                 Log.e("MapViewModel", "Error fetching location: ${e.message}")
@@ -502,15 +501,6 @@ class MapViewModel
     private fun fetchAllPositions() {
         viewModelScope.launch {
             repository.getAllPositions().collect { _positions.value = it }
-        }
-    }
-
-    fun fetchLatestPositionForUser(userId: Long) {
-        viewModelScope.launch {
-            repository.getLatestPositionForUser(userId).collect { position ->
-                _latestPosition.value = position
-                Log.d("MapViewModel", "Latest position: $position")
-            }
         }
     }
     // //

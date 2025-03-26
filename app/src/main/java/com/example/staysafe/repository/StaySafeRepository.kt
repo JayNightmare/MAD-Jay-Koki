@@ -50,26 +50,6 @@ class StaySafeRepository(
         }
     }.flowOn(Dispatchers.IO)
 
-    suspend fun getLatestPositionForUser(userId: Long): Flow<Position?> = flow {
-        try {
-            val latestActivity = getLatestActivityForUser(userId).firstOrNull()
-
-            if (latestActivity != null) {
-                Log.d("StaySafeRepository", "Latest Activity: $latestActivity")
-
-                val positions =
-                    service.getActivityPositions(latestActivity.activityID).awaitResponse()
-                val latestPosition = positions.body()?.maxByOrNull { it.positionTimestamp }
-                emit(latestPosition)
-            } else {
-                emit(null)
-            }
-        } catch (e: Exception) {
-            e.printStackTrace()
-            emit(null)
-        }
-    }.flowOn(Dispatchers.IO)
-
     suspend fun getActivitiesForUser(userId: Long): Flow<List<Activity>> = flow {
         try {
             val response = service.getUserActivities(userId).awaitResponse()

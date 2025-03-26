@@ -115,7 +115,8 @@ fun UserActivitiesScreen(
                     toPostcode = toPostcode
                 )
                 showAddDialog = false
-            }
+            },
+            viewModel = viewModel
         )
     }
 
@@ -127,7 +128,8 @@ fun UserActivitiesScreen(
             onConfirm = { name, fromName, toName, fromAddress, toAddress, description, fromTime, toTime, fromPostcode, toPostcode ->
                 // TODO: Implement edit activity
                 showEditDialog = false
-            }
+            },
+            viewModel = viewModel
         )
     }
 
@@ -233,8 +235,10 @@ private fun ActivityCard(
 private fun ActivityDialog(
     activity: Activity? = null,
     onDismiss: () -> Unit,
-    onConfirm: (String, String, String, String, String, String, String, String, String, String) -> Unit
+    onConfirm: (String, String, String, String, String, String, String, String, String, String) -> Unit,
+    viewModel: MapViewModel
 ) {
+    val context = LocalContext.current
     var name by remember { mutableStateOf(activity?.activityName ?: "") }
     var fromName by remember { mutableStateOf(activity?.activityFromName ?: "") }
     var toName by remember { mutableStateOf(activity?.activityToName ?: "") }
@@ -245,12 +249,31 @@ private fun ActivityDialog(
     var fromTime by remember { mutableStateOf("") }
     var toDate by remember { mutableStateOf("") }
     var toTime by remember { mutableStateOf("") }
-    val context = LocalContext.current
-    
-    // Added new fields for location details
     var fromPostcode by remember { mutableStateOf("") }
     var toPostcode by remember { mutableStateOf("") }
-    
+
+    // Fetch location postcodes if editing an existing activity
+    LaunchedEffect(activity) {
+        activity?.let { existingActivity ->
+            try {
+                viewModel.fetchLocationById(existingActivity.activityFromID).collect { fromLocation ->
+                    fromLocation?.let {
+                        fromPostcode = it.locationPostcode ?: ""
+                    }
+                }
+                
+                viewModel.fetchLocationById(existingActivity.activityToID).collect { toLocation ->
+                    toLocation?.let {
+                        toPostcode = it.locationPostcode ?: ""
+                    }
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+                Toast.makeText(context, "Error fetching location details", Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
+
     // Initialize date and time from activity if editing
     LaunchedEffect(activity) {
         activity?.let { it ->
@@ -275,7 +298,6 @@ private fun ActivityDialog(
             }
         }
     }
-
 
     AlertDialog(
         onDismissRequest = onDismiss,
