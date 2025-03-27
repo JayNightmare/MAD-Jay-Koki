@@ -38,22 +38,35 @@ fun CustomMarker(
     val markerState = remember { MarkerState(position = location) }
     val outerShape = RoundedCornerShape(15.dp, 15.dp, 15.dp, 15.dp)
     val innerShape = RoundedCornerShape(15.dp, 15.dp, 15.dp, 15.dp)
-//    val painter = rememberAsyncImagePainter(
-//        ImageRequest.Builder(LocalContext.current)
-//            .data(imageUrl)
-//            .allowHardware(false)
-//            .build()
-//    )
 
-
-    val painter = rememberAsyncImagePainter(
-        ImageRequest.Builder(LocalContext.current)
-            .data(imageUrl)
-            .allowHardware(false)
-            .error(R.drawable.avataaars)
-            .placeholder(R.drawable.avataaars)
-            .build()
-    )
+    val painter = when (imageUrl) {
+        "start" -> {
+            rememberAsyncImagePainter(
+                ImageRequest.Builder(LocalContext.current)
+                    .data(R.drawable.start)
+                    .allowHardware(false)
+                    .build()
+            )
+        }
+        "end" -> {
+            rememberAsyncImagePainter(
+                ImageRequest.Builder(LocalContext.current)
+                    .data(R.drawable.end)
+                    .allowHardware(false)
+                    .build()
+            )
+        }
+        else -> {
+            rememberAsyncImagePainter(
+                ImageRequest.Builder(LocalContext.current)
+                    .data(imageUrl)
+                    .allowHardware(false)
+                    .error(R.drawable.avataaars)
+                    .placeholder(R.drawable.avataaars)
+                    .build()
+            )
+        }
+    }
 
 
     MarkerComposable(

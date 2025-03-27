@@ -1,8 +1,10 @@
 package com.example.staysafe.viewModel
 
+import android.content.Context
 import android.os.Build
 import androidx.annotation.OptIn
 import androidx.annotation.RequiresApi
+import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.media3.common.util.Log
@@ -10,6 +12,7 @@ import androidx.media3.common.util.UnstableApi
 import com.example.staysafe.BuildConfig
 import com.example.staysafe.model.data.*
 import com.example.staysafe.repository.StaySafeRepository
+import com.example.staysafe.service.NotificationService
 import com.google.android.gms.maps.model.LatLng
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -30,7 +33,8 @@ import kotlinx.coroutines.isActive
 @OptIn(UnstableApi::class)
 class MapViewModel
     (
-    val repository: StaySafeRepository
+    private val repository: StaySafeRepository,
+    private val context: Context
 ) : ViewModel() {
     init {
         Log.d("Flow", "✅ MapViewModel Initialized")
@@ -83,6 +87,10 @@ class MapViewModel
     // ! Logged in user
     private val _loggedInUser = MutableStateFlow<User?>(null)
     val loggedInUser: StateFlow<User?> = _loggedInUser
+
+    private val notificationService: NotificationService by lazy {
+        NotificationService(context)
+    }
 
     @OptIn(UnstableApi::class)
     fun setLoggedInUser(username: String) {
@@ -297,6 +305,26 @@ class MapViewModel
                             if (it.activityID == activityId) updatedActivity else it 
                         }
                         Log.d("updateActivityStatus", "✅ Activity status updated successfully")
+
+                        // Show appropriate notifications based on status
+                        when (newStatus) {
+                            "Started" -> {
+                                Log.d("updateActivityStatus", "Showing activity started notification")
+                                notificationService.showActivityStartedNotification(updatedActivity)
+                            }
+                            "Completed" -> {
+                                Log.d("updateActivityStatus", "Activity completed: ${updatedActivity.activityName}")
+                            }
+                            "Cancelled" -> {
+                                Log.d("updateActivityStatus", "Activity cancelled: ${updatedActivity.activityName}")
+                            }
+                            "Paused" -> {
+                                Log.d("updateActivityStatus", "Activity paused: ${updatedActivity.activityName}")
+                            }
+                            else -> {
+                                Log.d("updateActivityStatus", "No notification needed for status: $newStatus")
+                            }
+                        }
                     } else {
                         Log.e("updateActivityStatus", "❌ Failed to update activity status - repository returned null")
                         Log.e("updateActivityStatus", "❌ Updated activity: $updatedActivity")
@@ -626,9 +654,37 @@ class MapViewModel
     // * Contacts
     @OptIn(UnstableApi::class)
     fun fetchUserContacts(userId: Long) {
-        Log.d("MapViewModel", "Fetching user contacts for userId: $userId")
         viewModelScope.launch {
-            repository.getContactsForUser(userId).collect { _contacts.value = it }
+            try {
+                // First, fetch all contacts for the user
+                repository.getContactsForUser(userId).collect { contactsList ->
+                    _contacts.value = contactsList
+                    Log.d("fetchUserContacts", "✅ Fetched ${contactsList.size} contacts for user $userId")
+
+                    // For each contact, fetch their activities
+                    contactsList.forEach { contact ->
+                        // Get the contact's user ID from the UserWithContact object
+                        val contactUserId = contact.userID
+                        Log.d("fetchUserContacts", "Fetching activities for contact user ID: $contactUserId")
+
+                        // Fetch activities for this contact
+                        repository.getActivitiesForUser(contactUserId).collect { activities ->
+                            activities.forEach { activity ->
+                                if (activity.activityStatusName == "Started") {
+                                    Log.d("fetchUserContacts", "Found started activity for contact: ${activity.activityName}")
+                                    notificationService.showContactActivityStartedNotification(
+                                        activity,
+                                        "${contact.userFirstname} ${contact.userLastname}"
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+            } catch (e: Exception) {
+                Log.e("fetchUserContacts", "❌ Failed to fetch contacts: ${e.message}")
+                e.printStackTrace()
+            }
         }
     }
 
@@ -669,6 +725,11 @@ class MapViewModel
                     repository.addContact(newContact).collect { response ->
                         if (response != null) {
                             Log.d("addContact", "✅ Contact added successfully!")
+                            // Show notification for new contact
+                            val newContactUser = contacts.value.find { it.userID == newContactID }
+                            newContactUser?.let { contact ->
+                                notificationService.showContactAddedNotification(contact)
+                            }
                             _contact.value += response
                         } else {
                             Log.e("addContact", "❌ Failed to add contact!")

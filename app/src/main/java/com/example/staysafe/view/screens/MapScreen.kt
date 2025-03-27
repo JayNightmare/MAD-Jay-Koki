@@ -313,7 +313,7 @@ fun MapScreen(navController: NavController, viewModel: MapViewModel) {
 
                     fromLocation?.let { location ->
                         CustomMarker(
-                            imageUrl = null,
+                            imageUrl = "start",
                             fullName = "Start: ${activity.activityFromName}",
                             location = LatLng(location.locationLatitude, location.locationLongitude),
                             onClick = { },
@@ -323,7 +323,7 @@ fun MapScreen(navController: NavController, viewModel: MapViewModel) {
 
                     toLocation?.let { location ->
                         CustomMarker(
-                            imageUrl = null,
+                            imageUrl = "end",
                             fullName = "End: ${activity.activityToName}",
                             location = LatLng(location.locationLatitude, location.locationLongitude),
                             onClick = { },

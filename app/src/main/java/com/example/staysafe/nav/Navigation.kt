@@ -5,6 +5,7 @@ import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
+import androidx.compose.ui.platform.LocalContext
 import androidx.navigation.compose.*
 import com.example.staysafe.API.Service
 import com.example.staysafe.view.screens.*
@@ -20,6 +21,7 @@ import java.util.concurrent.TimeUnit
 @Composable
 fun Navigation() {
     val nav = rememberNavController()
+    val context = LocalContext.current
 
     // Debugging purposes
     // * ✅ Add Logging Interceptor
@@ -47,7 +49,8 @@ fun Navigation() {
         MapViewModel(
             repository = StaySafeRepository(
                 service = service
-            )
+            ),
+            context = context
         )
     }
 
