@@ -13,7 +13,8 @@ data class UserWithContact(
     @SerializedName("UserLongitude") val userLongitude: Double?,
     @SerializedName("UserTimestamp") val userTimestamp: Long?,
     @SerializedName("UserImageURL") val userImageURL: String,
-    @SerializedName("UserContactID") val userContactID: Long
+    @SerializedName("UserContactID") val userContactID: Long?,
+    @SerializedName("ContactLabel") val contactLabel: String = "Friend"
 ) {
     fun toUser(): User = User(
         userID = userID,

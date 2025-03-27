@@ -15,6 +15,7 @@ import com.example.staysafe.viewModel.MapViewModel
 fun AddContactForm(viewModel: MapViewModel, onClose: () -> Unit) {
     var username by remember { mutableStateOf("") }
     var phone by remember { mutableStateOf("") }
+    var label by remember { mutableStateOf("") }
     var isAdding by remember { mutableStateOf(false) }
     val context = LocalContext.current
 
@@ -51,10 +52,29 @@ fun AddContactForm(viewModel: MapViewModel, onClose: () -> Unit) {
             )
         )
 
+        Spacer(modifier = Modifier.height(8.dp))
+
         OutlinedTextField(
             value = phone,
             onValueChange = { phone = it },
             label = { Text("Enter Phone Number") },
+            modifier = Modifier.fillMaxWidth(),
+            colors = TextFieldDefaults.colors(
+                focusedTextColor = Color.White,
+                unfocusedTextColor = Color.White,
+                focusedLabelColor = Color.White,
+                unfocusedLabelColor = Color.Gray,
+                unfocusedContainerColor = Color.Transparent,
+                focusedContainerColor = Color.Transparent,
+            )
+        )
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        OutlinedTextField(
+            value = label,
+            onValueChange = { label = it },
+            label = { Text("Contact Label (e.g., Family, Friend, Emergency)") },
             modifier = Modifier.fillMaxWidth(),
             colors = TextFieldDefaults.colors(
                 focusedTextColor = Color.White,
@@ -72,10 +92,10 @@ fun AddContactForm(viewModel: MapViewModel, onClose: () -> Unit) {
             onClick = {
                 if (username.isNotBlank() && phone.isNotBlank()) {
                     isAdding = true
-                    viewModel.addContact(username, phone)
+                    viewModel.addContact(username, phone, label)
                     Toast.makeText(context, "Adding Contact...", Toast.LENGTH_SHORT).show()
                 } else {
-                    Toast.makeText(context, "Please fill in all fields", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(context, "Please fill in all required fields", Toast.LENGTH_SHORT).show()
                 }
             },
             enabled = !isAdding,

@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "719095695361",
+    "project_id": "staysafe-a5d59",
+    "storage_bucket": "staysafe-a5d59.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:719095695361:android:8164f5bda41c272bb15800",
+        "android_client_info": {
+          "package_name": "com.example.staysafe"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD2GM7WhoyAF_C8K5FQlA8uwKP8N_-HjsE"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

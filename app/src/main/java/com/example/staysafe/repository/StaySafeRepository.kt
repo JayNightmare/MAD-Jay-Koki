@@ -10,7 +10,6 @@ import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
 import retrofit2.await
 import retrofit2.awaitResponse
-import retrofit2.http.Body
 
 class StaySafeRepository(
     private val service: Service
@@ -289,7 +288,7 @@ class StaySafeRepository(
     // * Users
 
     // Fetch Users directly from API
-    fun getAllUsers(): Flow<List<User>> = flow {
+    fun getAllUsers(): Flow<List<UserWithContact>> = flow {
         try {
             val users = service.getUsers().awaitResponse()
             println("DEBUG: API call executed, response received: $users")
@@ -305,7 +304,7 @@ class StaySafeRepository(
         }
     }
 
-    fun getUserById(id: Long): Flow<List<User>> = flow {
+    fun getUserById(id: Long): Flow<List<UserWithContact>> = flow {
         try {
             val user = service.getUser(id).awaitResponse()
             user.body()?.let { emit(it) } ?: emit(emptyList())
@@ -315,7 +314,7 @@ class StaySafeRepository(
         }
     }
 
-    fun addUser(user: User): Flow<Any> = flow {
+    fun addUser(user: UserWithContact): Flow<Any> = flow {
         try {
             val response = service.addUser(user).awaitResponse()
             Log.d("addUser", "Response: $response")
@@ -351,7 +350,7 @@ class StaySafeRepository(
         }
     }.flowOn(Dispatchers.IO)
 
-    fun updateUser(user: User): Flow<Any> = flow {
+    fun updateUser(user: UserWithContact): Flow<Any> = flow {
         try {
             Log.d("updateUser", "Attempting to update user: ${user.userUsername}")
             Log.d("updateUser", "User ID: ${user.userID}")
@@ -410,7 +409,7 @@ class StaySafeRepository(
         }
     }.flowOn(Dispatchers.IO)
 
-    fun deleteContact(contactId: Long): Flow<Boolean> = flow {
+    fun deleteContact(contactId: Long?): Flow<Boolean> = flow {
         try {
             val response = service.deleteContact(contactId).awaitResponse()
             Log.d("deleteContact", "Response: $response")
@@ -445,5 +444,15 @@ class StaySafeRepository(
             emit(emptyList())
         }
     }.flowOn(Dispatchers.IO)
+
+    fun getContacts(): Flow<List<Contact>> = flow {
+        try {
+            val contacts = service.getContacts().awaitResponse()
+            emit(contacts.body() ?: emptyList())
+        } catch (e: Exception) {
+            e.printStackTrace()
+            emit(emptyList())
+        }
+    }
     // //
 }

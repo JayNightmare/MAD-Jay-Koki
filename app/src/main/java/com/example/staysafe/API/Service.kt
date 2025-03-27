@@ -83,21 +83,21 @@ interface Service {
 
     // ! Users
     @GET("https://softwarehub.uk/unibase/staysafe/v1/api/users")
-    fun getUsers(): Call<List<User>>
+    fun getUsers(): Call<List<UserWithContact>>
 
     @GET("https://softwarehub.uk/unibase/staysafe/v1/api/users/{userID}")
-    fun getUser(@Path("userID") id: Long): Call<List<User>>
+    fun getUser(@Path("userID") id: Long): Call<List<UserWithContact>>
 
     @GET("https://softwarehub.uk/unibase/staysafe/v1/api/users/contacts/{userID}")
     fun getUserContact(@Path("userID") userID: Long): Call<List<UserWithContact>>
 
     // ? Insert user
     @POST("https://softwarehub.uk/unibase/staysafe/v1/api/users")
-    fun addUser(@Body user: User): Call<List<User>>
+    fun addUser(@Body user: UserWithContact): Call<List<UserWithContact>>
 
     // ? Update user
     @PUT("https://softwarehub.uk/unibase/staysafe/v1/api/users/{userID}")
-    fun updateUser(@Path("userID") id: Long, @Body user: User): Call<List<User>>
+    fun updateUser(@Path("userID") id: Long, @Body user: UserWithContact): Call<List<UserWithContact>>
 
     // ? Delete user
     @DELETE("https://softwarehub.uk/unibase/staysafe/v1/api/users/{userID}")
@@ -110,7 +110,10 @@ interface Service {
     fun addContact(@Body contact: Contact): Call<List<Contact>>
 
     @DELETE("https://softwarehub.uk/unibase/staysafe/v1/api/contacts/{contactID}")
-    fun deleteContact(@Path("contactID") id: Long): Call<List<Unit>>
+    fun deleteContact(@Path("contactID") id: Long?): Call<List<Unit>>
+
+    @GET("https://softwarehub.uk/unibase/staysafe/v1/api/contacts")
+    fun getContacts(): Call<List<Contact>>
 
 // //
 }

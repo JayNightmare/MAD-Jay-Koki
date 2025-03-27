@@ -1,6 +1,8 @@
 package com.example.staysafe.view.screens
 
+import androidx.compose.ui.window.Dialog
 import android.os.Build
+import android.widget.Toast
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -13,6 +15,7 @@ import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.DropdownMenu
@@ -23,6 +26,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -46,8 +50,12 @@ import com.example.staysafe.BuildConfig
 import com.example.staysafe.R
 import com.example.staysafe.map.CustomMarker
 import com.example.staysafe.model.data.*
+import com.example.staysafe.nav.Screen
+import com.example.staysafe.service.CameraService
+import com.example.staysafe.service.SafetyMonitoringService
 import com.example.staysafe.ui.components.sheets.ActivitySheet
 import com.example.staysafe.ui.components.BottomNavigationBar
+import com.example.staysafe.ui.components.PanicButton
 import com.example.staysafe.ui.components.sheets.CallUserSheet
 import com.example.staysafe.ui.components.TopNavigationBar
 import com.example.staysafe.ui.components.sheets.UserActivitiesSheet
@@ -165,8 +173,13 @@ fun MapScreen(navController: NavController, viewModel: MapViewModel) {
     // Add state for tracking if activity is paused
     var isActivityPaused by remember { mutableStateOf(false) }
 
+    var showPanicButton by remember { mutableStateOf(true) }
+    val cameraService = remember { CameraService(context) }
+    val safetyService = remember { SafetyMonitoringService() }
+    var showCameraDialog by remember { mutableStateOf(false) }
+
     Scaffold(
-        topBar = { 
+        topBar = {
             TopNavigationBar(
                 navController = navController,
                 viewModel = viewModel,
@@ -228,7 +241,7 @@ fun MapScreen(navController: NavController, viewModel: MapViewModel) {
                             tint = Color.Black
                         )
                     }
-                    
+
                     DropdownMenu(
                         expanded = showStatusMenu,
                         onDismissRequest = { showStatusMenu = false }
@@ -282,6 +295,16 @@ fun MapScreen(navController: NavController, viewModel: MapViewModel) {
                         }
                     }
                 }
+            }
+            if (showPanicButton) {
+                PanicButton(
+                    viewModel = viewModel,
+                    emergencyContacts = contacts,
+                    currentActivity = selectedActivity,
+//                    onPanicTriggered = {
+//                        showCameraDialog = true
+//                    }
+                )
             }
         },
         floatingActionButtonPosition = androidx.compose.material3.FabPosition.Start
@@ -401,20 +424,20 @@ fun MapScreen(navController: NavController, viewModel: MapViewModel) {
                                         isActivityPaused = true
                                     }
                                 },
-                                containerColor = if (isActivityPaused) 
+                                containerColor = if (isActivityPaused)
                                     Color(0xFF4CAF50) // Green color for resume
-                                else 
+                                else
                                     Color(0xFFFFA000), // Orange color for pause
                                 modifier = Modifier.size(56.dp).padding(bottom = 16.dp)
                             ) {
                                 Icon(
-                                    imageVector = if (isActivityPaused) 
+                                    imageVector = if (isActivityPaused)
                                         Icons.Default.PlayArrow
-                                    else 
+                                    else
                                         Icons.Default.Pause,
-                                    contentDescription = if (isActivityPaused) 
+                                    contentDescription = if (isActivityPaused)
                                         "Resume Activity"
-                                    else 
+                                    else
                                         "Pause Activity",
                                     tint = Color.White
                                 )
@@ -535,9 +558,36 @@ fun MapScreen(navController: NavController, viewModel: MapViewModel) {
                     )
                 }
             }
+
+            // Camera Dialog
+            if (showCameraDialog) {
+                AlertDialog(
+                    onDismissRequest = { showCameraDialog = false },
+                    title = { Text("Emergency Photo", color = Color.White) },
+                    text = { Text("Would you like to take a photo to share with your emergency contacts?", color = Color.White) },
+                    confirmButton = {
+                        TextButton(
+                            onClick = {
+                                showCameraDialog = false
+                                val intent = cameraService.getCameraIntent()
+                                context.startActivity(intent)
+                            }
+                        ) {
+                            Text("Take Photo")
+                        }
+                    },
+                    dismissButton = {
+                        TextButton(onClick = { showCameraDialog = false }) {
+                            Text("Cancel")
+                        }
+                    },
+                    containerColor = Color.Black
+                )
+            }
         }
     }
 }
+
 
 //@SuppressLint("MissingPermission")
 //fun getCurrentLocation(context: Context, onLocationReceived: (Double, Double) -> Unit) {

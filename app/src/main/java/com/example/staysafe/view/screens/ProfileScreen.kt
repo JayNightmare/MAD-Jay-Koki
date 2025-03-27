@@ -7,8 +7,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
@@ -36,27 +34,9 @@ fun ProfileScreen(
     val context = LocalContext.current
     val loggedInUser by viewModel.loggedInUser.collectAsState()
     var isEditing by remember { mutableStateOf(false) }
-    
-    // Update state variables when loggedInUser changes
-    var firstName by remember(loggedInUser) { mutableStateOf(loggedInUser?.userFirstname ?: "") }
-    var lastName by remember(loggedInUser) { mutableStateOf(loggedInUser?.userLastname ?: "") }
-    var phone by remember(loggedInUser) { mutableStateOf(loggedInUser?.userPhone ?: "") }
-
-    val updateResult by viewModel.updateResult.collectAsState()
-
-    // * Handle update result
-    LaunchedEffect(updateResult) {
-        updateResult?.let { success ->
-            if (success) {
-                Toast.makeText(context, "✅ Profile updated", Toast.LENGTH_SHORT).show()
-                isEditing = false
-                // * Clear the update result to prevent showing the toast again
-                viewModel.clearUpdateResult()
-            } else {
-                Toast.makeText(context, "❌ Failed to update profile", Toast.LENGTH_SHORT).show()
-            }
-        }
-    }
+    var firstName by remember { mutableStateOf(loggedInUser?.userFirstname ?: "") }
+    var lastName by remember { mutableStateOf(loggedInUser?.userLastname ?: "") }
+    var phone by remember { mutableStateOf(loggedInUser?.userPhone ?: "") }
 
     Scaffold(
         topBar = {
@@ -64,27 +44,11 @@ fun ProfileScreen(
                 title = { Text("Profile", color = Color.White) },
                 navigationIcon = {
                     IconButton(onClick = { navController.navigateUp() }) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back", tint = Color.White)
+                        Icon(Icons.Default.ArrowBack, contentDescription = "Back", tint = Color.White)
                     }
                 },
                 actions = {
-                    IconButton(
-                        onClick = { 
-                            if (isEditing) {
-                                // * Save changes
-                                loggedInUser?.let { user ->
-                                    val updatedUser = user.copy(
-                                        userFirstname = firstName,
-                                        userLastname = lastName,
-                                        userPhone = phone
-                                    )
-                                    viewModel.updateUserProfile(updatedUser)
-                                }
-                            } else {
-                                isEditing = true
-                            }
-                        }
-                    ) {
+                    IconButton(onClick = { isEditing = !isEditing }) {
                         Icon(
                             if (isEditing) Icons.Default.Save else Icons.Default.Edit,
                             contentDescription = if (isEditing) "Save" else "Edit",
@@ -181,11 +145,7 @@ fun ProfileScreen(
 
                         OutlinedTextField(
                             value = phone,
-                            onValueChange = {
-                                if (it.length <= 10) {
-                                    phone = it
-                                }
-                            },
+                            onValueChange = { phone = it },
                             label = { Text("Phone", color = Color.White) },
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -199,19 +159,45 @@ fun ProfileScreen(
                                 focusedContainerColor = Color.Transparent,
                             )
                         )
-                    } else {
-                        val phoneGroups = if (phone.startsWith("+44") && phone.length == 13) {
-                            val countryCode = phone.substring(0, 3)
-                            val areaCode = phone.substring(3, 7)
-                            val rest = phone.substring(7)
-                            "$countryCode $areaCode $rest"
-                        } else {
-                            phone
+                        val updateResult by viewModel.updateResult.collectAsState()
+
+                        LaunchedEffect(updateResult) {
+                            updateResult?.let {
+                                Toast.makeText(context, "✅ Profile updated", Toast.LENGTH_SHORT).show()
+                                //viewModel.clearUpdateResult()
+                            }
                         }
 
-                        InfoRow("First Name", firstName)
-                        InfoRow("Last Name", lastName)
-                        InfoRow("Phone", phoneGroups ?: phone)
+                        Button(
+                            onClick = {
+                                // TODO: Implement update user functionality
+                                isEditing = false
+                                loggedInUser?.let { user ->
+                                    val updateUser = user.copy(
+                                        userFirstname = firstName,
+                                        userLastname = lastName,
+                                        userPhone = phone
+                                    )
+                                    viewModel.updateUserProfile(updateUser)
+                                    isEditing = false
+                                } ?: run {
+                                    Toast.makeText(context, "❌ User is null", Toast.LENGTH_SHORT).show()
+                                }
+                            },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(top = 16.dp),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = Color.White,
+                                contentColor = Color.Black
+                            )
+                        ) {
+                            Text("Save Changes")
+                        }
+                    } else {
+                        InfoRow("First Name", loggedInUser?.userFirstname ?: "")
+                        InfoRow("Last Name", loggedInUser?.userLastname ?: "")
+                        InfoRow("Phone", loggedInUser?.userPhone ?: "")
                         InfoRow("Username", loggedInUser?.userUsername ?: "")
                     }
                 }
@@ -238,26 +224,6 @@ fun ProfileScreen(
                         color = Color.White,
                         modifier = Modifier.padding(bottom = 16.dp)
                     )
-
-                    // * Activities Button
-                    Button(
-                        onClick = { navController.navigate(Screen.UserActivitiesScreen.route) },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(vertical = 8.dp),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = Color.White,
-                            contentColor = Color.Black
-                        )
-                    ) {
-                        Row(
-                            horizontalArrangement = Arrangement.spacedBy(8.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Icon(Icons.AutoMirrored.Filled.List, contentDescription = null)
-                            Text("My Activities")
-                        }
-                    }
 
                     // * Settings Button
                     Button(
@@ -286,7 +252,6 @@ fun ProfileScreen(
                             navController.navigate(Screen.LoginScreen.route) {
                                 popUpTo(Screen.MapScreen.route) { inclusive = true }
                             }
-                            viewModel.logout()
                         },
                         modifier = Modifier
                             .fillMaxWidth()
