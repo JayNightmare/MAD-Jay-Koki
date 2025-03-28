@@ -1235,13 +1235,21 @@ class MapViewModel
     private val _stepCount = MutableStateFlow(0)
     val stepCount: StateFlow<Int> = _stepCount
 
+    private var sensorManager: SensorManager? = null
+    private var sensorEventListener: SensorEventListener? = null
+    private var start = -1f
+
+
     fun startStepCounting(context: Context) {
-        val sensorManager = context.getSystemService(Context.SENSOR_SERVICE) as SensorManager
-        val stepSensor = sensorManager.getDefaultSensor(Sensor.TYPE_STEP_COUNTER)
+        sensorManager = context.getSystemService(Context.SENSOR_SERVICE) as SensorManager
+        val stepSensor = sensorManager?.getDefaultSensor(Sensor.TYPE_STEP_COUNTER)
 
-        var start = -1f
+        if (stepSensor == null) {
+            Log.e("StepCounter", "❌ Sensor does not exists!")
+            return
+        }
 
-        val sensorEventListener = object : SensorEventListener {
+        sensorEventListener = object : SensorEventListener {
             override fun onSensorChanged(event: SensorEvent) {
                 if (event?.sensor?.type == Sensor.TYPE_STEP_COUNTER) {
                     if (start == -1f) {
@@ -1258,8 +1266,30 @@ class MapViewModel
                 TODO("Not yet implemented")
             }
         }
-        stepSensor?.let {
-            sensorManager.registerListener(sensorEventListener, it, SensorManager.SENSOR_DELAY_UI)
-        }
+        sensorManager?.registerListener(
+            sensorEventListener,
+            stepSensor,
+            SensorManager.SENSOR_DELAY_UI
+        )
     }
+
+    private fun stopStepCounting(){
+        sensorManager?.let{ sensorManager ->
+            sensorEventListener?.let { stepListener ->
+                sensorManager.unregisterListener(stepListener)
+                Log.d("Step Counter", "Release the listener for the step counter")
+            }
+
+        }
+        sensorManager = null
+        sensorEventListener = null
+        start = -1f
+    }
+
+    //Release listener for the step counter
+    override fun onCleared() {
+        super.onCleared()
+        stopStepCounting()
+    }
+
 }
