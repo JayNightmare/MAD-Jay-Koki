@@ -1,5 +1,6 @@
 package com.example.staysafe.view.screens
 
+import android.util.Log
 import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -164,7 +165,7 @@ fun ProfileScreen(
                         LaunchedEffect(updateResult) {
                             updateResult?.let {
                                 Toast.makeText(context, "✅ Profile updated", Toast.LENGTH_SHORT).show()
-                                //viewModel.clearUpdateResult()
+                                viewModel.clearUpdateResult()
                             }
                         }
 
@@ -176,7 +177,9 @@ fun ProfileScreen(
                                     val updateUser = user.copy(
                                         userFirstname = firstName,
                                         userLastname = lastName,
-                                        userPhone = phone
+                                        userPhone = phone,
+                                        contactLabel = user.contactLabel
+
                                     )
                                     viewModel.updateUserProfile(updateUser)
                                     isEditing = false

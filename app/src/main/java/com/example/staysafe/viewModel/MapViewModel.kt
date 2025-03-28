@@ -236,17 +236,19 @@ class MapViewModel
     private val _updateResult = MutableStateFlow<Any?>(null)
     val updateResult: StateFlow<Any?> = _updateResult
 
-    /*fun clearUpdateResult() {
+    fun clearUpdateResult() {
         _updateResult.value = null
     }
 
-     */
 
-
-    fun updateUserProfile(user: UserWithContact) {
+    fun updateUserProfile(user: UserWithContact){
         viewModelScope.launch {
-            repository.updateUser(user).collect {
-                _updateResult.value = it
+            repository.updateUser(user).collect { result ->
+                _updateResult.value = result
+
+                if (result != null) {
+                    _loggedInUser.value = user
+                }
             }
         }
     }
@@ -1272,7 +1274,7 @@ class MapViewModel
         )
     }
 
-    private fun stopStepCounting(){
+    fun stopStepCounting(){
         sensorManager?.let{ sensorManager ->
             sensorEventListener?.let { stepListener ->
                 sensorManager.unregisterListener(stepListener)
@@ -1332,7 +1334,7 @@ class MapViewModel
 
     }
 
-    private fun stopAccelerometerCounting(){
+    fun stopAccelerometerCounting(){
         accelerometerSensorManager?.let { sensorManager ->
             accelerometerSensorEventListener?.let{sensorEventListener ->
                 sensorManager.unregisterListener(sensorEventListener)

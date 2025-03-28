@@ -14,7 +14,8 @@ data class UserWithContact(
     @SerializedName("UserTimestamp") val userTimestamp: Long?,
     @SerializedName("UserImageURL") val userImageURL: String,
     @SerializedName("UserContactID") val userContactID: Long?,
-    @SerializedName("ContactLabel") val contactLabel: String = "Friend"
+    //Made to nullable due to prevent crash + contactlabel does not exist in API
+    @SerializedName("ContactLabel") val contactLabel: String? = "Friend"
 ) {
     fun toUser(): User = User(
         userID = userID,

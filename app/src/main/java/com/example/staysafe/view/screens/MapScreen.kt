@@ -56,6 +56,7 @@ import com.example.staysafe.service.SafetyMonitoringService
 import com.example.staysafe.ui.components.sheets.ActivitySheet
 import com.example.staysafe.ui.components.BottomNavigationBar
 import com.example.staysafe.ui.components.PanicButton
+import com.example.staysafe.ui.components.StepCounterScreen
 import com.example.staysafe.ui.components.sheets.CallUserSheet
 import com.example.staysafe.ui.components.TopNavigationBar
 import com.example.staysafe.ui.components.sheets.UserActivitiesSheet
@@ -174,6 +175,7 @@ fun MapScreen(navController: NavController, viewModel: MapViewModel) {
     var isActivityPaused by remember { mutableStateOf(false) }
 
     var showPanicButton by remember { mutableStateOf(true) }
+    var showStepCounter by remember { mutableStateOf(true) }
     val cameraService = remember { CameraService(context) }
     val safetyService = remember { SafetyMonitoringService() }
     var showCameraDialog by remember { mutableStateOf(false) }
@@ -304,6 +306,11 @@ fun MapScreen(navController: NavController, viewModel: MapViewModel) {
 //                    onPanicTriggered = {
 //                        showCameraDialog = true
 //                    }
+                )
+            }
+            if(showStepCounter){
+                StepCounterScreen(
+                    viewModel = viewModel
                 )
             }
         },
