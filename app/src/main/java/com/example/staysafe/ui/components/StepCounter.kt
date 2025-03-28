@@ -46,7 +46,7 @@ fun StepCounterScreen(viewModel: MapViewModel = viewModel()) {
             )
             Spacer(modifier = Modifier.height(32.dp))
 
-            Button(onClick = { viewModel.clearUpdateResult() }) {
+            Button(onClick = { viewModel.resetStepCount() }) {
                 Text("Reset")
             }
         }

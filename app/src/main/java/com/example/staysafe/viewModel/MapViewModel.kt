@@ -1287,6 +1287,14 @@ class MapViewModel
         start = -1f
     }
 
+    fun resetStepCount() {
+        start = -1f
+        viewModelScope.launch {
+            _stepCount.emit(0)
+        }
+    }
+
+
     //Accelerometer functionality
     private var accelerometerSensorManager: SensorManager? = null
     private var accelerometerSensorEventListener: SensorEventListener? = null
@@ -1351,4 +1359,5 @@ class MapViewModel
         stopStepCounting()
         stopAccelerometerCounting()
     }
+
 }
