@@ -1263,7 +1263,6 @@ class MapViewModel
             }
 
             override fun onAccuracyChanged(p0: Sensor?, p1: Int) {
-                TODO("Not yet implemented")
             }
         }
         sensorManager?.registerListener(
@@ -1286,10 +1285,68 @@ class MapViewModel
         start = -1f
     }
 
+    //Accelerometer functionality
+    private var accelerometerSensorManager: SensorManager? = null
+    private var accelerometerSensorEventListener: SensorEventListener? = null
+    private var lastStepTimestamp = 0L
+
+    fun startAccelerometerCounting(context: Context){
+        accelerometerSensorManager = context.getSystemService(Context.SENSOR_SERVICE) as SensorManager
+        val accelerometerSensor = accelerometerSensorManager?.getDefaultSensor(Sensor.TYPE_ACCELEROMETER)
+
+        if(accelerometerSensor == null){
+            Log.e("Accelerometer", "❌ Does not exist!")
+            return
+        }
+
+        accelerometerSensorEventListener = object : SensorEventListener {
+            override fun onSensorChanged(event: SensorEvent?) {
+                if (event == null) return
+
+                val x = event.values[0]
+                val y = event.values[1]
+                val z = event.values[2]
+                val magnitude = Math.sqrt((x * x + y * y + z * z).toDouble()).toFloat()
+
+                val currentTime = System.currentTimeMillis()
+                val timeSinceLastStep = currentTime - lastStepTimestamp
+
+                //After 0.5sec with the magnitude > 11, increment the counter
+                if (magnitude > 11 && timeSinceLastStep > 500) {
+                    lastStepTimestamp = currentTime
+                    viewModelScope.launch {
+                        _stepCount.emit(_stepCount.value + 1)
+                    }
+                }
+            }
+
+            override fun onAccuracyChanged(p0: Sensor?, p1: Int) {
+            }
+
+        }
+        accelerometerSensorManager?.registerListener(
+            accelerometerSensorEventListener,
+            accelerometerSensor,
+            SensorManager.SENSOR_DELAY_UI
+        )
+
+    }
+
+    private fun stopAccelerometerCounting(){
+        accelerometerSensorManager?.let { sensorManager ->
+            accelerometerSensorEventListener?.let{sensorEventListener ->
+                sensorManager.unregisterListener(sensorEventListener)
+            }
+        }
+        accelerometerSensorManager = null
+        accelerometerSensorEventListener = null
+        lastStepTimestamp = 0L
+    }
+
     //Release listener for the step counter
     override fun onCleared() {
         super.onCleared()
         stopStepCounting()
+        stopAccelerometerCounting()
     }
-
 }
