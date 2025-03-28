@@ -72,6 +72,7 @@ import com.google.maps.android.compose.CameraPositionState
 import com.google.maps.android.compose.GoogleMap
 import com.google.maps.android.compose.MapProperties
 import com.google.maps.android.compose.MapType
+import com.google.maps.android.compose.MapUiSettings
 import com.google.maps.android.compose.Polyline
 import com.google.maps.android.compose.rememberCameraPositionState
 import kotlinx.coroutines.launch
@@ -180,418 +181,452 @@ fun MapScreen(navController: NavController, viewModel: MapViewModel) {
     val safetyService = remember { SafetyMonitoringService() }
     var showCameraDialog by remember { mutableStateOf(false) }
 
-    Scaffold(
-        topBar = {
-            TopNavigationBar(
-                navController = navController,
-                viewModel = viewModel,
-                onUserSelected = { user ->
-                    selectedUser = user
-                    showPeopleSheet = true
-                    coroutineScope.launch {
-                        cameraPositionState.moveToUserLocation(
-                            user.userLatitude ?: 0.0,
-                            user.userLongitude ?: 0.0
-                        )
-                    }
-                }
-            )
-        },
-        bottomBar = {
-            BottomNavigationBar(
-                navController = navController,
-                onPeopleClicked = {
-                    selectedUser = null
-                    selectedActivity = null
-                    showPeopleSheet = true
-                    showCallUserDialog = false
-                    showActivitySheet = false
-                    showUserActivitiesSheet = false
-                },
-                onCallClicked = {
-                    showPeopleSheet = true
-                    showCallUserDialog = true
-                    showActivitySheet = false
-                    showUserActivitiesSheet = false
-                },
-                onMyActivitiesClicked = {
-                    showPeopleSheet = false
-                    showCallUserDialog = false
-                    showActivitySheet = false
-                    showUserActivitiesSheet = true
-                },
-                userId = loggedInUser?.userID ?: 0
-            )
-        },
-        floatingActionButton = {
-            if (selectedActivity != null && selectedActivity?.activityUserID == loggedInUser?.userID) {
-                Box {
-                    FloatingActionButton(
-                        onClick = { showStatusMenu = true },
-                        containerColor = when (selectedActivity?.activityStatusName) {
-                            "Planned" -> Color.White
-                            "Started" -> Color.Yellow
-                            "Paused" -> Color.Gray
-                            "Cancelled" -> Color.Red
-                            "Completed" -> Color.Green
-                            else -> Color.White
-                        }
-                    ) {
-                        Icon(
-                            Icons.Default.LocationOn,
-                            contentDescription = "Change Activity Status",
-                            tint = Color.Black
-                        )
-                    }
-
-                    DropdownMenu(
-                        expanded = showStatusMenu,
-                        onDismissRequest = { showStatusMenu = false }
-                    ) {
-                        selectedActivity?.let { activity ->
-                            if (activity.activityStatusName != "Planned") {
-                                DropdownMenuItem(
-                                    text = { Text("Planned") },
-                                    onClick = {
-                                        viewModel.updateActivityStatus(activity.activityID, "Planned")
-                                        showStatusMenu = false
-                                    }
-                                )
-                            }
-                            if (activity.activityStatusName != "Started") {
-                                DropdownMenuItem(
-                                    text = { Text("Started") },
-                                    onClick = {
-                                        viewModel.updateActivityStatus(activity.activityID, "Started")
-                                        showStatusMenu = false
-                                    }
-                                )
-                            }
-                            if (activity.activityStatusName != "Paused") {
-                                DropdownMenuItem(
-                                    text = { Text("Paused") },
-                                    onClick = {
-                                        viewModel.updateActivityStatus(activity.activityID, "Paused")
-                                        showStatusMenu = false
-                                    }
-                                )
-                            }
-                            if (activity.activityStatusName != "Cancelled") {
-                                DropdownMenuItem(
-                                    text = { Text("Cancelled") },
-                                    onClick = {
-                                        viewModel.updateActivityStatus(activity.activityID, "Cancelled")
-                                        showStatusMenu = false
-                                    }
-                                )
-                            }
-                            if (activity.activityStatusName != "Completed") {
-                                DropdownMenuItem(
-                                    text = { Text("Completed") },
-                                    onClick = {
-                                        viewModel.updateActivityStatus(activity.activityID, "Completed")
-                                        showStatusMenu = false
-                                    }
-                                )
-                            }
-                        }
-                    }
-                }
-            }
-            if (showPanicButton) {
-                PanicButton(
+    Box(modifier = Modifier.fillMaxSize()) {
+        Scaffold(
+            topBar = {
+                TopNavigationBar(
+                    navController = navController,
                     viewModel = viewModel,
-                    emergencyContacts = contacts,
-                    currentActivity = selectedActivity,
-//                    onPanicTriggered = {
-//                        showCameraDialog = true
-//                    }
-                )
-            }
-            if(showStepCounter){
-                StepCounterScreen(
-                    viewModel = viewModel
-                )
-            }
-        },
-        floatingActionButtonPosition = androidx.compose.material3.FabPosition.Start
-    ) { paddingValues ->
-        Box(modifier = Modifier.fillMaxSize()) {
-            GoogleMap(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(paddingValues),
-                cameraPositionState = cameraPositionState,
-                properties = MapProperties(
-                    mapStyleOptions = MapStyleOptions(nightMapStyle),
-                    mapType = MapType.NORMAL
-                ),
-            ) {
-                // Draw route if available
-                if (routePoints.isNotEmpty()) {
-                    Polyline(
-                        points = routePoints,
-                        color = Color(0xff049bec),
-                        width = 10f
-                    )
-                }
-
-                // Show markers for selected activity
-                selectedActivity?.let { activity ->
-                    val fromLocation = viewModel.locations.value.find { it.locationID == activity.activityFromID.toInt() }
-                    val toLocation = viewModel.locations.value.find { it.locationID == activity.activityToID.toInt() }
-
-                    fromLocation?.let { location ->
-                        CustomMarker(
-                            imageUrl = "start",
-                            fullName = "Start: ${activity.activityFromName}",
-                            location = LatLng(location.locationLatitude, location.locationLongitude),
-                            onClick = { },
-                            size = 50
-                        )
-                    }
-
-                    toLocation?.let { location ->
-                        CustomMarker(
-                            imageUrl = "end",
-                            fullName = "End: ${activity.activityToName}",
-                            location = LatLng(location.locationLatitude, location.locationLongitude),
-                            onClick = { },
-                            size = 50
-                        )
-                    }
-                }
-
-                // Show contact markers
-                contacts.forEach { user ->
-                    if (user.userLatitude != null && user.userLongitude != null) {
-                        val latLng = LatLng(user.userLatitude, user.userLongitude)
-                        CustomMarker(
-                            imageUrl = user.userImageURL,
-                            fullName = "${user.userFirstname} ${user.userLastname}",
-                            location = latLng,
-                            onClick = {
-                                selectedUser = user
-                                showPeopleSheet = true
-                                coroutineScope.launch {
-                                    cameraPositionState.moveToUserLocation(
-                                        user.userLatitude, user.userLongitude
-                                    )
-                                }
-                            },
-                            size = 50
-                        )
-                    }
-                }
-            }
-
-            // Navigation Controls
-            if (selectedActivity != null) {
-                Box(
-                    modifier = Modifier
-                        .align(Alignment.BottomCenter)
-                        .padding(bottom = 80.dp)
-                ) {
-                    if (!isActivityStarted) {
-                        // Start Button
-                        FloatingActionButton(
-                            onClick = {
-                                viewModel.updateActivityStatus(selectedActivity!!.activityID, "Started")
-                                isActivityStarted = true
-                                isActivityPaused = false
-                            },
-                            containerColor = Color(0xFF4CAF50), // Green color for start
-                            modifier = Modifier
-                                .size(56.dp)
-                                .shadow(4.dp)
-                                .padding(bottom = 16.dp)
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.PlayArrow,
-                                contentDescription = "Start Activity",
-                                tint = Color.White
+                    onUserSelected = { user ->
+                        selectedUser = user
+                        showPeopleSheet = true
+                        coroutineScope.launch {
+                            cameraPositionState.moveToUserLocation(
+                                user.userLatitude ?: 0.0,
+                                user.userLongitude ?: 0.0
                             )
                         }
-                    } else {
-                        // Row with Pause/Resume and Cancel buttons
-                        Row(
-                            horizontalArrangement = Arrangement.spacedBy(16.dp),
-                            modifier = Modifier
-                                .padding(horizontal = 16.dp)
-                                .shadow(4.dp)
-                        ) {
-                            // Pause/Resume Button
-                            FloatingActionButton(
-                                onClick = {
-                                    if (isActivityPaused) {
-                                        viewModel.updateActivityStatus(selectedActivity!!.activityID, "Started")
-                                        isActivityPaused = false
-                                    } else {
-                                        viewModel.updateActivityStatus(selectedActivity!!.activityID, "Paused")
-                                        isActivityPaused = true
-                                    }
-                                },
-                                containerColor = if (isActivityPaused)
-                                    Color(0xFF4CAF50) // Green color for resume
-                                else
-                                    Color(0xFFFFA000), // Orange color for pause
-                                modifier = Modifier.size(56.dp).padding(bottom = 16.dp)
-                            ) {
-                                Icon(
-                                    imageVector = if (isActivityPaused)
-                                        Icons.Default.PlayArrow
-                                    else
-                                        Icons.Default.Pause,
-                                    contentDescription = if (isActivityPaused)
-                                        "Resume Activity"
-                                    else
-                                        "Pause Activity",
-                                    tint = Color.White
-                                )
-                            }
-
-                            // Cancel Button
-                            FloatingActionButton(
-                                onClick = {
-                                    viewModel.updateActivityStatus(selectedActivity!!.activityID, "Cancelled")
-                                    isActivityStarted = false
-                                    isActivityPaused = false
-                                    selectedActivity = null
-                                    routePoints = emptyList()
-                                },
-                                containerColor = Color(0xFFE53935), // Red color for cancel
-                                modifier = Modifier.size(56.dp).padding(bottom = 16.dp)
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Default.Close,
-                                    contentDescription = "Cancel Activity",
-                                    tint = Color.White
-                                )
-                            }
-                        }
                     }
-                }
-            }
-
-            if (showPeopleSheet) {
-                ModalBottomSheet(
-                    onDismissRequest = {
+                )
+            },
+            bottomBar = {
+                BottomNavigationBar(
+                    navController = navController,
+                    onPeopleClicked = {
+                        selectedUser = null
+                        selectedActivity = null
+                        showPeopleSheet = true
+                        showCallUserDialog = false
+                        showActivitySheet = false
+                        showUserActivitiesSheet = false
+                    },
+                    onCallClicked = {
+                        showPeopleSheet = true
+                        showCallUserDialog = true
+                        showActivitySheet = false
+                        showUserActivitiesSheet = false
+                    },
+                    onMyActivitiesClicked = {
                         showPeopleSheet = false
                         showCallUserDialog = false
+                        showActivitySheet = false
+                        showUserActivitiesSheet = true
                     },
-                    sheetState = sheetState,
-                    containerColor = Color.Black
+                    userId = loggedInUser?.userID ?: 0
+                )
+            },
+            ) { paddingValues ->
+            Box(modifier = Modifier.fillMaxSize()) {
+                GoogleMap(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(paddingValues),
+                    cameraPositionState = cameraPositionState,
+                    properties = MapProperties(
+                        mapStyleOptions = MapStyleOptions(nightMapStyle),
+                        mapType = MapType.NORMAL
+                    ),
+                    uiSettings = MapUiSettings(
+                        zoomControlsEnabled = false,
+                        compassEnabled = false,
+                )
                 ) {
-                    if (showCallUserDialog) {
-                        CallUserSheet(
-                            contacts = contacts,
-                            viewModel = viewModel,
+                    // Draw route if available
+                    if (routePoints.isNotEmpty()) {
+                        Polyline(
+                            points = routePoints,
+                            color = Color(0xff049bec),
+                            width = 10f
                         )
-                    } else {
-                        if (selectedUser == null) {
-                            UserListSheet(
-                                viewModel = viewModel,
-                                onUserSelected = { user ->
+                    }
+
+                    // Show markers for selected activity
+                    selectedActivity?.let { activity ->
+                        val fromLocation =
+                            viewModel.locations.value.find { it.locationID == activity.activityFromID.toInt() }
+                        val toLocation =
+                            viewModel.locations.value.find { it.locationID == activity.activityToID.toInt() }
+
+                        fromLocation?.let { location ->
+                            CustomMarker(
+                                imageUrl = "start",
+                                fullName = "Start: ${activity.activityFromName}",
+                                location = LatLng(
+                                    location.locationLatitude,
+                                    location.locationLongitude
+                                ),
+                                onClick = { },
+                                size = 50
+                            )
+                        }
+
+                        toLocation?.let { location ->
+                            CustomMarker(
+                                imageUrl = "end",
+                                fullName = "End: ${activity.activityToName}",
+                                location = LatLng(
+                                    location.locationLatitude,
+                                    location.locationLongitude
+                                ),
+                                onClick = { },
+                                size = 50
+                            )
+                        }
+                    }
+
+                    // Show contact markers
+                    contacts.forEach { user ->
+                        if (user.userLatitude != null && user.userLongitude != null) {
+                            val latLng = LatLng(user.userLatitude, user.userLongitude)
+                            CustomMarker(
+                                imageUrl = user.userImageURL,
+                                fullName = "${user.userFirstname} ${user.userLastname}",
+                                location = latLng,
+                                onClick = {
                                     selectedUser = user
                                     showPeopleSheet = true
                                     coroutineScope.launch {
                                         cameraPositionState.moveToUserLocation(
-                                            user.userLatitude ?: 0.0,
-                                            user.userLongitude ?: 0.0
+                                            user.userLatitude, user.userLongitude
                                         )
                                     }
-                                }
-                            )
-                        } else {
-                            val location by viewModel.fetchLocationById(selectedUser!!.userID)
-                                .collectAsState(initial = null)
-
-                            UserDetailsSheet(
-                                viewModel = viewModel,
-                                user = selectedUser!!.toUser(),
-                                location = location,
-                                userLat = currentDeviceLat,
-                                userLon = currentDeviceLon,
-                                apiKey = BuildConfig.MAP_API_GOOGLE,
-                                onClose = { selectedUser = null },
-                                mapStyle = nightMapStyle,
-                                onRoutePlotted = { route -> routePoints = route },
-                                onActivityClicked = {
-                                    showPeopleSheet = false
-                                    showCallUserDialog = false
-                                    showActivitySheet = true
-                                }
+                                },
+                                size = 50
                             )
                         }
                     }
                 }
-            }
 
-            if (showActivitySheet) {
-                ModalBottomSheet(
-                    onDismissRequest = { showActivitySheet = false },
-                    sheetState = sheetState,
-                    containerColor = Color.Black
-                ) {
-                    ActivitySheet(
-                        viewModel = viewModel,
-                        userId = selectedUser?.userID ?: 0,
-                        onClose = {
-                            showActivitySheet = false
-                            showPeopleSheet = true
-                        },
-                        onActivitySelected = { activity ->
-                            selectedActivity = activity
-                            showActivitySheet = false
-                            showPeopleSheet = false
-                        }
-                    )
-                }
-            }
-
-            if (showUserActivitiesSheet) {
-                ModalBottomSheet(
-                    onDismissRequest = { showUserActivitiesSheet = false },
-                    sheetState = sheetState,
-                    containerColor = Color.Black
-                ) {
-                    UserActivitiesSheet(
-                        viewModel = viewModel,
-                        onClose = { showUserActivitiesSheet = false },
-                        onActivitySelected = { activity ->
-                            selectedActivity = activity
-                            showUserActivitiesSheet = false
-                        }
-                    )
-                }
-            }
-
-            // Camera Dialog
-            if (showCameraDialog) {
-                AlertDialog(
-                    onDismissRequest = { showCameraDialog = false },
-                    title = { Text("Emergency Photo", color = Color.White) },
-                    text = { Text("Would you like to take a photo to share with your emergency contacts?", color = Color.White) },
-                    confirmButton = {
-                        TextButton(
-                            onClick = {
-                                showCameraDialog = false
-                                val intent = cameraService.getCameraIntent()
-                                context.startActivity(intent)
-                            }
+                // 💚 Step Counter FAB - Top Right
+                if (showStepCounter) {
+                    Box(
+                        modifier = Modifier
+                            .align(Alignment.TopEnd)
+                            .padding(paddingValues)
+                            .padding(16.dp)
+                    ) {
+                        FloatingActionButton(
+                            onClick = { showStatusMenu = true },
+                            containerColor = Color.Yellow
                         ) {
-                            Text("Take Photo")
+                            StepCounterScreen(viewModel = viewModel)
                         }
-                    },
-                    dismissButton = {
-                        TextButton(onClick = { showCameraDialog = false }) {
-                            Text("Cancel")
+                    }
+                }
+
+                // 🔴 Panic Button FAB - Bottom Right
+                if (showPanicButton) {
+                    Box(
+                        modifier = Modifier
+                            .align(Alignment.BottomEnd)
+                            .padding(paddingValues)
+                            .padding(16.dp)
+                    ) {
+                        PanicButton(
+                            viewModel = viewModel,
+                            emergencyContacts = contacts,
+                            currentActivity = selectedActivity,
+                        )
+                    }
+                }
+
+                // 🔵 Planner FAB - Bottom Left
+                if (selectedActivity != null && selectedActivity?.activityUserID == loggedInUser?.userID) {
+                    Box(
+                        modifier = Modifier
+                            .align(Alignment.BottomStart)
+                            .padding(paddingValues)
+                            .padding(16.dp)
+                    ) {
+                        Box {
+                            FloatingActionButton(
+                                onClick = { showStatusMenu = true },
+                                containerColor = when (selectedActivity?.activityStatusName) {
+                                    "Planned" -> Color.White
+                                    "Started" -> Color.Yellow
+                                    "Paused" -> Color.Gray
+                                    "Cancelled" -> Color.Red
+                                    "Completed" -> Color.Green
+                                    else -> Color.White
+                                }
+                            ) {
+                                Icon(
+                                    Icons.Default.LocationOn,
+                                    contentDescription = "Change Activity Status",
+                                    tint = Color.Black
+                                )
+                            }
+
+                            DropdownMenu(
+                                expanded = showStatusMenu,
+                                onDismissRequest = { showStatusMenu = false }
+                            ) {
+                                selectedActivity?.let { activity ->
+                                    listOf(
+                                        "Planned",
+                                        "Started",
+                                        "Paused",
+                                        "Cancelled",
+                                        "Completed"
+                                    ).forEach { status ->
+                                        if (activity.activityStatusName != status) {
+                                            DropdownMenuItem(
+                                                text = { Text(status) },
+                                                onClick = {
+                                                    viewModel.updateActivityStatus(
+                                                        activity.activityID,
+                                                        status
+                                                    )
+                                                    showStatusMenu = false
+                                                }
+                                            )
+                                        }
+                                    }
+                                }
+                            }
                         }
-                    },
-                    containerColor = Color.Black
-                )
+                    }
+                }
+
+                // Navigation Controls
+                if (selectedActivity != null) {
+                    Box(
+                        modifier = Modifier
+                            .align(Alignment.BottomCenter)
+                            .padding(bottom = 80.dp)
+                    ) {
+                        if (!isActivityStarted) {
+                            // Start Button
+                            FloatingActionButton(
+                                onClick = {
+                                    viewModel.updateActivityStatus(
+                                        selectedActivity!!.activityID,
+                                        "Started"
+                                    )
+                                    isActivityStarted = true
+                                    isActivityPaused = false
+                                },
+                                containerColor = Color(0xFF4CAF50), // Green color for start
+                                modifier = Modifier
+                                    .size(56.dp)
+                                    .shadow(4.dp)
+                                    .padding(bottom = 16.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.PlayArrow,
+                                    contentDescription = "Start Activity",
+                                    tint = Color.White
+                                )
+                            }
+                        } else {
+                            // Row with Pause/Resume and Cancel buttons
+                            Row(
+                                horizontalArrangement = Arrangement.spacedBy(16.dp),
+                                modifier = Modifier
+                                    .padding(horizontal = 16.dp)
+                                    .shadow(4.dp)
+                            ) {
+                                // Pause/Resume Button
+                                FloatingActionButton(
+                                    onClick = {
+                                        if (isActivityPaused) {
+                                            viewModel.updateActivityStatus(
+                                                selectedActivity!!.activityID,
+                                                "Started"
+                                            )
+                                            isActivityPaused = false
+                                        } else {
+                                            viewModel.updateActivityStatus(
+                                                selectedActivity!!.activityID,
+                                                "Paused"
+                                            )
+                                            isActivityPaused = true
+                                        }
+                                    },
+                                    containerColor = if (isActivityPaused)
+                                        Color(0xFF4CAF50) // Green color for resume
+                                    else
+                                        Color(0xFFFFA000), // Orange color for pause
+                                    modifier = Modifier.size(56.dp).padding(bottom = 16.dp)
+                                ) {
+                                    Icon(
+                                        imageVector = if (isActivityPaused)
+                                            Icons.Default.PlayArrow
+                                        else
+                                            Icons.Default.Pause,
+                                        contentDescription = if (isActivityPaused)
+                                            "Resume Activity"
+                                        else
+                                            "Pause Activity",
+                                        tint = Color.White
+                                    )
+                                }
+
+                                // Cancel Button
+                                FloatingActionButton(
+                                    onClick = {
+                                        viewModel.updateActivityStatus(
+                                            selectedActivity!!.activityID,
+                                            "Cancelled"
+                                        )
+                                        isActivityStarted = false
+                                        isActivityPaused = false
+                                        selectedActivity = null
+                                        routePoints = emptyList()
+                                    },
+                                    containerColor = Color(0xFFE53935), // Red color for cancel
+                                    modifier = Modifier.size(56.dp).padding(bottom = 16.dp)
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.Close,
+                                        contentDescription = "Cancel Activity",
+                                        tint = Color.White
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+
+                if (showPeopleSheet) {
+                    ModalBottomSheet(
+                        onDismissRequest = {
+                            showPeopleSheet = false
+                            showCallUserDialog = false
+                        },
+                        sheetState = sheetState,
+                        containerColor = Color.Black
+                    ) {
+                        if (showCallUserDialog) {
+                            CallUserSheet(
+                                contacts = contacts,
+                                viewModel = viewModel,
+                            )
+                        } else {
+                            if (selectedUser == null) {
+                                UserListSheet(
+                                    viewModel = viewModel,
+                                    onUserSelected = { user ->
+                                        selectedUser = user
+                                        showPeopleSheet = true
+                                        coroutineScope.launch {
+                                            cameraPositionState.moveToUserLocation(
+                                                user.userLatitude ?: 0.0,
+                                                user.userLongitude ?: 0.0
+                                            )
+                                        }
+                                    }
+                                )
+                            } else {
+                                val location by viewModel.fetchLocationById(selectedUser!!.userID)
+                                    .collectAsState(initial = null)
+
+                                UserDetailsSheet(
+                                    viewModel = viewModel,
+                                    user = selectedUser!!.toUser(),
+                                    location = location,
+                                    userLat = currentDeviceLat,
+                                    userLon = currentDeviceLon,
+                                    apiKey = BuildConfig.MAP_API_GOOGLE,
+                                    onClose = { selectedUser = null },
+                                    mapStyle = nightMapStyle,
+                                    onRoutePlotted = { route -> routePoints = route },
+                                    onActivityClicked = {
+                                        showPeopleSheet = false
+                                        showCallUserDialog = false
+                                        showActivitySheet = true
+                                    }
+                                )
+                            }
+                        }
+                    }
+                }
+
+                if (showActivitySheet) {
+                    ModalBottomSheet(
+                        onDismissRequest = { showActivitySheet = false },
+                        sheetState = sheetState,
+                        containerColor = Color.Black
+                    ) {
+                        ActivitySheet(
+                            viewModel = viewModel,
+                            userId = selectedUser?.userID ?: 0,
+                            onClose = {
+                                showActivitySheet = false
+                                showPeopleSheet = true
+                            },
+                            onActivitySelected = { activity ->
+                                selectedActivity = activity
+                                showActivitySheet = false
+                                showPeopleSheet = false
+                            }
+                        )
+                    }
+                }
+
+                if (showUserActivitiesSheet) {
+                    ModalBottomSheet(
+                        onDismissRequest = { showUserActivitiesSheet = false },
+                        sheetState = sheetState,
+                        containerColor = Color.Black
+                    ) {
+                        UserActivitiesSheet(
+                            viewModel = viewModel,
+                            onClose = { showUserActivitiesSheet = false },
+                            onActivitySelected = { activity ->
+                                selectedActivity = activity
+                                showUserActivitiesSheet = false
+                            }
+                        )
+                    }
+                }
+
+                // Camera Dialog
+                if (showCameraDialog) {
+                    AlertDialog(
+                        onDismissRequest = { showCameraDialog = false },
+                        title = { Text("Emergency Photo", color = Color.White) },
+                        text = {
+                            Text(
+                                "Would you like to take a photo to share with your emergency contacts?",
+                                color = Color.White
+                            )
+                        },
+                        confirmButton = {
+                            TextButton(
+                                onClick = {
+                                    showCameraDialog = false
+                                    val intent = cameraService.getCameraIntent()
+                                    context.startActivity(intent)
+                                }
+                            ) {
+                                Text("Take Photo")
+                            }
+                        },
+                        dismissButton = {
+                            TextButton(onClick = { showCameraDialog = false }) {
+                                Text("Cancel")
+                            }
+                        },
+                        containerColor = Color.Black
+                    )
+                }
+
+
             }
         }
+
+
     }
 }
 

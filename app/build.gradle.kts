@@ -32,6 +32,12 @@ android {
         }
     }
 
+    android {
+        buildFeatures {
+            buildConfig = true
+        }
+    }
+
     buildTypes {
         android.buildFeatures.buildConfig = true
         release {

@@ -33,11 +33,12 @@ import java.util.Locale
 import androidx.core.net.toUri
 
 @OptIn(UnstableApi::class)
-class MapViewModel
-    (
+class MapViewModel (
     val repository: StaySafeRepository,
     private val context: Context
 ) : ViewModel() {
+    private val apiKey = BuildConfig.MAP_API_GOOGLE
+
     private val _emergencyContacts = MutableStateFlow<List<UserWithContact>>(emptyList())
     val emergencyContacts: StateFlow<List<UserWithContact>> = _emergencyContacts
 
@@ -106,7 +107,6 @@ class MapViewModel
     }
 
     private suspend fun geocodeAddress(address: String): Pair<Double, Double>? {
-        val apiKey = BuildConfig.MAP_API_GOOGLE
         val encodedAddress = address.replace(" ", "+")
         val url =
             "https://maps.googleapis.com/maps/api/geocode/json?address=$encodedAddress&key=$apiKey"
@@ -322,7 +322,6 @@ class MapViewModel
                     }
 
                 // Create URL for Google Directions API
-                val apiKey = BuildConfig.MAP_API_GOOGLE
                 val url = "https://maps.googleapis.com/maps/api/directions/json?" +
                         "origin=$origin&" +
                         "destination=$destination&" +
@@ -1094,7 +1093,6 @@ class MapViewModel
         startAddressLine: String,
         postCode: String,
         address: String,
-        apiKey: String = BuildConfig.MAP_API_GOOGLE
     ): Flow<List<LatLng>> = flow {
 
         // ! Format the destination query string

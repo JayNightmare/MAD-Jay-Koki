@@ -72,11 +72,6 @@ fun PanicButton(
                 modifier = Modifier.size(48.dp),
                 tint = Color.White
             )
-            Text(
-                text = if (isPressed) "SENT!" else "PANIC",
-                color = Color.White,
-                style = MaterialTheme.typography.titleMedium
-            )
         }
     }
 }
