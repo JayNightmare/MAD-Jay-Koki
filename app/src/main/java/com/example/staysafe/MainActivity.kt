@@ -34,6 +34,13 @@ class MainActivity : ComponentActivity() {
                         Log.e("MainActivity", "❌ Notification permission denied")
                     }
                 }
+                Manifest.permission.ACTIVITY_RECOGNITION ->{
+                    if (entry.value) {
+                        Log.d("MainActivity", "✅ Activity permission granted")
+                    }else{
+                        Log.d("MainActivity", "❌ Activity permission denied")
+                    }
+                }
             }
         }
     }
@@ -62,6 +69,17 @@ class MainActivity : ComponentActivity() {
                 permissions.add(Manifest.permission.POST_NOTIFICATIONS)
             }
         }
+
+        // Activity permission for Android 10+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            if(ContextCompat.checkSelfPermission(
+                    this,
+                    Manifest.permission.ACTIVITY_RECOGNITION
+                ) != PackageManager.PERMISSION_GRANTED){
+                permissions.add(Manifest.permission.ACTIVITY_RECOGNITION)
+            }
+        }
+
 
         // Request permissions if any are needed
         if (permissions.isNotEmpty()) {

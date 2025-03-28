@@ -2,6 +2,10 @@ package com.example.staysafe.viewModel
 
 import android.content.Context
 import android.content.Intent
+import android.hardware.Sensor
+import android.hardware.SensorEvent
+import android.hardware.SensorEventListener
+import android.hardware.SensorManager
 import android.os.Build
 import androidx.annotation.OptIn
 import androidx.annotation.RequiresApi
@@ -104,7 +108,8 @@ class MapViewModel
     private suspend fun geocodeAddress(address: String): Pair<Double, Double>? {
         val apiKey = BuildConfig.MAP_API_GOOGLE
         val encodedAddress = address.replace(" ", "+")
-        val url = "https://maps.googleapis.com/maps/api/geocode/json?address=$encodedAddress&key=$apiKey"
+        val url =
+            "https://maps.googleapis.com/maps/api/geocode/json?address=$encodedAddress&key=$apiKey"
 
         try {
             val response = withContext(Dispatchers.IO) { URL(url).readText() }
@@ -123,7 +128,10 @@ class MapViewModel
                     return Pair(lat, lng)
                 }
             }
-            Log.e("geocodeAddress", "❌ Failed to geocode address: $address, Status: ${jsonObject.getString("status")}")
+            Log.e(
+                "geocodeAddress",
+                "❌ Failed to geocode address: $address, Status: ${jsonObject.getString("status")}"
+            )
             return null
         } catch (e: Exception) {
             Log.e("geocodeAddress", "❌ Exception geocoding address: ${e.message}")
@@ -214,7 +222,7 @@ class MapViewModel
         return newUser
     }
 
-    fun deleteUserByID (userId: Long):UserWithContact?{
+    fun deleteUserByID(userId: Long): UserWithContact? {
         val existingUser = _user.value.find { it.userID == userId } ?: return null
         _user.value -= existingUser
 
@@ -274,7 +282,10 @@ class MapViewModel
         viewModelScope.launch {
             repository.getActivitiesForUser(userId).collect { activitiesList ->
                 _activities.value = activitiesList
-                Log.d("fetchActivitiesForUser", "✅ Fetched ${activitiesList.size} activities for user $userId")
+                Log.d(
+                    "fetchActivitiesForUser",
+                    "✅ Fetched ${activitiesList.size} activities for user $userId"
+                )
             }
         }
     }
@@ -283,8 +294,10 @@ class MapViewModel
         viewModelScope.launch {
             try {
                 // Get locations for the activity
-                val fromLocation = _locations.value.find { it.locationID == activity.activityFromID.toInt() }
-                val toLocation = _locations.value.find { it.locationID == activity.activityToID.toInt() }
+                val fromLocation =
+                    _locations.value.find { it.locationID == activity.activityFromID.toInt() }
+                val toLocation =
+                    _locations.value.find { it.locationID == activity.activityToID.toInt() }
 
                 if (fromLocation == null || toLocation == null) {
                     Log.e("getRouteForActivity", "❌ Could not find locations for activity")
@@ -292,17 +305,19 @@ class MapViewModel
                 }
 
                 // Create origin and destination strings
-                val origin = if (fromLocation.locationLatitude != 0.0 && fromLocation.locationLongitude != 0.0) {
-                    "${fromLocation.locationLatitude},${fromLocation.locationLongitude}"
-                } else {
-                    "${fromLocation.locationPostcode},${fromLocation.locationAddress}"
-                }
+                val origin =
+                    if (fromLocation.locationLatitude != 0.0 && fromLocation.locationLongitude != 0.0) {
+                        "${fromLocation.locationLatitude},${fromLocation.locationLongitude}"
+                    } else {
+                        "${fromLocation.locationPostcode},${fromLocation.locationAddress}"
+                    }
 
-                val destination = if (toLocation.locationLatitude != 0.0 && toLocation.locationLongitude != 0.0) {
-                    "${toLocation.locationLatitude},${toLocation.locationLongitude}"
-                } else {
-                    "${toLocation.locationPostcode},${toLocation.locationAddress}"
-                }
+                val destination =
+                    if (toLocation.locationLatitude != 0.0 && toLocation.locationLongitude != 0.0) {
+                        "${toLocation.locationLatitude},${toLocation.locationLongitude}"
+                    } else {
+                        "${toLocation.locationPostcode},${toLocation.locationAddress}"
+                    }
 
                 // Create URL for Google Directions API
                 val apiKey = BuildConfig.MAP_API_GOOGLE
@@ -328,7 +343,10 @@ class MapViewModel
                         onRouteReceived(routePoints)
                     }
                 } else {
-                    Log.e("getRouteForActivity", "❌ Failed to get route: ${jsonObject.getString("status")}")
+                    Log.e(
+                        "getRouteForActivity",
+                        "❌ Failed to get route: ${jsonObject.getString("status")}"
+                    )
                 }
             } catch (e: Exception) {
                 Log.e("getRouteForActivity", "❌ Exception: ${e.message}")
@@ -380,24 +398,46 @@ class MapViewModel
                         // Show appropriate notifications based on status
                         when (newStatus) {
                             "Started" -> {
-                                Log.d("updateActivityStatus", "Showing activity started notification")
+                                Log.d(
+                                    "updateActivityStatus",
+                                    "Showing activity started notification"
+                                )
                                 notificationService.showActivityStartedNotification(updatedActivity)
                             }
+
                             "Completed" -> {
-                                Log.d("updateActivityStatus", "Activity completed: ${updatedActivity.activityName}")
+                                Log.d(
+                                    "updateActivityStatus",
+                                    "Activity completed: ${updatedActivity.activityName}"
+                                )
                             }
+
                             "Cancelled" -> {
-                                Log.d("updateActivityStatus", "Activity cancelled: ${updatedActivity.activityName}")
+                                Log.d(
+                                    "updateActivityStatus",
+                                    "Activity cancelled: ${updatedActivity.activityName}"
+                                )
                             }
+
                             "Paused" -> {
-                                Log.d("updateActivityStatus", "Activity paused: ${updatedActivity.activityName}")
+                                Log.d(
+                                    "updateActivityStatus",
+                                    "Activity paused: ${updatedActivity.activityName}"
+                                )
                             }
+
                             else -> {
-                                Log.d("updateActivityStatus", "No notification needed for status: $newStatus")
+                                Log.d(
+                                    "updateActivityStatus",
+                                    "No notification needed for status: $newStatus"
+                                )
                             }
                         }
                     } else {
-                        Log.e("updateActivityStatus", "❌ Failed to update activity status - repository returned null")
+                        Log.e(
+                            "updateActivityStatus",
+                            "❌ Failed to update activity status - repository returned null"
+                        )
                         Log.e("updateActivityStatus", "❌ Updated activity: $updatedActivity")
                         Log.e("updateActivityStatus", "❌ Current result: $result")
                     }
@@ -430,7 +470,10 @@ class MapViewModel
                     return@launch
                 }
 
-                Log.d("addActivity", "✅ Adding new activity for user ${loggedInUser.userUsername}...")
+                Log.d(
+                    "addActivity",
+                    "✅ Adding new activity for user ${loggedInUser.userUsername}..."
+                )
 
                 // Get the max activity ID from the local state
                 val newActivityID = (_activities.value.maxOfOrNull { it.activityID } ?: 0) + 1L
@@ -454,14 +497,19 @@ class MapViewModel
                 Log.d("addActivity", "Generated To Location ID: $toLocationID")
 
                 // Get coordinates for addresses using geocoding
-                val fromAddressWithPostcode = if (fromPostcode.isNotBlank()) "$startAddressLine, $fromPostcode" else startAddressLine
-                val toAddressWithPostcode = if (toPostcode.isNotBlank()) "$destAddressLine, $toPostcode" else destAddressLine
+                val fromAddressWithPostcode =
+                    if (fromPostcode.isNotBlank()) "$startAddressLine, $fromPostcode" else startAddressLine
+                val toAddressWithPostcode =
+                    if (toPostcode.isNotBlank()) "$destAddressLine, $toPostcode" else destAddressLine
 
                 val fromCoordinates = geocodeAddress(fromAddressWithPostcode)
                 val toCoordinates = geocodeAddress(toAddressWithPostcode)
 
                 if (fromCoordinates == null || toCoordinates == null) {
-                    Log.e("addActivity", "❌ Could not geocode addresses - aborting activity creation")
+                    Log.e(
+                        "addActivity",
+                        "❌ Could not geocode addresses - aborting activity creation"
+                    )
                     return@launch
                 }
 
@@ -505,7 +553,10 @@ class MapViewModel
                 }
 
                 if (!fromLocationSuccess) {
-                    Log.e("addActivity", "❌ From location creation failed, aborting activity creation")
+                    Log.e(
+                        "addActivity",
+                        "❌ From location creation failed, aborting activity creation"
+                    )
                     return@launch
                 }
 
@@ -522,7 +573,10 @@ class MapViewModel
                 }
 
                 if (!toLocationSuccess) {
-                    Log.e("addActivity", "❌ To location creation failed, aborting activity creation")
+                    Log.e(
+                        "addActivity",
+                        "❌ To location creation failed, aborting activity creation"
+                    )
                     return@launch
                 }
 
@@ -732,8 +786,11 @@ class MapViewModel
                     return@launch
                 }
 
-                Log.d("removeContact", "Removing contact relationship between $loggedInUserId and $contactUserId")
-                
+                Log.d(
+                    "removeContact",
+                    "Removing contact relationship between $loggedInUserId and $contactUserId"
+                )
+
                 // Get the contact relationship from the API response
                 repository.getContactsForUser(loggedInUserId).collect { users ->
                     val contactUser = users.find { it.userID == contactUserId }
@@ -768,6 +825,7 @@ class MapViewModel
         // TODO: Implement notification sending
         Log.d("MapViewModel", "Sending call notification to user: $userId")
     }
+
     // //
     // //
     // * Status
@@ -1010,11 +1068,19 @@ class MapViewModel
         onResult: (List<LatLng>) -> Unit
     ) {
         viewModelScope.launch {
-            getRoute(startPostCode, startAddressLine, destPostCode, destAddressLine).collect { routePoints ->
+            getRoute(
+                startPostCode,
+                startAddressLine,
+                destPostCode,
+                destAddressLine
+            ).collect { routePoints ->
                 if (routePoints.isNotEmpty()) {
                     onResult(routePoints)
                 } else {
-                    Log.e("getRouteForLocation", "❌ No route found for $startAddressLine to $destAddressLine")
+                    Log.e(
+                        "getRouteForLocation",
+                        "❌ No route found for $startAddressLine to $destAddressLine"
+                    )
                 }
             }
         }
@@ -1061,7 +1127,11 @@ class MapViewModel
         }
     }.flowOn(Dispatchers.IO)
 
-    fun changePassword(currentPassword: String, newPassword: String, onComplete: (Boolean) -> Unit) {
+    fun changePassword(
+        currentPassword: String,
+        newPassword: String,
+        onComplete: (Boolean) -> Unit
+    ) {
         viewModelScope.launch {
             try {
                 val loggedInUser = _loggedInUser.value
@@ -1159,5 +1229,37 @@ class MapViewModel
 
     fun updateCurrentActivity(activity: Activity?) {
         _currentActivity.value = activity
+    }
+
+    //StepCounter functionality
+    private val _stepCount = MutableStateFlow(0)
+    val stepCount: StateFlow<Int> = _stepCount
+
+    fun startStepCounting(context: Context) {
+        val sensorManager = context.getSystemService(Context.SENSOR_SERVICE) as SensorManager
+        val stepSensor = sensorManager.getDefaultSensor(Sensor.TYPE_STEP_COUNTER)
+
+        var start = -1f
+
+        val sensorEventListener = object : SensorEventListener {
+            override fun onSensorChanged(event: SensorEvent) {
+                if (event?.sensor?.type == Sensor.TYPE_STEP_COUNTER) {
+                    if (start == -1f) {
+                        start = event.values[0]
+                    }
+                    val steps = (event.values[0] - start).toInt()
+                    viewModelScope.launch {
+                        _stepCount.emit(steps)
+                    }
+                }
+            }
+
+            override fun onAccuracyChanged(p0: Sensor?, p1: Int) {
+                TODO("Not yet implemented")
+            }
+        }
+        stepSensor?.let {
+            sensorManager.registerListener(sensorEventListener, it, SensorManager.SENSOR_DELAY_UI)
+        }
     }
 }

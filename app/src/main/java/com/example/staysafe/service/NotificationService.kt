@@ -69,13 +69,15 @@ class NotificationService internal constructor(private val context: Context) {
             .setAutoCancel(true)
             .setContentIntent(createPendingIntent())
             .build()
-
         notificationManager.notify(activity.activityID.toInt(), notification)
     }
 
     // TODO: Fix Notification ->> Check if id is correct
     // TODO: When a contact is added, show a notification should be sent to the newly added contact
     // TODO: ->> If user 1 adds user 2 as a contact, user 2 should receive a notification
+
+
+
     fun showContactAddedNotification(user: UserWithContact) {
         val notification = NotificationCompat.Builder(context, channelId)
             .setSmallIcon(R.drawable.ic_notification)
