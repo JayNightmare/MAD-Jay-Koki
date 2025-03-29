@@ -28,7 +28,11 @@ fun Navigation() {
         val intent = (context as? android.app.Activity)?.intent
         intent?.getStringExtra("screen")?.let { screen ->
             if (screen == "emergency") {
-                startDestination = "emergency/${intent.getLongExtra("userId", 0)}/${intent.getLongExtra("panicTime", 0)}"
+                val userId = intent.getLongExtra("userId", 0)
+                val userName = intent.getStringExtra("userName") ?: ""
+                val activityId = intent.getLongExtra("activityId", 0)
+                val photoUri = intent.getStringExtra("photoUri")
+                startDestination = "emergency/$userId/$userName/$activityId/$photoUri"
             }
         }
     }
@@ -110,27 +114,20 @@ fun Navigation() {
                 viewModel = sharedViewModel
             )
         }
-        composable("emergency/{userId}/{panicTime}") { backStackEntry ->
-            val userId = backStackEntry.arguments?.getString("userId")?.toLongOrNull()
-            val panicTime = backStackEntry.arguments?.getString("panicTime")?.toLongOrNull()
+        composable("emergency/{userId}/{userName}/{activityId}/{photoUri}") { backStackEntry ->
+            val userId = backStackEntry.arguments?.getString("userId")?.toLongOrNull() ?: 0
+            val userName = backStackEntry.arguments?.getString("userName") ?: ""
+            val activityId = backStackEntry.arguments?.getString("activityId")?.toLongOrNull()
+            val photoUri = backStackEntry.arguments?.getString("photoUri")
             
-            if (userId != null && panicTime != null) {
-                EmergencyScreen(
-                    user = sharedViewModel.getUserById(userId),
-                    activity = sharedViewModel.getCurrentActivity(),
-                    panicTime = panicTime,
-                    onClose = { nav.navigate(Screen.MapScreen.route) },
-                    onGetDirections = {
-                        sharedViewModel.getUserById(userId)?.let { user ->
-                            user.userLatitude?.let { lat ->
-                                user.userLongitude?.let { lon ->
-                                    sharedViewModel.openDirections(lat, lon)
-                                }
-                            }
-                        }
-                    }
-                )
-            }
+            EmergencyScreen(
+                navController = nav,
+                viewModel = sharedViewModel,
+                userId = userId,
+                userName = userName,
+                activityId = activityId,
+                photoUri = photoUri
+            )
         }
     }
 }

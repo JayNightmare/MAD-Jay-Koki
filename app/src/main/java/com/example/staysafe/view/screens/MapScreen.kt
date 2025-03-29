@@ -47,6 +47,7 @@ import androidx.media3.common.util.Log
 import androidx.media3.common.util.UnstableApi
 import androidx.navigation.NavController
 import com.example.staysafe.BuildConfig
+import com.example.staysafe.MainActivity
 import com.example.staysafe.R
 import com.example.staysafe.map.CustomMarker
 import com.example.staysafe.model.data.*
@@ -606,8 +607,12 @@ fun MapScreen(navController: NavController, viewModel: MapViewModel) {
                             TextButton(
                                 onClick = {
                                     showCameraDialog = false
-                                    val intent = cameraService.getCameraIntent()
-                                    context.startActivity(intent)
+                                    coroutineScope.launch {
+                                        val photoUri = cameraService.capturePhoto()
+                                        photoUri?.let {
+                                            (context as? MainActivity)?.launchCamera(it)
+                                        }
+                                    }
                                 }
                             ) {
                                 Text("Take Photo")

@@ -1,6 +1,7 @@
 package com.example.staysafe
 
 import android.Manifest
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
@@ -45,6 +46,16 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    private val takePictureLauncher = registerForActivityResult(
+        ActivityResultContracts.TakePicture()
+    ) { success ->
+        if (success) {
+            Log.d("MainActivity", "✅ Photo captured successfully")
+        } else {
+            Log.e("MainActivity", "❌ Failed to capture photo")
+        }
+    }
+
     @RequiresApi(Build.VERSION_CODES.O)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -80,7 +91,6 @@ class MainActivity : ComponentActivity() {
             }
         }
 
-
         // Request permissions if any are needed
         if (permissions.isNotEmpty()) {
             requestPermissionLauncher.launch(permissions.toTypedArray())
@@ -94,5 +104,9 @@ class MainActivity : ComponentActivity() {
                 Navigation()
             }
         }
+    }
+
+    fun launchCamera(photoUri: android.net.Uri) {
+        takePictureLauncher.launch(photoUri)
     }
 }

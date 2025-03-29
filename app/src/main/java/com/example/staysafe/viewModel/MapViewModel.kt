@@ -31,6 +31,9 @@ import java.time.Instant
 import java.util.Date
 import java.util.Locale
 import androidx.core.net.toUri
+import com.google.firebase.messaging.FirebaseMessaging
+import android.net.Uri
+import kotlinx.coroutines.tasks.await
 
 @OptIn(UnstableApi::class)
 class MapViewModel (
@@ -46,7 +49,7 @@ class MapViewModel (
     val users: StateFlow<Map<Long, UserWithContact>> = _users
 
     init {
-//        loadEmergencyContacts()
+        loadEmergencyContacts()
         loadUsers()
         Log.d("Flow", "✅ MapViewModel Initialized")
     }
@@ -105,6 +108,12 @@ class MapViewModel (
     private val notificationService: NotificationService by lazy {
         NotificationService(context)
     }
+
+    private val _uiState = MutableStateFlow(MapUiState())
+    val uiState: StateFlow<MapUiState> = _uiState.asStateFlow()
+
+    private val _currentUser = MutableStateFlow<UserWithContact?>(null)
+    val currentUser: StateFlow<UserWithContact?> = _currentUser.asStateFlow()
 
     private suspend fun geocodeAddress(address: String): Pair<Double, Double>? {
         val encodedAddress = address.replace(" ", "+")
@@ -966,7 +975,7 @@ class MapViewModel (
                     Log.d("RoutesAPI", "Raw Response: $response")
 
                     if (responseCode != HttpURLConnection.HTTP_OK) {
-                        Log.e("RoutesAPI", "❌ API Error - HTTP $responseCode: $responseMessage")
+                        Log.e("RoutesAPI", "❌ API Error - HTT`P $responseCode: $responseMessage")
                         Log.e("RoutesAPI", "❌ Error Response: $response")
                         return@let null
                     }
@@ -1194,7 +1203,7 @@ class MapViewModel (
                 val contacts = repository.getContacts().firstOrNull() ?: emptyList()
 //                _emergencyContacts.value = contacts.filter { it.contactLabel == "Emergency" }
             } catch (e: Exception) {
-                // Handle error
+                Log.e("MapViewModel", "Error loading emergency contacts: ${e.message}")
             }
         }
     }
@@ -1205,12 +1214,12 @@ class MapViewModel (
                 val usersList = repository.getAllUsers().firstOrNull() ?: emptyList()
                 _users.value = usersList.associateBy { it.userID }
             } catch (e: Exception) {
-                // Handle error
+                Log.e("MapViewModel", "Error loading users: ${e.message}")
             }
         }
     }
 
-    fun getUserById(userId: Long?): UserWithContact? {
+    fun getUserById(userId: Long): UserWithContact? {
         return _users.value[userId]
     }
 
@@ -1223,8 +1232,7 @@ class MapViewModel (
         val intent = Intent(Intent.ACTION_VIEW, uri.toUri())
         intent.setPackage("com.google.android.apps.maps")
         intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
-        // Note: This intent needs to be launched from an Activity context
-        // You'll need to handle this in your UI layer
+        context.startActivity(intent)
     }
 
     fun updateCurrentActivity(activity: Activity?) {
@@ -1358,4 +1366,132 @@ class MapViewModel (
         stopAccelerometerCounting()
     }
 
+    fun sendEmergencyAlert(currentActivity: Activity?) {
+        viewModelScope.launch {
+            try {
+                val loggedInUser = _loggedInUser.value
+                if (loggedInUser == null) {
+                    Log.e("MapViewModel", "No logged in user found")
+                    return@launch
+                }
+
+                // Get FCM token for the current user
+                val fcmToken = FirebaseMessaging.getInstance().token.await()
+                
+                // Send emergency alert to all emergency contacts
+                emergencyContacts.value.forEach { contact ->
+                    val emergencyData = mapOf(
+                        "type" to "emergency",
+                        "userId" to loggedInUser.userID.toString(),
+                        "panicTime" to System.currentTimeMillis().toString(),
+                        "userName" to "${loggedInUser.userFirstname} ${loggedInUser.userLastname}",
+                        "activityName" to (currentActivity?.activityName ?: "No current activity"),
+                        "latitude" to (loggedInUser.userLatitude?.toString() ?: ""),
+                        "longitude" to (loggedInUser.userLongitude?.toString() ?: "")
+                    )
+
+                    // Send to your Firebase Cloud Function
+                    repository.sendEmergencyNotification(contact.userID, emergencyData)
+                }
+            } catch (e: Exception) {
+                Log.e("MapViewModel", "Error sending emergency alert: ${e.message}")
+            }
+        }
+    }
+
+    // Emergency Alert
+    fun sendEmergencyAlert(userId: Long, data: Map<String, String>) {
+        viewModelScope.launch {
+            try {
+                repository.sendEmergencyNotification(userId, data)
+            } catch (e: Exception) {
+                Log.e("MapViewModel", "Error sending emergency alert: ${e.message}")
+            }
+        }
+    }
+
+    private suspend fun getEmergencyContacts(userId: Long): List<UserWithContact> {
+        try {
+            // Get all contacts from the Contact table
+            val contacts = repository.getContacts().first()
+            
+            // Filter contacts with "Emergency" label for the current user
+            val emergencyContactIds = contacts.filter { contact ->
+                contact.contactUserID == userId && 
+                contact.contactLabel.equals("Emergency", ignoreCase = true)
+            }.map { it.contactContactID }
+
+            Log.d("MapViewModel", "Found ${emergencyContactIds.size} emergency contact IDs")
+
+            // Get user information for each emergency contact
+            val emergencyContacts = emergencyContactIds.mapNotNull { contactId ->
+                repository.getUserById(contactId).first().firstOrNull()
+            }
+
+            Log.d("MapViewModel", "Found ${emergencyContacts.size} emergency contacts with user info")
+            return emergencyContacts
+        } catch (e: Exception) {
+            Log.e("MapViewModel", "Error getting emergency contacts: ${e.message}")
+            return emptyList()
+        }
+    }
+
+    fun triggerPanicAlert() {
+        viewModelScope.launch {
+            try {
+                val currentUser = _loggedInUser.value ?: throw Exception("No logged in user found")
+                
+                // Get emergency contacts with their user information
+                val emergencyContacts = getEmergencyContacts(currentUser.userID)
+                
+                if (emergencyContacts.isEmpty()) {
+                    Log.w("MapViewModel", "No emergency contacts found for user ${currentUser.userID}")
+                    _uiState.update { it.copy(error = "No emergency contacts found") }
+                    return@launch
+                }
+
+                // Get current activity if available
+                val currentActivity = _currentActivity.value
+
+                // Send panic alert notification to each emergency contact
+                emergencyContacts.forEach { contact ->
+                    try {
+                        // Create notification data
+                        val notificationData = mapOf(
+                            "type" to "emergency",
+                            "userId" to currentUser.userID.toString(),
+                            "userName" to "${currentUser.userFirstname} ${currentUser.userLastname}",
+                            "contactId" to contact.userID.toString(),
+                            "contactName" to "${contact.userFirstname} ${contact.userLastname}",
+                            "timestamp" to System.currentTimeMillis().toString(),
+                            "activityId" to (currentActivity?.activityID?.toString() ?: ""),
+                            "activityName" to (currentActivity?.activityName ?: ""),
+                            "latitude" to (currentUser.userLatitude?.toString() ?: ""),
+                            "longitude" to (currentUser.userLongitude?.toString() ?: "")
+                        )
+
+                        // Send notification through repository
+                        repository.sendEmergencyNotification(contact.userID, notificationData)
+                        Log.d("MapViewModel", "Sent emergency notification to contact: ${contact.userID}")
+                    } catch (e: Exception) {
+                        Log.e("MapViewModel", "Error sending notification to contact ${contact.userID}: ${e.message}")
+                    }
+                }
+
+                // Update UI state
+                _uiState.update { it.copy(isPanicAlertActive = true) }
+            } catch (e: Exception) {
+                _uiState.update { it.copy(error = e.message ?: "Failed to trigger panic alert") }
+            }
+        }
+    }
 }
+
+data class MapUiState(
+    val isLoading: Boolean = false,
+    val error: String? = null,
+    val isPanicAlertActive: Boolean = false,
+    val currentActivity: Activity? = null,
+    val contacts: List<UserWithContact> = emptyList(),
+    val currentUser: UserWithContact? = null
+)

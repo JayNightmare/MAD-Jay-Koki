@@ -86,7 +86,7 @@ interface Service {
     fun getUsers(): Call<List<UserWithContact>>
 
     @GET("https://softwarehub.uk/unibase/staysafe/v1/api/users/{userID}")
-    fun getUser(@Path("userID") id: Long): Call<List<UserWithContact>>
+    fun getUser(@Path("userID") id: Long?): Call<List<UserWithContact>>
 
     @GET("https://softwarehub.uk/unibase/staysafe/v1/api/users/contacts/{userID}")
     fun getUserContact(@Path("userID") userID: Long): Call<List<UserWithContact>>
@@ -114,6 +114,15 @@ interface Service {
 
     @GET("https://softwarehub.uk/unibase/staysafe/v1/api/contacts")
     fun getContacts(): Call<List<Contact>>
+
+    // //
+
+    // ! Emergency
+    @POST("https://softwarehub.uk/unibase/staysafe/v1/api/emergency/notify/{userId}")
+    fun sendEmergencyNotification(
+        @Path("userId") userId: Long,
+        @Body data: Map<String, String>
+    ): Call<Unit>
 
 // //
 }

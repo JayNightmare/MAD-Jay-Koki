@@ -304,7 +304,7 @@ class StaySafeRepository(
         }
     }
 
-    fun getUserById(id: Long): Flow<List<UserWithContact>> = flow {
+    fun getUserById(id: Long?): Flow<List<UserWithContact>> = flow {
         try {
             val user = service.getUser(id).awaitResponse()
             user.body()?.let { emit(it) } ?: emit(emptyList())
@@ -455,4 +455,25 @@ class StaySafeRepository(
         }
     }
     // //
+
+    // //
+    // ! Emergency Notification
+    fun sendEmergencyNotification(
+        userId: Long,
+        data: Map<String, String>
+    ): Flow<Boolean> = flow {
+        try {
+            val response = service.sendEmergencyNotification(userId, data).awaitResponse()
+            if (response.isSuccessful) {
+                emit(true)
+            } else {
+                Log.e("sendEmergencyNotification", "Error sending notification: ${response.errorBody()?.string()}")
+                emit(false)
+            }
+        } catch (e: Exception) {
+            Log.e("sendEmergencyNotification", "Exception: ${e.message}")
+            e.printStackTrace()
+            emit(false)
+        }
+    }.flowOn(Dispatchers.IO)
 }

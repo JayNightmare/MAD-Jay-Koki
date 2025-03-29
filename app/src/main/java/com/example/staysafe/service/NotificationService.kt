@@ -5,16 +5,24 @@ import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
+import android.net.Uri
 import android.os.Build
 import androidx.core.app.NotificationCompat
+import androidx.navigation.NavController
 import com.example.staysafe.MainActivity
 import com.example.staysafe.R
 import com.example.staysafe.model.data.Activity
 import com.example.staysafe.model.data.User
 import com.example.staysafe.model.data.UserWithContact
 import com.example.staysafe.view.screens.EmergencyScreen
+import com.example.staysafe.nav.Screen
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
-class NotificationService internal constructor(private val context: Context) {
+class NotificationService internal constructor(
+    private val context: Context,
+) {
     private val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
     private val channelId = "StaySafeNotifications"
     private val panicChannelId = "PanicAlerts"
@@ -72,12 +80,6 @@ class NotificationService internal constructor(private val context: Context) {
         notificationManager.notify(activity.activityID.toInt(), notification)
     }
 
-    // TODO: Fix Notification ->> Check if id is correct
-    // TODO: When a contact is added, show a notification should be sent to the newly added contact
-    // TODO: ->> If user 1 adds user 2 as a contact, user 2 should receive a notification
-
-
-
     fun showContactAddedNotification(user: UserWithContact) {
         val notification = NotificationCompat.Builder(context, channelId)
             .setSmallIcon(R.drawable.ic_notification)
@@ -93,7 +95,7 @@ class NotificationService internal constructor(private val context: Context) {
 
     fun showContactActivityStartedNotification(activity: Activity, contactName: String) {
         val notification = NotificationCompat.Builder(context, channelId)
-            .setSmallIcon(R.drawable.ic_notification)
+                .setSmallIcon(R.drawable.ic_notification)
             .setContentTitle("Contact Started Activity")
             .setContentText("$contactName has started ${activity.activityName}")
             .setPriority(NotificationCompat.PRIORITY_DEFAULT)
@@ -104,7 +106,19 @@ class NotificationService internal constructor(private val context: Context) {
         notificationManager.notify(activity.activityID.toInt(), notification)
     }
 
-    fun showPanicAlertNotification(user: UserWithContact) {
+    fun showPanicAlertNotification(user: UserWithContact, emergencyContacts: List<UserWithContact>) {
+        // Send Firebase notification to emergency contacts
+        CoroutineScope(Dispatchers.IO).launch {
+            StaySafeFirebaseMessagingService.sendEmergencyNotification(
+                context = context,
+                userId = user.userID,
+                userName = "${user.userFirstname} ${user.userLastname}",
+                currentActivity = null, // TODO: Get current activity if available
+                emergencyContacts = emergencyContacts
+            )
+        }
+
+        // Show local notification
         val notification = NotificationCompat.Builder(context, panicChannelId)
             .setSmallIcon(R.drawable.ic_notification)
             .setContentTitle("🚨 PANIC ALERT")
@@ -181,16 +195,23 @@ class NotificationService internal constructor(private val context: Context) {
 
         fun showEmergencyNotification(
             context: Context,
-            contact: UserWithContact,
+            userId: Long,
+            userName: String,
             currentActivity: Activity?,
-            panicTime: Long
+            photoUri: Uri?
         ) {
-            // Create intent to open EmergencyScreen
+            // Create intent for the emergency screen
             val intent = Intent(context, MainActivity::class.java).apply {
                 flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
                 putExtra("screen", "emergency")
-                putExtra("userId", contact.userID)
-                putExtra("panicTime", panicTime)
+                putExtra("userId", userId)
+                putExtra("userName", userName)
+                currentActivity?.let {
+                    putExtra("activityId", it.activityID)
+                }
+                photoUri?.let {
+                    putExtra("photoUri", it.toString())
+                }
             }
 
             val pendingIntent = PendingIntent.getActivity(
@@ -201,9 +222,9 @@ class NotificationService internal constructor(private val context: Context) {
             )
 
             val notification = NotificationCompat.Builder(context, CHANNEL_ID)
-//                .setSmallIcon(R.drawable.ic_warning)
-                .setContentTitle("EMERGENCY ALERT")
-                .setContentText("${contact.userFirstname} ${contact.userLastname} needs help!")
+                .setSmallIcon(R.drawable.img)
+                .setContentTitle("Emergency Alert!")
+                .setContentText("$userName needs immediate assistance!")
                 .setPriority(NotificationCompat.PRIORITY_HIGH)
                 .setCategory(NotificationCompat.CATEGORY_ALARM)
                 .setAutoCancel(true)
@@ -212,37 +233,46 @@ class NotificationService internal constructor(private val context: Context) {
                 .setLights(android.graphics.Color.RED, 3000, 3000)
                 .build()
 
-            val notificationManager: NotificationManager =
+            val notificationManager =
                 context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
             notificationManager.notify(NOTIFICATION_ID, notification)
         }
 
-        fun showActivityNotification(context: Context, activity: Activity) {
+        fun showActivityStatusNotification(
+            context: Context,
+            activityName: String,
+            status: String
+        ) {
             val notification = NotificationCompat.Builder(context, CHANNEL_ID)
-//                .setSmallIcon(R.drawable.ic_activity)
-                .setContentTitle("Activity Started")
-                .setContentText("You are now ${activity.activityName}")
+                .setSmallIcon(R.drawable.img)
+                .setContentTitle("Activity Status Update")
+                .setContentText("$activityName is now $status")
                 .setPriority(NotificationCompat.PRIORITY_DEFAULT)
                 .setAutoCancel(true)
                 .build()
 
-            val notificationManager: NotificationManager =
+            val notificationManager =
                 context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-            notificationManager.notify(2, notification)
+            notificationManager.notify(NOTIFICATION_ID + 1, notification)
         }
 
-        fun showLocationUpdateNotification(context: Context, latitude: Double, longitude: Double) {
+        fun showLocationUpdateNotification(
+            context: Context,
+            userName: String,
+            latitude: Double,
+            longitude: Double
+        ) {
             val notification = NotificationCompat.Builder(context, CHANNEL_ID)
-//                .setSmallIcon(R.drawable.ic_location)
-                .setContentTitle("Location Updated")
-                .setContentText("Your location has been updated")
+                .setSmallIcon(R.drawable.img)
+                .setContentTitle("Location Update")
+                .setContentText("$userName's location has been updated")
                 .setPriority(NotificationCompat.PRIORITY_LOW)
                 .setAutoCancel(true)
                 .build()
 
-            val notificationManager: NotificationManager =
+            val notificationManager =
                 context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-            notificationManager.notify(3, notification)
+            notificationManager.notify(NOTIFICATION_ID + 2, notification)
         }
     }
 } 

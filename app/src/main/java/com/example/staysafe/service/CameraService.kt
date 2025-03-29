@@ -13,29 +13,31 @@ import java.util.*
 class CameraService(private val context: Context) {
     private var currentPhotoPath: String? = null
 
-    fun createImageFile(): File {
-        val timeStamp = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(Date())
-        val imageFileName = "JPEG_${timeStamp}_"
-        val storageDir = context.getExternalFilesDir(Environment.DIRECTORY_PICTURES)
-        return File.createTempFile(
-            imageFileName,
-            ".jpg",
-            storageDir
-        ).apply {
-            currentPhotoPath = absolutePath
-        }
-    }
+    suspend fun capturePhoto(): Uri? {
+        return try {
+            // Create an image file name
+            val timeStamp = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(Date())
+            val imageFileName = "JPEG_${timeStamp}_"
+            val storageDir = context.getExternalFilesDir(Environment.DIRECTORY_PICTURES)
+            val image = File.createTempFile(
+                imageFileName,  /* prefix */
+                ".jpg",        /* suffix */
+                storageDir     /* directory */
+            )
 
-    fun getCameraIntent(): Intent {
-        val intent = Intent(MediaStore.ACTION_IMAGE_CAPTURE)
-        val photoFile = createImageFile()
-        val photoURI: Uri = FileProvider.getUriForFile(
-            context,
-            "com.example.staysafe.fileprovider",
-            photoFile
-        )
-        intent.putExtra(MediaStore.EXTRA_OUTPUT, photoURI)
-        return intent
+            // Save a file: path for use with ACTION_VIEW intents
+            currentPhotoPath = image.absolutePath
+
+            // Create the FileProvider URI
+            FileProvider.getUriForFile(
+                context,
+                "com.example.staysafe.fileprovider",
+                image
+            )
+        } catch (e: Exception) {
+            e.printStackTrace()
+            null
+        }
     }
 
     fun getCurrentPhotoPath(): String? = currentPhotoPath

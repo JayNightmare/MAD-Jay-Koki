@@ -23,6 +23,9 @@ import com.example.staysafe.service.NotificationService
 import androidx.core.net.toUri
 import com.example.staysafe.model.data.Activity
 import com.example.staysafe.viewModel.MapViewModel
+import com.example.staysafe.nav.Screen
+import com.example.staysafe.service.CameraService
+import kotlinx.coroutines.launch
 
 @Composable
 fun PanicButton(
@@ -30,69 +33,62 @@ fun PanicButton(
     emergencyContacts: List<UserWithContact>,
     currentActivity: Activity?
 ) {
-    var isPressed by remember { mutableStateOf(false) }
     val context = LocalContext.current
+    val cameraService = remember { CameraService(context) }
+    val coroutineScope = rememberCoroutineScope()
 
-    LaunchedEffect(isPressed) {
-        if (isPressed) {
-            // Send emergency notifications to contacts labeled as "Emergency"
-            emergencyContacts.filter { it.contactLabel == "Emergency" }.forEach { contact ->
-                NotificationService.showEmergencyNotification(
-                    context = context,
-                    contact = contact,
-                    currentActivity = currentActivity,
-                    panicTime = System.currentTimeMillis()
-                )
+    FloatingActionButton(
+        onClick = {
+            coroutineScope.launch {
+                try {
+                    // Capture photo
+                    val photoUri = cameraService.capturePhoto()
+                    
+                    // Filter emergency contacts
+                    val emergencyContacts = emergencyContacts.filter { it.contactLabel == "Emergency" }
+                    
+                    // Get current user's location and activity
+                    val loggedInUser = viewModel.loggedInUser.value
+                    if (loggedInUser != null) {
+                        val emergencyData = mapOf(
+                            "type" to "emergency",
+                            "userId" to loggedInUser.userID.toString(),
+                            "panicTime" to System.currentTimeMillis().toString(),
+                            "userName" to "${loggedInUser.userFirstname} ${loggedInUser.userLastname}",
+                            "activityName" to (currentActivity?.activityName ?: "No current activity"),
+                            "latitude" to (loggedInUser.userLatitude?.toString() ?: ""),
+                            "longitude" to (loggedInUser.userLongitude?.toString() ?: ""),
+                            "activityId" to (currentActivity?.activityID?.toString() ?: ""),
+                            "photoUri" to (photoUri?.toString() ?: "")
+                        )
+
+                        // Send emergency notification to all emergency contacts
+                        emergencyContacts.forEach { contact ->
+                            viewModel.sendEmergencyAlert(contact.userID, emergencyData)
+                        }
+
+                        // Show local notification
+                        NotificationService.showEmergencyNotification(
+                            context = context,
+                            userId = loggedInUser.userID,
+                            userName = "${loggedInUser.userFirstname} ${loggedInUser.userLastname}",
+                            currentActivity = currentActivity,
+                            photoUri = photoUri
+                        )
+                    }
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                }
             }
-            
-            // Reset button after 3 seconds
-            kotlinx.coroutines.delay(3000)
-            isPressed = false
-        }
-    }
-
-    Button(
-        onClick = { isPressed = true },
-        enabled = !isPressed,
-        modifier = Modifier
-            .size(120.dp)
-            .padding(16.dp),
-        colors = ButtonDefaults.buttonColors(
-            containerColor = if (isPressed) Color.Gray else Color.Red
-        ),
-        shape = MaterialTheme.shapes.medium
+        },
+        containerColor = Color.Red,
+        modifier = Modifier.size(56.dp)
     ) {
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
-        ) {
-            Icon(
-                imageVector = Icons.Default.Warning,
-                contentDescription = "Panic Button",
-                modifier = Modifier.size(48.dp),
-                tint = Color.White
-            )
-        }
+        Icon(
+            imageVector = Icons.Default.Warning,
+            contentDescription = "Panic Button",
+            tint = Color.White
+        )
     }
 }
 
-private fun triggerPanicAlert(context: android.content.Context, contacts: List<UserWithContact>) {
-    // Send SMS to all emergency contacts
-    contacts.forEach { contact ->
-        val intent = Intent(Intent.ACTION_SENDTO).apply {
-            data = "smsto:${contact.userPhone}".toUri()
-            putExtra("sms_body", "EMERGENCY: Your contact has triggered the panic button. Please check on them immediately.")
-        }
-        context.startActivity(intent)
-    }
-
-    // Send notification to all contacts
-    val notificationService = NotificationService(context)
-    contacts.forEach { contact ->
-        notificationService.showPanicAlertNotification(contact)
-    }
-
-    // TODO: Send location data to emergency services
-    // TODO: Start recording audio/video
-    // TODO: Send last known location to emergency contacts
-} 
