@@ -31,7 +31,7 @@ class NotificationService internal constructor(
         createNotificationChannels()
     }
 
-    fun createNotificationChannels() {
+    private fun createNotificationChannels() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             // Regular notifications channel
             val regularChannel = NotificationChannel(
@@ -198,7 +198,6 @@ class NotificationService internal constructor(
             userId: Long,
             userName: String,
             currentActivity: Activity?,
-            photoUri: Uri?
         ) {
             // Create intent for the emergency screen
             val intent = Intent(context, MainActivity::class.java).apply {
@@ -208,9 +207,6 @@ class NotificationService internal constructor(
                 putExtra("userName", userName)
                 currentActivity?.let {
                     putExtra("activityId", it.activityID)
-                }
-                photoUri?.let {
-                    putExtra("photoUri", it.toString())
                 }
             }
 

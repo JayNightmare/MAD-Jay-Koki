@@ -31,8 +31,7 @@ fun Navigation() {
                 val userId = intent.getLongExtra("userId", 0)
                 val userName = intent.getStringExtra("userName") ?: ""
                 val activityId = intent.getLongExtra("activityId", 0)
-                val photoUri = intent.getStringExtra("photoUri")
-                startDestination = "emergency/$userId/$userName/$activityId/$photoUri"
+                startDestination = "emergency/$userId/$userName/$activityId"
             }
         }
     }
@@ -114,19 +113,17 @@ fun Navigation() {
                 viewModel = sharedViewModel
             )
         }
-        composable("emergency/{userId}/{userName}/{activityId}/{photoUri}") { backStackEntry ->
+        composable("emergency/{userId}/{userName}/{activityId}") { backStackEntry ->
             val userId = backStackEntry.arguments?.getString("userId")?.toLongOrNull() ?: 0
             val userName = backStackEntry.arguments?.getString("userName") ?: ""
             val activityId = backStackEntry.arguments?.getString("activityId")?.toLongOrNull()
-            val photoUri = backStackEntry.arguments?.getString("photoUri")
-            
+
             EmergencyScreen(
                 navController = nav,
                 viewModel = sharedViewModel,
                 userId = userId,
                 userName = userName,
                 activityId = activityId,
-                photoUri = photoUri
             )
         }
     }

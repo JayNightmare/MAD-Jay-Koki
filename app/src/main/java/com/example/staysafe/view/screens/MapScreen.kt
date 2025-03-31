@@ -52,7 +52,6 @@ import com.example.staysafe.R
 import com.example.staysafe.map.CustomMarker
 import com.example.staysafe.model.data.*
 import com.example.staysafe.nav.Screen
-import com.example.staysafe.service.CameraService
 import com.example.staysafe.service.SafetyMonitoringService
 import com.example.staysafe.ui.components.sheets.ActivitySheet
 import com.example.staysafe.ui.components.BottomNavigationBar
@@ -178,7 +177,6 @@ fun MapScreen(navController: NavController, viewModel: MapViewModel) {
 
     var showPanicButton by remember { mutableStateOf(true) }
     var showStepCounter by remember { mutableStateOf(true) }
-    val cameraService = remember { CameraService(context) }
     val safetyService = remember { SafetyMonitoringService() }
     var showCameraDialog by remember { mutableStateOf(false) }
 
@@ -607,12 +605,6 @@ fun MapScreen(navController: NavController, viewModel: MapViewModel) {
                             TextButton(
                                 onClick = {
                                     showCameraDialog = false
-                                    coroutineScope.launch {
-                                        val photoUri = cameraService.capturePhoto()
-                                        photoUri?.let {
-                                            (context as? MainActivity)?.launchCamera(it)
-                                        }
-                                    }
                                 }
                             ) {
                                 Text("Take Photo")

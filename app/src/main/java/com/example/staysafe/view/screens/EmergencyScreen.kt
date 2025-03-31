@@ -6,6 +6,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.Message
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -41,7 +42,6 @@ fun EmergencyScreen(
     userId: Long,
     userName: String,
     activityId: Long? = null,
-    photoUri: String? = null
 ) {
     val context = LocalContext.current
     var activity by remember { mutableStateOf<Activity?>(null) }
@@ -88,23 +88,6 @@ fun EmergencyScreen(
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            // Emergency Photo
-            photoUri?.let { uri ->
-                Card(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(200.dp),
-                    shape = RoundedCornerShape(8.dp)
-                ) {
-                    AsyncImage(
-                        model = uri.toUri(),
-                        contentDescription = "Emergency Photo",
-                        modifier = Modifier.fillMaxSize(),
-                        contentScale = ContentScale.Crop
-                    )
-                }
-            }
-
             // User Information
             Card(
                 modifier = Modifier.fillMaxWidth(),
@@ -119,14 +102,35 @@ fun EmergencyScreen(
                         fontSize = 18.sp,
                         fontWeight = FontWeight.Bold
                     )
+                    
+                    // Activity Information
                     activity?.let {
-                        Text(
-                            text = "Activity: ${it.activityName}",
-                            fontSize = 16.sp
-                        )
-                    }
+                        Column(
+                            verticalArrangement = Arrangement.spacedBy(4.dp)
+                        ) {
+                            Text(
+                                text = "Current Activity: ${it.activityName}",
+                                fontSize = 16.sp,
+                                fontWeight = FontWeight.Medium
+                            )
+                            Text(
+                                text = "Status: ${it.activityStatusName}",
+                                fontSize = 16.sp,
+                                color = if (it.activityStatusName == "Started") Color.Red else Color.Black
+                            )
+                            Text(
+                                text = "Started: ${SimpleDateFormat("MMM dd, yyyy HH:mm:ss", Locale.getDefault()).format(it.activityArrive)}",
+                                fontSize = 14.sp
+                            )
+                        }
+                    } ?: Text(
+                        text = "No current activity",
+                        fontSize = 16.sp,
+                        color = Color.Gray
+                    )
+
                     Text(
-                        text = "Time: ${SimpleDateFormat("MMM dd, yyyy HH:mm:ss", Locale.getDefault()).format(Date())}",
+                        text = "Alert Time: ${SimpleDateFormat("MMM dd, yyyy HH:mm:ss", Locale.getDefault()).format(Date())}",
                         fontSize = 16.sp
                     )
                 }
@@ -154,45 +158,64 @@ fun EmergencyScreen(
                 }
             }
 
-            // Action Buttons
-            Row(
+            // Call Emergency Services
+            Column(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Button(
                     onClick = {
-                        userLocation?.let { location ->
-                            val uri = "google.navigation:q=${location.latitude},${location.longitude}"
-                            val intent = Intent(Intent.ACTION_VIEW, Uri.parse(uri))
-                            intent.setPackage("com.google.android.apps.maps")
-                            context.startActivity(intent)
-                        }
-                    },
-                    modifier = Modifier.weight(1f),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = Color(0xFF4CAF50)
-                    )
-                ) {
-                    Icon(Icons.Default.Navigation, contentDescription = null)
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text("Navigate")
-                }
-
-                Button(
-                    onClick = {
                         val intent = Intent(Intent.ACTION_DIAL).apply {
-                            data = Uri.parse("tel:911")
+                            data = "sms:112".toUri()
                         }
                         context.startActivity(intent)
                     },
-                    modifier = Modifier.weight(1f),
                     colors = ButtonDefaults.buttonColors(
                         containerColor = Color.Red
                     )
                 ) {
-                    Icon(Icons.Default.Emergency, contentDescription = null)
+                    Icon(Icons.Default.Phone, contentDescription = null)
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text("Call 911")
+                    Text("Call Emergency Services")
+                }
+            }
+
+            // Emergency Actions
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceEvenly
+            ) {
+                Button(
+                    onClick = {
+                        val intent = Intent(Intent.ACTION_DIAL).apply {
+                            data = "sms:112".toUri()
+                        }
+                        context.startActivity(intent)
+                    },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color.Red
+                    )
+                ) {
+                    Icon(Icons.Default.Phone, contentDescription = null)
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text("Call")
+                }
+
+                Button(
+                    onClick = {
+                        val intent = Intent(Intent.ACTION_VIEW).apply {
+                            data = "sms:112".toUri()
+                            putExtra("sms_body", "Emergency alert from $userName")
+                        }
+                        context.startActivity(intent)
+                    },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color.Red
+                    )
+                ) {
+                    Icon(Icons.AutoMirrored.Filled.Message, contentDescription = null)
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text("Text")
                 }
             }
         }

@@ -8,5 +8,13 @@ sealed class Screen(val route:String) {
     object ProfileScreen: Screen("profile")
     object SettingsScreen: Screen("settings")
     object UserActivitiesScreen : Screen("user_activities")
-    object EmergencyScreen : Screen("emergency")
+    object EmergencyScreen : Screen("emergency/{userId}/{userName}/{activityId}") {
+        fun createRoute(
+            userId: Long,
+            userName: String,
+            activityId: Long?,
+        ): String {
+            return "emergency/$userId/$userName/${activityId ?: 0}}"
+        }
+    }
 }

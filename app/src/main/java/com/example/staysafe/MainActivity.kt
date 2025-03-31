@@ -105,8 +105,4 @@ class MainActivity : ComponentActivity() {
             }
         }
     }
-
-    fun launchCamera(photoUri: android.net.Uri) {
-        takePictureLauncher.launch(photoUri)
-    }
 }
