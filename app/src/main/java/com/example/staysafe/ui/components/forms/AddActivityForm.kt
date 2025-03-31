@@ -58,7 +58,6 @@ fun AddActivityForm(viewModel: MapViewModel, onClose: () -> Unit) {
                 fromAddressLine,
                 toPostCode,
                 toAddressLine,
-                travelMode
             ) { route ->
                 routePoints = route
             }
